@@ -15,6 +15,7 @@
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
+            /* 優先使用繁體與簡體字型，確保文字不破字 */
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
             background-color: #3f5968; 
             color: #fff;
@@ -473,8 +474,8 @@
                 return `${period} ${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
             };
 
-            // 處理標題點擊跳轉
-            const handleTitleClick = (e) => {
+            // 處理標題與封面點擊跳轉 (管理模式時只有雙擊封面可以編輯，單擊則是跳轉，保持功能明確)
+            const handleLinkClick = (e) => {
                 if (g.url) {
                     e.stopPropagation();
                     window.open(g.url, '_blank');
@@ -483,7 +484,8 @@
 
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
-                    <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
+                    {/* 封面區域點擊跳轉 */}
+                    <div className="image-link" onClick={handleLinkClick}>
                         {getStatusBadge()}
                         {g.cover ? (
                             <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div>
@@ -494,7 +496,8 @@
 
                     <div className="desc">
                         <div className="title-container">
-                            <div className="title-link" onClick={handleTitleClick}>
+                            {/* 名稱點擊跳轉 */}
+                            <div className="title-link" onClick={handleLinkClick}>
                                 <span className="id-label">#{g.order || 0}</span>
                                 {g.name}
                             </div> 
@@ -658,10 +661,14 @@
 
             useEffect(() => {
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        console.error("Auth failed:", e);
                     }
                 };
                 initAuth();
@@ -679,7 +686,7 @@
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
                 }, (err) => {
-                    console.error("Firestore error:", err);
+                    if (err.code !== 'permission-denied') console.error("Firestore error:", err);
                 });
 
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
