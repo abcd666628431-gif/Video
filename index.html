@@ -384,10 +384,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        // 重要：確保 appId 與資料庫安全性規則路徑一致
         const appId = 'video-library-v1';
 
-        // 格式化日期：確保回傳的一定是字串，避免渲染物件導致報錯
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -629,11 +627,36 @@
                 return Array.from(ids).filter(Boolean).sort();
             }, [userName, onlineUsers, games]);
 
-            // 修復登入邏輯：自動處理權杖不匹配的情形
+            // 新增：處理剪貼簿圖片貼上
+            const handlePaste = useCallback(async (e) => {
+                if (!isModalOpen) return;
+                
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf("image") !== -1) {
+                        const blob = items[i].getAsFile();
+                        const url = URL.createObjectURL(blob);
+                        const compressed = await compressImage(url, lastSelectedImgZone === 'source' ? 100 : 400);
+                        
+                        if (lastSelectedImgZone === 'source') {
+                            setFormData(prev => ({ ...prev, sourceIcon: compressed }));
+                        } else {
+                            setFormData(prev => ({ ...prev, cover: compressed }));
+                        }
+                        showNotify("圖片已貼上");
+                        break;
+                    }
+                }
+            }, [isModalOpen, lastSelectedImgZone, showNotify]);
+
+            useEffect(() => {
+                window.addEventListener('paste', handlePaste);
+                return () => window.removeEventListener('paste', handlePaste);
+            }, [handlePaste]);
+
             useEffect(() => {
                 const initAuth = async () => {
                     try {
-                        // 如果專案資訊已變更，Custom Token 一定會失效，故直接嘗試匿名登入或處理錯誤
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             try {
                                 await signInWithCustomToken(auth, __initial_auth_token);
