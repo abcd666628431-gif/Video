@@ -365,20 +365,29 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // Firebase 初始化
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // --- 使用用戶提供的 Firebase 設定 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
+            authDomain: "video-b02b3.firebaseapp.com",
+            projectId: "video-b02b3",
+            storageBucket: "video-b02b3.firebasestorage.app",
+            messagingSenderId: "25339039789",
+            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
+        };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'steam-stats-v4';
+        // 重要：確保 appId 與資料庫安全性規則路徑一致
+        const appId = 'video-library-v1';
 
-        // 格式化日期：確保回傳的一定是字串，避免 React Error #31
+        // 格式化日期：確保回傳的一定是字串，避免渲染物件導致報錯
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -458,7 +467,6 @@
                 return <span className={`status-badge ${cls}`}>{g.airingStatus}</span>;
             };
 
-            // 格式化卡片上的更新時間顯示 (AM/PM 轉中文)
             const getDisplayUpdateTime = (timeStr) => {
                 if (!timeStr) return "";
                 const [h, m] = timeStr.split(':').map(Number);
@@ -621,23 +629,30 @@
                 return Array.from(ids).filter(Boolean).sort();
             }, [userName, onlineUsers, games]);
 
-            // Auth 初始化
+            // 修復登入邏輯：自動處理權杖不匹配的情形
             useEffect(() => {
                 const initAuth = async () => {
                     try {
+                        // 如果專案資訊已變更，Custom Token 一定會失效，故直接嘗試匿名登入或處理錯誤
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
+                            try {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } catch (tokenErr) {
+                                await signInAnonymously(auth);
+                            }
                         } else {
                             await signInAnonymously(auth);
                         }
-                    } catch (e) { console.error("Auth failed", e); }
+                    } catch (e) { 
+                        console.error("Auth failed", e); 
+                        showNotify("連線失敗，請檢查規則與匿名登入設定");
+                    }
                 };
                 initAuth();
                 const unsubscribe = onAuthStateChanged(auth, setUser);
                 return () => unsubscribe();
             }, []);
 
-            // 資料監聽
             useEffect(() => {
                 if (!user) return;
                 setIsLoadingGames(true);
@@ -647,7 +662,10 @@
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
-                }, (err) => console.error("Games error", err));
+                }, (err) => {
+                    console.error("Games error", err);
+                    if (err.code === 'permission-denied') showNotify("資料庫規則拒絕存取");
+                });
 
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
                     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -691,9 +709,11 @@
 
             const logActivity = async (action, gameName) => { 
                 if(!user) return;
-                await addDoc(getPublicCol('activity_logs'), {
-                    userName, action: String(action), gameName: String(gameName), timestamp: serverTimestamp()
-                });
+                try {
+                    await addDoc(getPublicCol('activity_logs'), {
+                        userName, action: String(action), gameName: String(gameName), timestamp: serverTimestamp()
+                    });
+                } catch(e) {}
             };
 
             const handleAddGroup = async () => {
@@ -714,35 +734,39 @@
                 if (e) e.preventDefault();
                 if (!formData.name.trim() || !user) return;
                 
-                let updatedSources = [...customSources];
-                if (formData.source.trim()) {
-                    const sName = formData.source.trim();
-                    const sIcon = formData.sourceIcon || '';
-                    const idx = updatedSources.findIndex(s => s.name === sName);
-                    if (idx === -1) updatedSources.push({ name: sName, icon: sIcon });
-                    else updatedSources[idx].icon = sIcon;
-                    await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources });
-                }
+                try {
+                    let updatedSources = [...customSources];
+                    if (formData.source.trim()) {
+                        const sName = formData.source.trim();
+                        const sIcon = formData.sourceIcon || '';
+                        const idx = updatedSources.findIndex(s => s.name === sName);
+                        if (idx === -1) updatedSources.push({ name: sName, icon: sIcon });
+                        else updatedSources[idx].icon = sIcon;
+                        await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources });
+                    }
 
-                const finalData = { 
-                    ...formData,
-                    addedBy: String(formData.addedBy || userName),
-                    order: formData.order || (games.length + 1),
-                    manualUpdatedAt: String(formData.manualUpdatedAt || ""),
-                    updateDay: String(formData.updateDay || ""),
-                    updateTime: String(formData.updateTime || ""),
-                    updatedAt: serverTimestamp() 
-                };
-                delete finalData.sourceIcon;
+                    const finalData = { 
+                        ...formData,
+                        addedBy: String(formData.addedBy || userName),
+                        order: formData.order || (games.length + 1),
+                        manualUpdatedAt: String(formData.manualUpdatedAt || ""),
+                        updateDay: String(formData.updateDay || ""),
+                        updateTime: String(formData.updateTime || ""),
+                        updatedAt: serverTimestamp() 
+                    };
+                    delete finalData.sourceIcon;
 
-                if (editingId) {
-                    await updateDoc(doc(getPublicCol('games'), editingId), finalData);
-                    logActivity("修改", finalData.name);
-                } else {
-                    await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() });
-                    logActivity("錄入", finalData.name);
+                    if (editingId) {
+                        await updateDoc(doc(getPublicCol('games'), editingId), finalData);
+                        logActivity("修改", finalData.name);
+                    } else {
+                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() });
+                        logActivity("錄入", finalData.name);
+                    }
+                    showNotify("已保存"); setIsModalOpen(false); setEditingId(null);
+                } catch (err) {
+                    showNotify("存檔失敗: 權限不足");
                 }
-                showNotify("已保存"); setIsModalOpen(false); setEditingId(null);
             };
 
             const handleDeleteGame = async (id) => {
@@ -764,7 +788,6 @@
                 } catch (e) { showNotify("操作失敗"); }
             };
 
-            // 導出與導入
             const handleExportData = () => {
                 const backup = { 
                     version: "11.6", 
@@ -775,7 +798,7 @@
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = `backup_anime_matrix_${Date.now()}.json`;
+                a.download = `backup_video_library_${Date.now()}.json`;
                 a.click();
             };
 
@@ -836,7 +859,6 @@
                 return Object.keys(statsMap).sort().map(name => ({ name, color: nameColorMap[name] || '#ffffff', stats: statsMap[name] }));
             }, [games, nameColorMap]);
 
-            // 時間選擇組件邏輯
             const TimeSelector = ({ value, onChange }) => {
                 const [h, m] = (value || "18:00").split(':').map(Number);
                 const period = h >= 12 ? '下午' : '上午';
@@ -852,7 +874,6 @@
 
                 return (
                     <div className="flex gap-2 w-full">
-                        {/* 上下午下拉 */}
                         <select 
                             className="modal-input-base flex-1 text-xs font-black"
                             value={period}
@@ -861,7 +882,6 @@
                             <option value="上午">上午</option>
                             <option value="下午">下午</option>
                         </select>
-                        {/* 小時下拉 (1-12) */}
                         <select 
                             className="modal-input-base flex-1 text-xs font-black"
                             value={displayH}
@@ -871,7 +891,6 @@
                                 <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>
                             ))}
                         </select>
-                        {/* 分鐘下拉 (00-59) */}
                         <select 
                             className="modal-input-base flex-1 text-xs font-black"
                             value={m}
@@ -1097,7 +1116,6 @@
                                                         <input type="number" className="modal-input-base w-full font-black text-sm" value={formData.updatedEpisodes} onChange={e=>setFormData({...formData, updatedEpisodes: e.target.value})} />
                                                     </div>
                                                 </div>
-                                                {/* 優化：更新時間下拉選單區塊 */}
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
