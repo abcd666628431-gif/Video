@@ -129,7 +129,7 @@
             background: #000;
             transition: width 0.2s ease;
             border-right: 1px solid rgba(255,255,255,0.05);
-            position: relative; /* 為了讓標籤定位 */
+            position: relative;
         }
         .image-link:hover { border-color: #ffbae9; }
 
@@ -159,6 +159,7 @@
             display: block;
             text-decoration: none;
             transition: color 0.2s;
+            cursor: pointer;
         }
         .desc .title-link:hover { color: #ffbae9; }
 
@@ -168,19 +169,38 @@
         .progress-container {
             width: 100%;
             background: rgba(255,255,255,0.1);
-            height: 4px;
-            border-radius: 10px;
+            height: 16px;
+            border-radius: 4px;
             margin-top: auto; 
             margin-bottom: 4px;
             overflow: hidden;
+            position: relative;
         }
         .progress-fill {
             height: 100%;
             background: #ffbae9;
             transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 900;
+            color: #3f5968;
+        }
+        .progress-text-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 900;
+            color: #fff;
+            pointer-events: none;
+            mix-blend-mode: difference;
         }
 
-        /* 強化後的狀態 UI 標籤 */
         .status-badge {
             position: absolute;
             top: 6px;
@@ -192,11 +212,11 @@
             text-transform: uppercase;
             box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             z-index: 10;
-            pointer-events: none; /* 點擊穿透到圖片連結 */
+            pointer-events: none;
         }
-        .badge-airing { background-color: #22c55e; color: #fff; border: 1px solid rgba(255,255,255,0.3); } /* 連載中：綠色 */
-        .badge-completed { background-color: #ef4444; color: #fff; border: 1px solid rgba(255,255,255,0.3); } /* 已完結：紅色 */
-        .badge-waiting { background-color: #64748b; color: #fff; border: 1px solid rgba(255,255,255,0.3); } /* 待播出：灰色 */
+        .badge-airing { background-color: #22c55e; color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .badge-completed { background-color: #ef4444; color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .badge-waiting { background-color: #64748b; color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
         .dashboard-panel {
             background: rgba(0,0,0,0.25);
@@ -258,6 +278,56 @@
         }
         li:hover .btn-delete-bottom { opacity: 1; }
         .btn-delete-bottom:hover { background: #ef4444; color: #fff; transform: translateY(-2px); }
+
+        .source-icon-small {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            object-fit: cover;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        .source-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .source-icon-preview-box {
+            width: 44px;
+            height: 44px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .source-icon-preview-box.active {
+            border-color: #ffbae9;
+            box-shadow: 0 0 10px rgba(255, 186, 233, 0.3);
+        }
+        .source-icon-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+        .source-icon-preview-box .tip {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(255, 186, 233, 0.8);
+            color: #3f5968;
+            font-size: 7px;
+            font-weight: 900;
+            text-align: center;
+            padding: 1px 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .source-icon-preview-box:hover .tip { opacity: 1; }
     </style>
 </head>
 <body>
@@ -305,13 +375,12 @@
             </span>
         ));
 
-        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap }) => {
+        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const total = parseInt(g.totalEpisodes) || 0;
             const current = parseFloat(g.watchedProgress) || 0;
-            const percentage = total > 0 ? Math.min((current / total) * 100, 100) : 0;
+            const percentage = total > 0 ? Math.floor(Math.min((current / total) * 100, 100)) : 0;
 
-            // 狀態標籤樣式映射
             const getStatusBadge = () => {
                 if (!g.airingStatus) return null;
                 let cls = "badge-waiting";
@@ -319,6 +388,10 @@
                 if (g.airingStatus === "已完結") cls = "badge-completed";
                 return <span className={`status-badge ${cls}`}>{g.airingStatus}</span>;
             };
+
+            const sourceInfo = useMemo(() => {
+                return allSources.find(s => s.name === g.source);
+            }, [allSources, g.source]);
 
             const handleCardClick = (e) => {
                 if (!isEditLocked) {
@@ -330,55 +403,48 @@
 
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={handleCardClick}>
-                    {/* 封面圖片區塊 */}
-                    <a 
-                        href={g.url || "#"} 
-                        target="_blank" 
-                        className="image-link" 
-                        onClick={e => {
-                            if (!isEditLocked) {
-                                e.preventDefault();
-                                onOpenEdit(g);
-                            } else if (!g.url) {
-                                e.preventDefault();
-                            }
-                        }}
-                    >
+                    <div className="image-link" onClick={e => {
+                        if (!isEditLocked) {
+                            e.preventDefault();
+                            onOpenEdit(g);
+                        } else if (g.url) {
+                            window.open(g.url, '_blank');
+                        }
+                    }}>
                         {getStatusBadge()}
                         {g.cover ? (
                             <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div>
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>
                         )}
-                    </a> 
+                    </div> 
 
                     <div className="desc">
-                        {/* 名稱區塊：編號不使用斜體 */}
-                        <a 
-                            href={g.url || "#"} 
-                            target="_blank" 
-                            className="title-link" 
-                            onClick={e => {
-                                if (!isEditLocked) {
-                                    e.preventDefault();
-                                    onOpenEdit(g);
-                                } else if (!g.url) {
-                                    e.preventDefault();
-                                }
-                            }}
-                        >
+                        <div className="title-link" onClick={e => {
+                            if (!isEditLocked) {
+                                e.preventDefault();
+                                onOpenEdit(g);
+                            } else if (g.url) {
+                                window.open(g.url, '_blank');
+                            }
+                        }}>
                             <span className="text-[#ffbae9] font-mono text-xs mr-2 font-black">#{g.order || 0}</span>
                             {g.name}
-                        </a> 
+                        </div> 
                         
                         <div className="meta">
-                            <div><strong>分類：</strong> {g.category || '未分類'} | {g.source || '未知來源'}</div>
+                            <div>
+                                <strong>分類：</strong> {g.category || '未分類'} | 
+                                {sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}
+                                {g.source || '未知來源'}
+                            </div>
                             <div><strong>進度：</strong> {g.watchedProgress || 0} / {g.totalEpisodes || '?'} 集</div>
                             <div><strong>提起：</strong> <span style={{ color: addedByColor }}>{g.addedBy || '系統'}</span></div>
                         </div>
                         
                         <div className="progress-container">
                             <div className="progress-fill" style={{ width: `${percentage}%` }}></div>
+                            <div className="progress-text-overlay">{percentage}%</div>
                         </div>
 
                         {!isEditLocked && (
@@ -418,6 +484,7 @@
             
             const [games, setGames] = useState([]); 
             const [customCategories, setCustomCategories] = useState([]);
+            const [customSources, setCustomSources] = useState([]);
             const [activeTab, setActiveTab] = useState(0); 
             const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false);
             const [newGroupName, setNewGroupName] = useState('');
@@ -426,8 +493,12 @@
             const [editingId, setEditingId] = useState(null); 
             const [formData, setFormData] = useState({ 
                 name: '', addedBy: '', order: '', url: '', cover: null, note: '',
-                totalEpisodes: '', watchedProgress: '', airingStatus: '連載中', source: '', category: ''
+                totalEpisodes: '', watchedProgress: '', airingStatus: '連載中', source: '', category: '',
+                sourceIcon: ''
             });
+
+            // 用於追蹤當前貼上圖片的目標是哪個區塊 ('cover' 或 'source')
+            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover');
             
             const [searchQuery, setSearchQuery] = useState(''); 
             const [isEditLocked, setIsEditLocked] = useState(true);
@@ -469,7 +540,6 @@
 
             useEffect(() => {
                 if (!user) return;
-
                 setIsLoadingGames(true);
                 setIsLoadingLogs(true);
 
@@ -479,7 +549,7 @@
                     setGames(list);
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
-                }, () => showNotify("獲取數據失敗"));
+                });
 
                 const unsubLogs = db.collection(paths.logs).limit(30).onSnapshot((snap) => {
                     const list = [];
@@ -491,6 +561,10 @@
 
                 const unsubCats = db.collection(paths.settings).doc('categories').onSnapshot((d) => {
                     if (d.exists) setCustomCategories(d.data().list || []);
+                });
+
+                const unsubSources = db.collection(paths.settings).doc('sources').onSnapshot((d) => {
+                    if (d.exists) setCustomSources(d.data().list || []);
                 });
 
                 const unsubPresence = db.collection(paths.presence).onSnapshot((snap) => {
@@ -505,7 +579,7 @@
                     setOnlineUsers(list);
                 });
 
-                return () => { unsubGames(); unsubLogs(); unsubCats(); unsubPresence(); };
+                return () => { unsubGames(); unsubLogs(); unsubCats(); unsubSources(); unsubPresence(); };
             }, [user]);
 
             useEffect(() => {
@@ -553,8 +627,19 @@
                 if (e) e.preventDefault();
                 if (!formData.name.trim() || !user) return;
                 
+                if (formData.source.trim()) {
+                    const sourceName = formData.source.trim();
+                    const sourceIcon = formData.sourceIcon?.trim() || '';
+                    const existing = customSources.find(s => s.name === sourceName);
+                    if (!existing || existing.icon !== sourceIcon) {
+                        const newList = [...customSources.filter(s => s.name !== sourceName), { name: sourceName, icon: sourceIcon }];
+                        await db.collection(paths.settings).doc('sources').set({ list: newList });
+                    }
+                }
+
+                const { sourceIcon, ...dataToSave } = formData;
                 const finalData = { 
-                    ...formData, 
+                    ...dataToSave, 
                     addedBy: formData.addedBy || userName, 
                     order: formData.order || (games.length + 1) 
                 };
@@ -592,7 +677,7 @@
             };
 
             const handleExportData = () => {
-                const backup = { version: "9.3", games, categories: customCategories };
+                const backup = { version: "9.4", games, categories: customCategories, sources: customSources };
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -617,6 +702,9 @@
                         if (data.categories) {
                             await db.collection(paths.settings).doc('categories').set({ list: data.categories });
                         }
+                        if (data.sources) {
+                            await db.collection(paths.settings).doc('sources').set({ list: data.sources });
+                        }
                         showNotify("資料導入成功");
                     } catch (err) {
                         showNotify("導入失敗");
@@ -637,6 +725,15 @@
                 } catch (e) { showNotify("操作失敗"); }
             };
 
+            const handleManualSync = () => {
+                setIsSyncing(true);
+                setTimeout(() => {
+                    setIsSyncing(false);
+                    showNotify("已重新同步最新矩陣");
+                }, 800);
+            };
+
+            // 優化後的貼上邏輯：支援多區域貼上
             useEffect(() => {
                 if (!isModalOpen) return;
                 const handlePaste = async (e) => {
@@ -646,9 +743,14 @@
                             const blob = items[i].getAsFile();
                             const reader = new FileReader();
                             reader.onload = async (event) => {
-                                const compressed = await compressImage(event.target.result);
-                                setFormData(prev => ({ ...prev, cover: compressed }));
-                                showNotify("封面已貼上");
+                                const compressed = await compressImage(event.target.result, lastSelectedImgZone === 'source' ? 100 : 400);
+                                if (lastSelectedImgZone === 'source') {
+                                    setFormData(prev => ({ ...prev, sourceIcon: compressed }));
+                                    showNotify("來源圖標已貼上");
+                                } else {
+                                    setFormData(prev => ({ ...prev, cover: compressed }));
+                                    showNotify("主封面已貼上");
+                                }
                             };
                             reader.readAsDataURL(blob);
                         }
@@ -656,7 +758,7 @@
                 };
                 window.addEventListener('paste', handlePaste);
                 return () => window.removeEventListener('paste', handlePaste);
-            }, [isModalOpen]);
+            }, [isModalOpen, lastSelectedImgZone]);
 
             const filteredGames = useMemo(() => {
                 let list = [...games];
@@ -705,16 +807,17 @@
                             <div className="flex items-center gap-6">
                                 <Icon name="film" className="w-14 h-14 text-[#ffbae9]" />
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v9.3</span></div>
+                                    <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v9.4</span></div>
                                     <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className={`flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20 text-white transition-all`}>
-                                    <Icon name="refresh-cw" className={`w-4 h-4 cursor-pointer ${isSyncing ? 'animate-spin' : ''}`} onClick={() => showNotify("已同步最新矩陣")} />
+                                    <Icon name="refresh-cw" className={`w-4 h-4 cursor-pointer ${isSyncing ? 'animate-spin' : ''}`} onClick={handleManualSync} />
                                     <div className="flex-col flex">
-                                        <span className="uppercase text-[10px]">SYNC</span>
-                                        <span className="text-[10px] text-white/40 font-bold">{lastSynced ? formatDate(lastSynced).split(' ')[0] : '...'}</span>
+                                        <span className="uppercase text-[10px]">同步完成</span>
+                                        {/* 修改為完整時間顯示 */}
+                                        <span className="text-[10px] text-white/40 font-bold">{lastSynced ? formatDate(lastSynced) : '...'}</span>
                                     </div>
                                 </div>
                                 {!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}
@@ -785,7 +888,7 @@
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             <button onClick={() => { 
                                 setEditingId(null); 
-                                setFormData({ name: '', addedBy: userName, order: '', url: '', cover: null, note: '', totalEpisodes: '', watchedProgress: '', airingStatus: '連載中', source: '', category: '' }); 
+                                setFormData({ name: '', addedBy: userName, order: '', url: '', cover: null, note: '', totalEpisodes: '', watchedProgress: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '' }); 
                                 setIsModalOpen(true); 
                             }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white transition-all uppercase tracking-widest active:scale-95 text-sm">+ 錄入新內容</button>
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0">
@@ -835,6 +938,7 @@
                                                 g={g} 
                                                 onOpenEdit={(item) => { 
                                                     setEditingId(item.id); 
+                                                    const sourceObj = customSources.find(s => s.name === item.source);
                                                     setFormData({
                                                         name: item.name || '',
                                                         addedBy: item.addedBy || '',
@@ -846,13 +950,15 @@
                                                         watchedProgress: item.watchedProgress || '',
                                                         airingStatus: item.airingStatus || '連載中',
                                                         source: item.source || '',
-                                                        category: item.category || ''
+                                                        category: item.category || '',
+                                                        sourceIcon: sourceObj?.icon || ''
                                                     }); 
                                                     setIsModalOpen(true); 
                                                 }}
                                                 isEditLocked={isEditLocked}
                                                 onDelete={(item) => setDeleteGameTarget(item)}
                                                 nameColorMap={nameColorMap}
+                                                allSources={customSources}
                                             />
                                         ))}
                                     </ul>
@@ -882,8 +988,9 @@
                         </div>
                     )}
 
+                    {/* 彈窗背景優化：減低透明度與模糊，避免跳轉感 */}
                     {isModalOpen && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-2xl overflow-hidden relative shadow-2xl rounded-sm">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
@@ -891,12 +998,17 @@
                                     <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
                                     <form onSubmit={handleSaveGame} className="space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                                            {/* 左側：封面、編號、狀態 */}
                                             <div className="md:col-span-4 space-y-4">
-                                                <div onClick={() => fileInputRef.current.click()} className="w-full aspect-[3/4.2] bg-black border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl">
+                                                <div 
+                                                    onClick={() => {
+                                                        setLastSelectedImgZone('cover');
+                                                        fileInputRef.current.click();
+                                                    }} 
+                                                    className={`w-full aspect-[3/4.2] bg-black border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
+                                                >
                                                     {formData.cover ? <img src={formData.cover} className="w-full h-full object-cover" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase tracking-widest leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
                                                 </div>
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0])); setFormData(p=>({...p, cover: c})); } }} />
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
                                                 
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 ml-1">編號</label>
@@ -904,7 +1016,7 @@
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 ml-1">狀態</label>
-                                                    <select className="modal-input-base w-full text-xs font-black" value={formData.airingStatus || '連載中'} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
+                                                    <select className="modal-input-base w-full text-xs font-black" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
                                                         <option value="連載中">連載中</option>
                                                         <option value="已完結">已完結</option>
                                                         <option value="待播出">待播出</option>
@@ -912,7 +1024,6 @@
                                                 </div>
                                             </div>
 
-                                            {/* 右側內容 */}
                                             <div className="md:col-span-8 space-y-5">
                                                 <div>
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2 ml-1">-名稱-</label>
@@ -924,13 +1035,35 @@
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2 ml-1">-分類-</label>
                                                         <select className="modal-input-base w-full text-sm font-bold" value={formData.category || ''} onChange={e=>setFormData({...formData, category: e.target.value})}>
                                                             <option value="">- 選擇自定義分組 -</option>
-                                                            {/* 分類下拉菜單與自定義標籤同步 */}
+                                                            <option value="最新入庫">最新入庫</option>
+                                                            <option value="編號排序">編號排序</option>
                                                             {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                         </select>
                                                     </div>
                                                     <div>
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2 ml-1">-影片來源地-</label>
-                                                        <input className="modal-input-base w-full text-sm font-bold" value={formData.source || ''} onChange={e=>setFormData({...formData, source: e.target.value})} placeholder="例如：Netflix, Steam" />
+                                                        <div className="source-input-group">
+                                                            {/* 來源圖標預覽框：支援貼上 */}
+                                                            <div 
+                                                                className={`source-icon-preview-box ${lastSelectedImgZone === 'source' ? 'active' : ''}`} 
+                                                                title="點擊後可 Ctrl+V 貼上圖標" 
+                                                                onClick={() => setLastSelectedImgZone('source')}
+                                                            >
+                                                                {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-4 h-4 text-white/20" />}
+                                                                <div className="tip">貼上圖片</div>
+                                                            </div>
+                                                            <div className="flex-1 space-y-2">
+                                                                <select className="modal-input-base w-full text-xs font-bold" value={formData.source} onChange={e => {
+                                                                    const found = customSources.find(s => s.name === e.target.value);
+                                                                    setFormData({...formData, source: e.target.value, sourceIcon: found?.icon || ''});
+                                                                }}>
+                                                                    <option value="">- 選擇已有來源 -</option>
+                                                                    {customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                                                                </select>
+                                                                <input className="modal-input-base w-full text-sm font-bold" value={formData.source} onChange={e=>setFormData({...formData, source: e.target.value})} placeholder="手動輸入來源名稱..." />
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-2 text-[10px] text-white/30 italic">點擊上方小框即可貼上 (Ctrl+V) 來源圖標</div>
                                                     </div>
                                                 </div>
 
