@@ -366,7 +366,13 @@
                     if (items[i].type.indexOf("image") !== -1) {
                         const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
                         if (lastSelectedImgZone === 'source') { const c = await compressImage(url, 100); setFormData(p => ({ ...p, sourceIcon: c })); showNotify("來源圖標已貼上"); }
-                        else { setRawImageData(url); setIsCropping(true); showNotify("進入裁剪模式"); }
+                        else { 
+                            // 封面改為自動縮放，不自動跳裁剪
+                            const c = await compressImage(url, 400); 
+                            setFormData(p => ({ ...p, cover: c }));
+                            setRawImageData(url); 
+                            showNotify("封面已自動縮放貼上"); 
+                        }
                         break;
                     }
                 }
