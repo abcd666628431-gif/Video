@@ -396,13 +396,14 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // --- Firebase 配置 ---
+        // --- Firebase 環境配置 ---
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-video-library';
 
+        // 智慧提取數字函式
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) {
@@ -507,17 +508,18 @@
         });
 
         const ProgressInputField = memo(({ label, value, onChange, labelClass }) => {
+            if (!value) return null;
             const handleChange = (field, val) => {
                 onChange({ ...value, [field]: val });
             };
             return (
-                <div className="max-w-[300px]">
-                    <label className={`block text-[11px] font-black uppercase mb-1.5 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                <div className="max-w-[280px]">
+                    <label className={`block text-[10px] font-black uppercase mb-1 ${labelClass || 'text-white/40'}`}>-{label}-</label>
                     <div className="progress-input-row">
-                        <input type="number" className="modal-input-base w-full font-black text-sm p-2" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
-                        <input list="unit-list" className="modal-input-base w-full font-black text-xs p-2" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
-                        <input type="number" className="modal-input-base w-full font-black text-sm p-2" value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
-                        <input list="unit-list" className="modal-input-base w-full font-black text-xs p-2" value={value.u2} onChange={e=>handleChange('u2', e.target.value)} />
+                        <input type="number" className="modal-input-base w-full font-black text-xs !min-h-[32px] p-1.5" value={value.v1 || ''} onChange={e=>handleChange('v1', e.target.value)} />
+                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] !min-h-[32px] p-1.5" value={value.u1 || ''} onChange={e=>handleChange('u1', e.target.value)} />
+                        <input type="number" className="modal-input-base w-full font-black text-xs !min-h-[32px] p-1.5" value={value.v2 || ''} onChange={e=>handleChange('v2', e.target.value)} />
+                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] !min-h-[32px] p-1.5" value={value.u2 || ''} onChange={e=>handleChange('u2', e.target.value)} />
                     </div>
                 </div>
             );
@@ -526,7 +528,7 @@
         const TimeSelector = memo(({ value, onChange }) => {
             if (!value) {
                 return (
-                    <div onClick={() => onChange("18:00")} className="modal-input-base w-full flex items-center justify-center text-xs font-black text-white/30 cursor-pointer">
+                    <div onClick={() => onChange("18:00")} className="modal-input-base w-full flex items-center justify-center text-[10px] font-black text-white/30 cursor-pointer !min-h-[32px]">
                         點擊設定
                     </div>
                 );
@@ -543,15 +545,15 @@
                 onChange(`${String(finalH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
             };
             return (
-                <div className="flex gap-1.5 w-full">
-                    <select className="modal-input-base flex-1 text-[11px] font-black" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}>
+                <div className="flex gap-1 w-full">
+                    <select className="modal-input-base flex-1 text-[10px] font-black !min-h-[32px] p-0 px-1" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}>
                         <option value="上午">上午</option><option value="下午">下午</option>
                     </select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>)}
+                    <select className="modal-input-base flex-1 text-[10px] font-black !min-h-[32px] p-0 px-1" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')}</option>)}
                     </select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>
-                        {Array.from({ length: 60 }, (_, i) => i).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 分</option>)}
+                    <select className="modal-input-base flex-1 text-[10px] font-black !min-h-[32px] p-0 px-1" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>
+                        {Array.from({ length: 60 }, (_, i) => i).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')}</option>)}
                     </select>
                     <button type="button" onClick={() => onChange("")} className="w-6 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors">
                         <Icon name="trash-2" className="w-3.5 h-3.5" />
@@ -958,7 +960,7 @@
             };
 
             const handleExportData = () => {
-                const backup = { version: "11.6", games, categories: customCategories, sources: customSources };
+                const backup = { version: "11.6.1", games, categories: customCategories, sources: customSources };
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -1029,7 +1031,7 @@
                             <div className="flex items-center gap-6">
                                 <TitleIcon />
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div>
+                                    <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.1</span></div>
                                     <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1>
                                 </div>
                             </div>
@@ -1188,34 +1190,34 @@
                                                     {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
-                                                <div className="max-w-[80px]">
+                                                <div className="max-w-[70px]">
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label>
-                                                    <input type="text" className="modal-input-base w-full text-center font-black !min-h-[36px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
+                                                    <input type="text" className="modal-input-base w-full text-center font-black !min-h-[32px] text-xs" value={formData.order || ''} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                 </div>
                                                 <div className="max-w-[120px]">
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">狀態</label>
-                                                    <select className="modal-input-base w-full text-[11px] font-black !min-h-[36px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
+                                                    <select className="modal-input-base w-full text-[10px] font-black !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
                                                         <option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option>
                                                     </select>
                                                 </div>
-                                                <div className="max-w-[150px]">
+                                                <div className="max-w-[140px]">
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">分類</label>
-                                                    <select className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
+                                                    <select className="modal-input-base w-full text-[10px] font-bold !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
                                                         <option value="">- 選擇分類 -</option>
                                                         {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                     </select>
                                                 </div>
-                                                <div className="max-w-[200px]">
+                                                <div className="max-w-[180px]">
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">來源</label>
-                                                    <div className="source-input-group !gap-2">
-                                                        <div className={`source-icon-preview-box !w-9 !h-9 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
-                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3.5 h-3.5 text-white/20" />}
+                                                    <div className="source-input-group !gap-1.5">
+                                                        <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
+                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                         </div>
                                                         <div className="flex-1 flex gap-1 items-center">
                                                             <input 
                                                                 list="source-list"
-                                                                className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" 
-                                                                value={formData.source} 
+                                                                className="modal-input-base w-full text-[10px] font-bold !min-h-[32px] p-1" 
+                                                                value={formData.source || ''} 
                                                                 onChange={e => {
                                                                     const val = e.target.value;
                                                                     const existing = customSources.find(s => s.name === val);
@@ -1226,11 +1228,6 @@
                                                                     });
                                                                 }} 
                                                             />
-                                                            {customSources.some(s => s.name === formData.source) && (
-                                                                <button type="button" onClick={() => handleDeleteSource(formData.source)} className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors" title="刪除此來源選項">
-                                                                    <Icon name="trash-2" className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            )}
                                                         </div>
                                                         <datalist id="source-list">
                                                             {customSources.map(s => <option key={s.name} value={s.name} />)}
@@ -1239,9 +1236,9 @@
                                                 </div>
                                             </div>
                                             <div className="md:col-span-8 space-y-4">
-                                                <div className="max-w-lg">
+                                                <div className="max-w-md">
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-1.5">-名稱-</label>
-                                                    <input required className="modal-input-base w-full font-black text-white text-lg !min-h-[44px]" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
+                                                    <input required className="modal-input-base w-full font-black text-white text-base !min-h-[40px]" value={formData.name || ''} onChange={e=>setFormData({...formData, name: e.target.value})} />
                                                 </div>
                                                 
                                                 <ProgressInputField 
@@ -1256,9 +1253,9 @@
                                                     onChange={v => setFormData({ ...formData, updatedEpisodes: v })} 
                                                 />
 
-                                                <div className="grid grid-cols-2 gap-4 max-w-[320px]">
+                                                <div className="grid grid-cols-2 gap-3 max-w-[280px]">
                                                     <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1.5">-更新星期-</label>
-                                                        <select className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
+                                                        <select className="modal-input-base w-full text-[10px] font-bold !min-h-[32px] p-0 px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
                                                             <option value="">(不設定)</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
                                                         </select>
                                                     </div>
@@ -1274,24 +1271,24 @@
                                                     onChange={v => setFormData({ ...formData, watchedProgress: v })} 
                                                 />
 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-xl">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-lg">
                                                     <div className="md:col-span-1">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-1">-最後更新-</label>
-                                                        <input className="modal-input-base w-full font-black text-[11px] !min-h-[36px]" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
+                                                        <input className="modal-input-base w-full font-black text-[10px] !min-h-[32px]" value={formData.manualUpdatedAt || ''} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
                                                     </div>
                                                     <div className="md:col-span-2">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-1">-連結-</label>
-                                                        <input className="modal-input-base w-full font-mono text-[10px] text-cyan-500 !min-h-[36px]" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
+                                                        <input className="modal-input-base w-full font-mono text-[9px] text-cyan-500 !min-h-[32px]" value={formData.url || ''} onChange={e=>setFormData({...formData, url: e.target.value})} />
                                                     </div>
                                                 </div>
                                                 
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1.5">-誰在看-</label>
-                                                    <div className="flex flex-wrap gap-1.5 p-2 bg-black/30 border border-white/5 rounded min-h-[36px] max-w-xl">
+                                                    <div className="flex flex-wrap gap-1.5 p-2 bg-black/30 border border-white/5 rounded min-h-[36px] max-w-lg">
                                                         {allMemberIDs.map(name => (<div key={name} onClick={() => {
                                                             const list = [...(formData.watchingBy || [])];
                                                             const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name];
                                                             setFormData({...formData, watchingBy: nList});
-                                                        }} className={`watcher-tag !px-2.5 !py-1 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}
+                                                        }} className={`watcher-tag !px-2 !py-1 !text-[10px] ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}
                                                     </div>
                                                 </div>
                                             </div>
