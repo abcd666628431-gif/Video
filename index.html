@@ -15,7 +15,6 @@
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
-            /* 優先使用繁體與簡體字型，確保文字不破字 */
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
             background-color: #3f5968; 
             color: #fff;
@@ -268,18 +267,6 @@
             outline: none;
             box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1);
         }
-        
-        .expand {
-            margin-top: 2rem;
-            text-align: center;
-            font-weight: 900;
-            font-size: 12px;
-            letter-spacing: 0.2em;
-            color: rgba(255,255,255,0.2);
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .expand:hover { color: #ffbae9; }
 
         .btn-delete-bottom {
             position: absolute;
@@ -374,22 +361,14 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // --- Firebase 設定 ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
-            authDomain: "video-b02b3.firebaseapp.com",
-            projectId: "video-b02b3",
-            storageBucket: "video-b02b3.firebasestorage.app",
-            messagingSenderId: "25339039789",
-            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
-        };
-        
+        // --- 核心配置 ---
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'video-library-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
 
-        // 格式化日期：確保回傳的一定是字串，避免渲染物件導致報錯
+        // 格式化日期：確保回傳的一定是字串
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -494,6 +473,14 @@
                 return `${period} ${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
             };
 
+            // 處理標題點擊跳轉
+            const handleTitleClick = (e) => {
+                if (g.url) {
+                    e.stopPropagation();
+                    window.open(g.url, '_blank');
+                }
+            };
+
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -507,7 +494,7 @@
 
                     <div className="desc">
                         <div className="title-container">
-                            <div className="title-link">
+                            <div className="title-link" onClick={handleTitleClick}>
                                 <span className="id-label">#{g.order || 0}</span>
                                 {g.name}
                             </div> 
@@ -671,17 +658,11 @@
 
             useEffect(() => {
                 const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try {
-                                await signInWithCustomToken(auth, __initial_auth_token);
-                            } catch (tokenErr) {
-                                await signInAnonymously(auth);
-                            }
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) { console.error("Auth failed", e); }
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 };
                 initAuth();
                 const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -693,21 +674,21 @@
                 setIsLoadingGames(true);
                 setIsLoadingLogs(true);
                 
-                // Firestore 即時同步監聽
                 const unsubGames = onSnapshot(getPublicCol('games'), (snap) => {
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
-                    // 每次雲端有變動時更新同步時間點
                     setLastSynced(new Date());
                 }, (err) => {
-                    if (err.code === 'permission-denied') showNotify("權限不足");
+                    console.error("Firestore error:", err);
                 });
+
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
                     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     list.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(list.slice(0, 30));
                     setIsLoadingLogs(false);
-                });
+                }, () => {});
+
                 const unsubSettings = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => {
                     if (d.exists()) {
                         const data = d.data();
@@ -716,11 +697,13 @@
                     } else {
                         setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] });
                     }
-                });
+                }, () => {});
+
                 const unsubPresence = onSnapshot(getPublicCol('presence'), (snap) => {
                     const now = Date.now();
                     setOnlineUsers(snap.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000)));
-                });
+                }, () => {});
+
                 const updatePresence = () => {
                     if (!auth.currentUser) return;
                     setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), {
@@ -728,7 +711,7 @@
                     }, { merge: true });
                 };
                 updatePresence();
-                const interval = setInterval(updatePresence, 120000); // 每一分鐘更新一次在線狀態
+                const interval = setInterval(updatePresence, 120000);
                 return () => { unsubGames(); unsubLogs(); unsubSettings(); unsubPresence(); clearInterval(interval); };
             }, [user, userName, userColor]);
 
@@ -797,18 +780,15 @@
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources, categories: customCategories }, { merge: true });
                     }
 
+                    const { sourceIcon, ...restData } = formData;
                     const finalData = { 
-                        ...formData,
+                        ...restData,
                         name: currentName,
                         source: sourceVal,
                         addedBy: String(formData.addedBy || userName),
                         order: targetOrder,
-                        manualUpdatedAt: String(formData.manualUpdatedAt || ""),
-                        updateDay: String(formData.updateDay || ""),
-                        updateTime: String(formData.updateTime || ""),
                         updatedAt: serverTimestamp() 
                     };
-                    delete finalData.sourceIcon;
 
                     if (editingId) {
                         await updateDoc(doc(getPublicCol('games'), editingId), finalData);
@@ -1056,7 +1036,6 @@
                                     ))}
                                 </ul>
                             </div> 
-                            <div className="expand" onClick={() => showNotify("資料矩陣已刷新")}>REFRESH DATA MATRIX</div>
                         </article>
                     </div>
 
@@ -1201,6 +1180,7 @@
                             </div>
                         </div>
                     )}
+
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                             <div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center">
