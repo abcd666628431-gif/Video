@@ -153,6 +153,7 @@
             margin-bottom: 0.3rem; 
             display: flex;
             align-items: flex-start;
+            padding-right: 45px; /* 為右上角百分比留出空間 */
         }
 
         .desc .title-link { 
@@ -244,6 +245,29 @@
         .badge-airing { background-color: #16a34a; color: #fff; border-color: rgba(255,255,255,0.4); }
         .badge-completed { background-color: #dc2626; color: #fff; border-color: rgba(255,255,255,0.4); }
         .badge-waiting { background-color: #475569; color: #fff; border-color: rgba(255,255,255,0.4); }
+
+        .update-progress-circle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            border: 2px solid #ffbae9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .update-progress-circle span {
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffbae9;
+            letter-spacing: -0.05em;
+        }
 
         .dashboard-panel {
             background: rgba(0,0,0,0.25);
@@ -462,6 +486,10 @@
             const percentage = total > 0 ? Math.floor(Math.min((current / total) * 100, 100)) : 0;
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
 
+            // 計算「觀看進度」相對於「更新至」的百分比
+            const updatedEp = parseInt(g.updatedEpisodes) || 0;
+            const updatePercentage = updatedEp > 0 ? Math.floor(Math.min((current / updatedEp) * 100, 100)) : 0;
+
             const sourceInfo = useMemo(() => allSources.find(s => s.name === g.source), [allSources, g.source]);
 
             const getStatusBadge = () => {
@@ -494,6 +522,11 @@
                     </div> 
 
                     <div className="desc">
+                        {/* 右上角圓形 UI：位於名稱右側 */}
+                        <div className="update-progress-circle">
+                            <span>{updatePercentage}%</span>
+                        </div>
+
                         <div className="title-container">
                             <div className="title-link" onClick={(e) => {
                                 if (g.url) {
@@ -995,7 +1028,7 @@
                             <button onClick={() => { setEditingId(null); setFormData({ name: '', addedBy: userName, order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: formatDate(new Date(), true), watchingBy: [], updateDay: '', updateTime: '18:00' }); setIsModalOpen(true); }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0">
                                 <Icon name="search" className="w-5 h-5 text-white/40 mr-4" />
-                                <input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                <input type="text" placeholder="搜尋標題..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                             </div>
                             <div className="px-8 flex items-center justify-end py-4 md:py-0">
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}>
