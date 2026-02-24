@@ -15,7 +15,7 @@
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
-            /* 優先使用繁體與簡體字型 */
+            /* 優先使用繁體與簡體字型，確保文字不破字 */
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
             background-color: #3f5968; 
             color: #fff;
@@ -225,7 +225,7 @@
             top: 10px;
             right: 10px;
             font-size: 11px; 
-            padding: 3px 8px; /* 修改：縮減內距 */
+            padding: 3px 8px; 
             border-radius: 4px;
             font-weight: 900;
             text-transform: uppercase;
@@ -234,12 +234,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 52px; /* 修改：縮小寬度 */
+            min-width: 52px; 
             letter-spacing: 0.05em; 
             text-shadow: 0 1px 1px rgba(0,0,0,0.2); 
             border: 1px solid rgba(255,255,255,0.3);
             line-height: 1.2;
-            /* 修改：移除模糊效果 */
             backdrop-filter: none; 
         }
         .badge-airing { background-color: #16a34a; color: #fff; border-color: rgba(255,255,255,0.4); }
@@ -390,7 +389,7 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
-        // 格式化日期
+        // 格式化日期：確保回傳的一定是字串，避免渲染物件導致報錯
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -693,9 +692,12 @@
                 if (!user) return;
                 setIsLoadingGames(true);
                 setIsLoadingLogs(true);
+                
+                // Firestore 即時同步監聽
                 const unsubGames = onSnapshot(getPublicCol('games'), (snap) => {
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
+                    // 每次雲端有變動時更新同步時間點
                     setLastSynced(new Date());
                 }, (err) => {
                     if (err.code === 'permission-denied') showNotify("權限不足");
@@ -726,7 +728,7 @@
                     }, { merge: true });
                 };
                 updatePresence();
-                const interval = setInterval(updatePresence, 120000);
+                const interval = setInterval(updatePresence, 120000); // 每一分鐘更新一次在線狀態
                 return () => { unsubGames(); unsubLogs(); unsubSettings(); unsubPresence(); clearInterval(interval); };
             }, [user, userName, userColor]);
 
@@ -946,7 +948,7 @@
                                 <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20">
                                     <Icon name="refresh-cw" className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} onClick={() => { setIsSyncing(true); setTimeout(()=>setIsSyncing(false), 800); }} />
                                     <div className="flex flex-col">
-                                        <span className="uppercase text-[10px]">同步狀態</span>
+                                        <span className="uppercase text-[10px]">即時同步中</span>
                                         <span className="text-[10px] text-white/40 font-bold">{lastSynced ? formatDate(lastSynced) : '...'}</span>
                                     </div>
                                 </div>
