@@ -221,22 +221,22 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            font-size: 11px; /* 微調字體 */
+            font-size: 11px; 
             padding: 3px 10px;
             border-radius: 4px;
             font-weight: 900;
             text-transform: uppercase;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* 更加緊湊的投影 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); 
             z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
             min-width: 64px;
-            letter-spacing: 0.05em; /* 增加字距提升清晰度 */
-            text-shadow: 0 1px 1px rgba(0,0,0,0.2); /* 字體輕微陰影強化輪廓 */
+            letter-spacing: 0.05em; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.2); 
             border: 1px solid rgba(255,255,255,0.3);
             line-height: 1.2;
-            backdrop-filter: blur(8px); /* 強化背景模糊 */
+            backdrop-filter: blur(8px); 
         }
         .badge-airing { background-color: #16a34a; color: #fff; border-color: rgba(255,255,255,0.4); }
         .badge-completed { background-color: #dc2626; color: #fff; border-color: rgba(255,255,255,0.4); }
@@ -378,20 +378,34 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'steam-stats-v4';
 
-        // 格式化日期
-        const formatDate = (ts) => { 
-            if (!ts) return "LIVE"; 
+        // 格式化日期：確保回傳的一定是字串，避免 React Error #31
+        const formatDate = (ts, dateOnly = false) => { 
+            if (!ts) return ""; 
+            if (typeof ts === 'string') return ts;
+
             let date;
             try {
-                if (ts.toDate && typeof ts.toDate === 'function') date = ts.toDate();
-                else if (ts.seconds !== undefined) date = new Date(ts.seconds * 1000);
-                else if (ts instanceof Date) date = ts;
-                else date = new Date(ts);
-            } catch (e) { return "NOW"; }
+                if (ts && typeof ts.toDate === 'function') {
+                    date = ts.toDate();
+                } else if (ts && ts.seconds !== undefined) {
+                    date = new Date(ts.seconds * 1000);
+                } else if (ts instanceof Date) {
+                    date = ts;
+                } else {
+                    date = new Date(ts);
+                }
+            } catch (e) { 
+                return "NOW"; 
+            }
+
             if (!date || isNaN(date.getTime())) return "NOW";
+            
             const Y = date.getFullYear();
             const M = (date.getMonth() + 1).toString().padStart(2, '0');
             const D = date.getDate().toString().padStart(2, '0');
+            
+            if (dateOnly) return `${Y}-${M}-${D}`;
+            
             const h = date.getHours().toString().padStart(2, '0');
             const m = date.getMinutes().toString().padStart(2, '0');
             return `${Y}-${M}-${D} ${h}:${m}`; 
@@ -444,6 +458,15 @@
                 return <span className={`status-badge ${cls}`}>{g.airingStatus}</span>;
             };
 
+            // 格式化卡片上的更新時間顯示 (AM/PM 轉中文)
+            const getDisplayUpdateTime = (timeStr) => {
+                if (!timeStr) return "";
+                const [h, m] = timeStr.split(':').map(Number);
+                const period = h >= 12 ? '下午' : '上午';
+                const displayH = h % 12 || 12;
+                return `${period} ${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            };
+
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -475,6 +498,11 @@
                             <div className="text-[11px] opacity-90">
                                 <strong>更新進度：</strong> 
                                 <span className="text-white/95">更新至 {g.updatedEpisodes || 0} / {total || '?'} 集</span>
+                                {(g.updateDay || g.updateTime) && (
+                                    <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">
+                                        每周{g.updateDay ? `(${g.updateDay})` : ''} {getDisplayUpdateTime(g.updateTime)}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="mt-auto pt-2">
@@ -502,9 +530,11 @@
                                 <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5"> 
                                     <div className="truncate text-[10px]">
                                         <strong className="opacity-50 text-[9px] uppercase">創建</strong> 
-                                        <span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{g.addedBy || '系統'}</span>
+                                        <span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span>
                                     </div>
-                                    <div className="text-[10px] opacity-60">最後更新: {formatDate(g.updatedAt || g.createdAt)}</div>
+                                    <div className="text-[10px] opacity-60">
+                                        最後更新: {formatDate(g.manualUpdatedAt) || formatDate(g.updatedAt || g.createdAt) || "LIVE"}
+                                    </div>
                                 </div>
 
                                 <div className="progress-container">
@@ -559,7 +589,7 @@
             const [formData, setFormData] = useState({ 
                 name: '', addedBy: '', order: '', url: '', cover: null,
                 totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '',
-                sourceIcon: '', manualUpdatedAt: '', watchingBy: []
+                sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '18:00'
             });
 
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover');
@@ -662,7 +692,7 @@
             const logActivity = async (action, gameName) => { 
                 if(!user) return;
                 await addDoc(getPublicCol('activity_logs'), {
-                    userName, action, gameName, timestamp: serverTimestamp()
+                    userName, action: String(action), gameName: String(gameName), timestamp: serverTimestamp()
                 });
             };
 
@@ -696,8 +726,11 @@
 
                 const finalData = { 
                     ...formData,
-                    addedBy: formData.addedBy || userName,
+                    addedBy: String(formData.addedBy || userName),
                     order: formData.order || (games.length + 1),
+                    manualUpdatedAt: String(formData.manualUpdatedAt || ""),
+                    updateDay: String(formData.updateDay || ""),
+                    updateTime: String(formData.updateTime || ""),
                     updatedAt: serverTimestamp() 
                 };
                 delete finalData.sourceIcon;
@@ -803,6 +836,55 @@
                 return Object.keys(statsMap).sort().map(name => ({ name, color: nameColorMap[name] || '#ffffff', stats: statsMap[name] }));
             }, [games, nameColorMap]);
 
+            // 時間選擇組件邏輯
+            const TimeSelector = ({ value, onChange }) => {
+                const [h, m] = (value || "18:00").split(':').map(Number);
+                const period = h >= 12 ? '下午' : '上午';
+                const displayH = h % 12 || 12;
+
+                const updateTime = (newPeriod, newH, newM) => {
+                    let finalH = parseInt(newH);
+                    if (newPeriod === '下午' && finalH !== 12) finalH += 12;
+                    if (newPeriod === '上午' && finalH === 12) finalH = 0;
+                    const timeStr = `${String(finalH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+                    onChange(timeStr);
+                };
+
+                return (
+                    <div className="flex gap-2 w-full">
+                        {/* 上下午下拉 */}
+                        <select 
+                            className="modal-input-base flex-1 text-xs font-black"
+                            value={period}
+                            onChange={(e) => updateTime(e.target.value, displayH, m)}
+                        >
+                            <option value="上午">上午</option>
+                            <option value="下午">下午</option>
+                        </select>
+                        {/* 小時下拉 (1-12) */}
+                        <select 
+                            className="modal-input-base flex-1 text-xs font-black"
+                            value={displayH}
+                            onChange={(e) => updateTime(period, e.target.value, m)}
+                        >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(val => (
+                                <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>
+                            ))}
+                        </select>
+                        {/* 分鐘下拉 (00-59) */}
+                        <select 
+                            className="modal-input-base flex-1 text-xs font-black"
+                            value={m}
+                            onChange={(e) => updateTime(period, displayH, e.target.value)}
+                        >
+                            {Array.from({ length: 60 }, (_, i) => i).map(val => (
+                                <option key={val} value={val}>{String(val).padStart(2, '0')} 分</option>
+                            ))}
+                        </select>
+                    </div>
+                );
+            };
+
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && (
@@ -839,7 +921,7 @@
                                     {activityLogs.map(log => (
                                         <div key={log.id} className="border-b border-white/5 pb-0.5">
                                             <span className="text-white/30 text-[10px] mr-2">[{formatDate(log.timestamp).split(' ')[1]}]</span> 
-                                            <span className="font-bold" style={{ color: nameColorMap[log.userName] }}>{log.userName}</span> {log.action} <span className="font-black">"{log.gameName}"</span>
+                                            <span className="font-bold" style={{ color: nameColorMap[log.userName] }}>{String(log.userName)}</span> {String(log.action)} <span className="font-black">"{String(log.gameName)}"</span>
                                         </div>
                                     ))}
                                 </div>
@@ -848,7 +930,7 @@
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3">
                                 <div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div>
                                 <div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">
-                                    {onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}
+                                    {onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {String(u.name)}</span>)}
                                 </div>
                                 <div className="flex justify-between items-center pt-1 border-t border-white/5">
                                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>
@@ -891,7 +973,7 @@
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
-                            <button onClick={() => { setEditingId(null); setFormData({ name: '', addedBy: userName, order: '', url: '', cover: null, totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: formatDate(new Date()), watchingBy: [] }); setIsModalOpen(true); }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
+                            <button onClick={() => { setEditingId(null); setFormData({ name: '', addedBy: userName, order: '', url: '', cover: null, totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: formatDate(new Date(), true), watchingBy: [], updateDay: '', updateTime: '18:00' }); setIsModalOpen(true); }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0">
                                 <Icon name="search" className="w-5 h-5 text-white/40 mr-4" />
                                 <input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -924,7 +1006,14 @@
                                             onOpenEdit={(item) => { 
                                                 setEditingId(item.id); 
                                                 const sObj = customSources.find(s => s.name === item.source);
-                                                setFormData({ ...item, manualUpdatedAt: item.updatedAt ? formatDate(item.updatedAt) : formatDate(new Date()), sourceIcon: sObj?.icon || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); 
+                                                setFormData({ 
+                                                    ...item, 
+                                                    manualUpdatedAt: formatDate(item.manualUpdatedAt) || formatDate(item.updatedAt || new Date(), true), 
+                                                    updateDay: item.updateDay || '',
+                                                    updateTime: item.updateTime || '18:00',
+                                                    sourceIcon: sObj?.icon || '', 
+                                                    watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
+                                                }); 
                                                 setIsModalOpen(true); 
                                             }}
                                             onDelete={(item) => setDeleteGameTarget(item)} 
@@ -1008,9 +1097,32 @@
                                                         <input type="number" className="modal-input-base w-full font-black text-sm" value={formData.updatedEpisodes} onChange={e=>setFormData({...formData, updatedEpisodes: e.target.value})} />
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-cyan-400 uppercase mb-2">-觀看進度-</label>
-                                                    <input step="any" className="modal-input-base w-full font-black text-cyan-400 text-sm" value={formData.watchedProgress} onChange={e=>setFormData({...formData, watchedProgress: e.target.value})} placeholder="我看完第幾集" />
+                                                {/* 優化：更新時間下拉選單區塊 */}
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
+                                                        <select className="modal-input-base w-full text-sm font-bold" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
+                                                            <option value="">- 選擇星期 -</option>
+                                                            {['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間 (上下午切換)-</label>
+                                                        <TimeSelector 
+                                                            value={formData.updateTime} 
+                                                            onChange={(newTime) => setFormData({...formData, updateTime: newTime})} 
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-black text-cyan-400 uppercase mb-2">-觀看進度-</label>
+                                                        <input step="any" className="modal-input-base w-full font-black text-cyan-400 text-sm" value={formData.watchedProgress} onChange={e=>setFormData({...formData, watchedProgress: e.target.value})} placeholder="我看完第幾集" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新 (年-月-日)-</label>
+                                                        <input className="modal-input-base w-full font-black text-sm" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} placeholder="2024-01-01" />
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看 (多選)-</label>
@@ -1045,7 +1157,7 @@
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4>
-                                <p className="text-sm text-slate-300 mb-8 font-bold italic">{deleteGameTarget.name}</p>
+                                <p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p>
                                 <div className="flex gap-4">
                                     <button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button>
                                     <button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button>
