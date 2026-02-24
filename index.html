@@ -365,13 +365,13 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/12.9.0/firebase-firestore.js";
+        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // --- 使用用戶提供的 Firebase 設定 ---
+        // --- Firebase 設定 ---
         const firebaseConfig = {
             apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
             authDomain: "video-b02b3.firebaseapp.com",
@@ -386,33 +386,22 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
+        // 格式化日期
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
-
             let date;
             try {
-                if (ts && typeof ts.toDate === 'function') {
-                    date = ts.toDate();
-                } else if (ts && ts.seconds !== undefined) {
-                    date = new Date(ts.seconds * 1000);
-                } else if (ts instanceof Date) {
-                    date = ts;
-                } else {
-                    date = new Date(ts);
-                }
-            } catch (e) { 
-                return "NOW"; 
-            }
-
+                if (ts && typeof ts.toDate === 'function') date = ts.toDate();
+                else if (ts && ts.seconds !== undefined) date = new Date(ts.seconds * 1000);
+                else if (ts instanceof Date) date = ts;
+                else date = new Date(ts);
+            } catch (e) { return "NOW"; }
             if (!date || isNaN(date.getTime())) return "NOW";
-            
             const Y = date.getFullYear();
             const M = (date.getMonth() + 1).toString().padStart(2, '0');
             const D = date.getDate().toString().padStart(2, '0');
-            
             if (dateOnly) return `${Y}-${M}-${D}`;
-            
             const h = date.getHours().toString().padStart(2, '0');
             const m = date.getMinutes().toString().padStart(2, '0');
             return `${Y}-${M}-${D} ${h}:${m}`; 
@@ -448,6 +437,22 @@
             );
         });
 
+        // 自定義標題圖示組件
+        const TitleIcon = () => (
+            <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.741394999999999 28.34337L28.254675 28.34337C29.447565000000004 28.34337 30.414675000000003 27.376275 30.414675000000003 26.183370000000004L30.414675000000003 9.510465C30.414675000000003 8.317544999999999 29.447565000000004 7.350465 28.254675 7.350465L7.74141 7.350465C6.548475 7.350465 5.58141 8.317544999999999 5.58141 9.510465L5.58141 26.183370000000004C5.58141 27.376275 6.548475 28.34337 7.741394999999999 28.34337z" fill="#9796EDff"></path>
+                <path d="M8.237805 10.726875C8.237805 11.323335 8.721345 11.806875 9.317805 11.806875L11.308215 11.806875C11.904675 11.806875 12.388215 11.323335 12.388215 10.726875C12.388215 10.130415 11.904675 9.646875000000001 11.308215 9.646875000000001L9.317805 9.646875000000001C8.721345 9.646875000000001 8.237805 10.130415 8.237805 10.726875z" fill="#6D69E4ff"></path>
+                <path d="M16.03455 10.726875C16.03455 11.323335 16.51809 11.806875 17.11455 11.806875L19.104915000000002 11.806875C19.70136 11.806875 20.184915 11.323335 20.184915 10.726875C20.184915 10.130415 19.70136 9.646875000000001 19.104915000000002 9.646875000000001L17.11455 9.646875000000001C16.51809 9.646875000000001 16.03455 10.130415 16.03455 10.726875z" fill="#6D69E4ff"></path>
+                <path d="M23.830995 10.726875C23.830995 11.323335 24.314550000000004 11.806875 24.910995 11.806875L26.901359999999997 11.806875C27.497805 11.806875 27.981360000000002 11.323335 27.981360000000002 10.726875C27.981360000000002 10.130415 27.497805 9.646875000000001 26.901359999999997 9.646875000000001L24.910995 9.646875000000001C24.314550000000004 9.646875000000001 23.830995 10.130415 23.830995 10.726875z" fill="#6D69E4ff"></path>
+                <path d="M8.237805 25.721130000000002C8.237805 26.317725 8.721345 26.80113 9.317805 26.80113L11.308215 26.80113C11.904675 26.80113 12.388215 26.317725 12.388215 25.721130000000002C12.388215 25.124685 11.904675 24.641130000000004 11.308215 24.641130000000004L9.317805 24.641130000000004C8.721345 24.641130000000004 8.237805 25.124685 8.237805 25.721130000000002z" fill="#6D69E4ff"></path>
+                <path d="M16.03455 25.721130000000002C16.03455 26.317725 16.51809 26.80113 17.11455 26.80113L19.104915000000002 26.80113C19.70136 26.80113 20.184915 26.317725 20.184915 25.721130000000002C20.184915 25.124685 19.70136 24.641130000000004 19.104915000000002 24.641130000000004L17.11455 24.641130000000004C16.51809 24.641130000000004 16.03455 25.124685 16.03455 25.721130000000002z" fill="#6D69E4ff"></path>
+                <path d="M23.830995 25.721130000000002C23.830995 26.317725 24.314550000000004 26.80113 24.910995 26.80113L26.901359999999997 26.80113C27.497805 26.80113 27.981360000000002 26.317725 27.981360000000002 25.721130000000002C27.981360000000002 25.124685 27.497805 24.641130000000004 26.901359999999997 24.641130000000004L24.910995 24.641130000000004C24.314550000000004 24.641130000000004 23.830995 25.124685 23.830995 25.721130000000002z" fill="#6D69E4ff"></path>
+                <path d="M5.58141 22.43865L30.414675000000003 22.43865L30.414675000000003 13.253910000000001L5.58141 13.253910000000001L5.58141 22.43865z" fill="#6D69E4ff"></path>
+                <path d="M14.81745 19.422C14.87304 19.271805 14.900835 19.196640000000002 14.928195 19.16151C15.043244999999999 19.013475 15.26703 19.013475 15.38223 19.16151C15.40944 19.196640000000002 15.437235 19.271805 15.49281 19.422C15.802275000000002 20.258355 16.461645 20.917725 17.298000000000002 21.22719C17.44833 21.282765 17.52336 21.31056 17.55849 21.33792C17.706525 21.45297 17.706525 21.676755 17.55849 21.791805C17.52336 21.819165 17.44833 21.846960000000003 17.298000000000002 21.902549999999998C16.461645 22.212 15.802275000000002 22.87137 15.49281 23.707725C15.437235 23.85792 15.40944 23.933085 15.38223 23.968230000000002C15.26703 24.11625 15.043244999999999 24.11625 14.928195 23.968230000000002C14.900835 23.933085 14.87304 23.85792 14.81745 23.707725C14.508000000000001 22.87137 13.84863 22.212 13.012305000000001 21.902549999999998C12.86205 21.846960000000003 12.786930000000002 21.819165 12.751845 21.791805C12.60381 21.676755 12.60381 21.45297 12.751845 21.33792C12.786930000000002 21.31056 12.86205 21.282765 13.012305000000001 21.22719C13.84863 20.917725 14.508000000000001 20.258355 14.81745 19.422z" fill="#FDDE80ff"></path>
+                <path d="M20.13192 10.496220000000001C20.259075 10.15269 20.32257 9.980910000000002 20.384925 9.90072C20.64816 9.56226 21.159795 9.56226 21.423029999999997 9.90072C21.48537 9.980910000000002 21.548879999999997 10.15269 21.676035 10.496220000000001C22.38351 12.408375 23.89119 13.915994999999999 25.803359999999998 14.623635C26.14695 14.75064 26.318595 14.814284999999998 26.3988 14.876639999999998C26.73735 15.139875 26.73735 15.65136 26.3988 15.914595000000002C26.318595 15.976950000000002 26.14695 16.040595 25.803359999999998 16.167749999999998C23.89119 16.87521 22.38351 18.38289 21.676035 20.295074999999997C21.548879999999997 20.638514999999998 21.48537 20.81031 21.423029999999997 20.890515C21.159795 21.22905 20.64816 21.22905 20.384925 20.890515C20.32257 20.81031 20.259075 20.638514999999998 20.13192 20.295074999999997C19.424310000000002 18.38289 17.916764999999998 16.87521 16.004595 16.167749999999998C15.661005000000001 16.040595 15.48921 15.976950000000002 15.409005 15.914595000000002C15.070605 15.65136 15.070605 15.139875 15.409005 14.876639999999998C15.48921 14.814284999999998 15.661005000000001 14.75064 16.004595 14.623635C17.916764999999998 13.915994999999999 19.424310000000002 12.408375 20.13192 10.496220000000001z" fill="#FDDE80ff"></path>
+            </svg>
+        );
+
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const total = parseInt(g.totalEpisodes) || 0;
@@ -467,7 +472,9 @@
 
             const getDisplayUpdateTime = (timeStr) => {
                 if (!timeStr) return "";
-                const [h, m] = timeStr.split(':').map(Number);
+                const parts = timeStr.split(':');
+                if (parts.length < 2) return timeStr;
+                const [h, m] = parts.map(Number);
                 const period = h >= 12 ? '下午' : '上午';
                 const displayH = h % 12 || 12;
                 return `${period} ${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -627,22 +634,16 @@
                 return Array.from(ids).filter(Boolean).sort();
             }, [userName, onlineUsers, games]);
 
-            // 新增：處理剪貼簿圖片貼上
             const handlePaste = useCallback(async (e) => {
                 if (!isModalOpen) return;
-                
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].type.indexOf("image") !== -1) {
                         const blob = items[i].getAsFile();
                         const url = URL.createObjectURL(blob);
                         const compressed = await compressImage(url, lastSelectedImgZone === 'source' ? 100 : 400);
-                        
-                        if (lastSelectedImgZone === 'source') {
-                            setFormData(prev => ({ ...prev, sourceIcon: compressed }));
-                        } else {
-                            setFormData(prev => ({ ...prev, cover: compressed }));
-                        }
+                        if (lastSelectedImgZone === 'source') setFormData(prev => ({ ...prev, sourceIcon: compressed }));
+                        else setFormData(prev => ({ ...prev, cover: compressed }));
                         showNotify("圖片已貼上");
                         break;
                     }
@@ -666,10 +667,7 @@
                         } else {
                             await signInAnonymously(auth);
                         }
-                    } catch (e) { 
-                        console.error("Auth failed", e); 
-                        showNotify("連線失敗，請檢查規則與匿名登入設定");
-                    }
+                    } catch (e) { console.error("Auth failed", e); }
                 };
                 initAuth();
                 const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -680,53 +678,40 @@
                 if (!user) return;
                 setIsLoadingGames(true);
                 setIsLoadingLogs(true);
-
                 const unsubGames = onSnapshot(getPublicCol('games'), (snap) => {
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
                 }, (err) => {
-                    console.error("Games error", err);
-                    if (err.code === 'permission-denied') showNotify("資料庫規則拒絕存取");
+                    if (err.code === 'permission-denied') showNotify("權限不足");
                 });
-
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
                     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     list.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(list.slice(0, 30));
                     setIsLoadingLogs(false);
-                }, (err) => console.error("Logs error", err));
-
+                });
                 const unsubSettings = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => {
                     if (d.exists()) {
                         const data = d.data();
                         setCustomCategories(data.categories || ["最新入庫", "編號排序"]);
                         setCustomSources(data.sources || []);
                     } else {
-                        setDoc(doc(getPublicCol('settings'), 'config'), { 
-                            categories: ["最新入庫", "編號排序"], 
-                            sources: [] 
-                        });
+                        setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] });
                     }
-                }, (err) => console.error("Settings error", err));
-
+                });
                 const unsubPresence = onSnapshot(getPublicCol('presence'), (snap) => {
                     const now = Date.now();
                     setOnlineUsers(snap.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000)));
-                }, (err) => console.error("Presence error", err));
-
+                });
                 const updatePresence = () => {
                     if (!auth.currentUser) return;
                     setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), {
-                        uid: auth.currentUser.uid,
-                        name: userName,
-                        color: userColor,
-                        lastSeen: serverTimestamp()
+                        uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp()
                     }, { merge: true });
                 };
                 updatePresence();
                 const interval = setInterval(updatePresence, 120000);
-
                 return () => { unsubGames(); unsubLogs(); unsubSettings(); unsubPresence(); clearInterval(interval); };
             }, [user, userName, userColor]);
 
@@ -741,7 +726,7 @@
 
             const handleAddGroup = async () => {
                 if(!user) return;
-                const name = newGroupName.trim();
+                const name = (newGroupName || '').trim();
                 if (!name || customCategories.includes(name)) return;
                 await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, name] });
                 setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增");
@@ -755,23 +740,52 @@
 
             const handleSaveGame = async (e) => {
                 if (e) e.preventDefault();
-                if (!formData.name.trim() || !user) return;
+                const currentName = (formData.name || '').trim();
+                if (!currentName || !user) return;
                 
                 try {
-                    let updatedSources = [...customSources];
-                    if (formData.source.trim()) {
-                        const sName = formData.source.trim();
+                    const allCurrentOrders = games.map(g => parseInt(g.order)).sort((a,b) => a-b);
+                    let targetOrder;
+                    if (!formData.order || formData.order === "") {
+                        targetOrder = 1;
+                        while (allCurrentOrders.includes(targetOrder)) targetOrder++;
+                    } else {
+                        targetOrder = parseInt(formData.order);
+                    }
+                    
+                    let currentConflict = games.find(g => parseInt(g.order) === targetOrder && g.id !== editingId);
+                    if (currentConflict) {
+                        showNotify("編號衝突，正在智慧順延...");
+                        let shiftChain = [];
+                        let checkNum = targetOrder;
+                        while (true) {
+                            let itemAtNum = games.find(g => parseInt(g.order) === checkNum && g.id !== editingId);
+                            if (itemAtNum) { shiftChain.push(itemAtNum); checkNum++; }
+                            else break;
+                        }
+                        shiftChain.reverse();
+                        const shiftPromises = shiftChain.map(item => {
+                            return updateDoc(doc(getPublicCol('games'), item.id), { order: parseInt(item.order) + 1 });
+                        });
+                        await Promise.all(shiftPromises);
+                    }
+
+                    const sourceVal = (formData.source || '').trim();
+                    if (sourceVal) {
+                        let updatedSources = [...customSources];
                         const sIcon = formData.sourceIcon || '';
-                        const idx = updatedSources.findIndex(s => s.name === sName);
-                        if (idx === -1) updatedSources.push({ name: sName, icon: sIcon });
+                        const idx = updatedSources.findIndex(s => s.name === sourceVal);
+                        if (idx === -1) updatedSources.push({ name: sourceVal, icon: sIcon });
                         else updatedSources[idx].icon = sIcon;
-                        await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources });
+                        await setDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources, categories: customCategories }, { merge: true });
                     }
 
                     const finalData = { 
                         ...formData,
+                        name: currentName,
+                        source: sourceVal,
                         addedBy: String(formData.addedBy || userName),
-                        order: formData.order || (games.length + 1),
+                        order: targetOrder,
                         manualUpdatedAt: String(formData.manualUpdatedAt || ""),
                         updateDay: String(formData.updateDay || ""),
                         updateTime: String(formData.updateTime || ""),
@@ -786,9 +800,10 @@
                         await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() });
                         logActivity("錄入", finalData.name);
                     }
-                    showNotify("已保存"); setIsModalOpen(false); setEditingId(null);
+                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch (err) {
-                    showNotify("存檔失敗: 權限不足");
+                    console.error("Save error:", err);
+                    showNotify("操作失敗");
                 }
             };
 
@@ -803,21 +818,14 @@
             const handleClearAllData = async () => {
                 if(!user) return;
                 try {
-                    for (const game of games) {
-                        await deleteDoc(doc(getPublicCol('games'), game.id));
-                    }
+                    for (const game of games) await deleteDoc(doc(getPublicCol('games'), game.id));
                     showNotify("資料已清空");
                     setShowClearConfirm(false);
                 } catch (e) { showNotify("操作失敗"); }
             };
 
             const handleExportData = () => {
-                const backup = { 
-                    version: "11.6", 
-                    games, 
-                    categories: customCategories, 
-                    sources: customSources 
-                };
+                const backup = { version: "11.6", games, categories: customCategories, sources: customSources };
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -840,10 +848,7 @@
                             }
                         }
                         if (data.categories || data.sources) {
-                            await updateDoc(doc(getPublicCol('settings'), 'config'), { 
-                                categories: data.categories || customCategories,
-                                sources: data.sources || customSources
-                            });
+                            await setDoc(doc(getPublicCol('settings'), 'config'), { categories: data.categories || customCategories, sources: data.sources || customSources }, { merge: true });
                         }
                         showNotify("資料導入成功");
                     } catch (err) { showNotify("導入失敗"); }
@@ -853,14 +858,15 @@
 
             const filteredGames = useMemo(() => {
                 let list = [...games];
-                if (searchQuery.trim()) {
-                    const q = searchQuery.toLowerCase();
-                    list = list.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
+                const q = (searchQuery || '').toLowerCase().trim();
+                if (q) list = list.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
+                
+                if (activeTab === "最新入庫") {
+                    list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                } else {
+                    if (activeTab && activeTab !== "編號排序") list = list.filter(g => g.category === activeTab);
+                    list.sort((a, b) => (parseInt(a.order) || 0) - (parseInt(b.order) || 0));
                 }
-                if (activeTab === "編號排序") list.sort((a, b) => (parseInt(a.order)||0) - (parseInt(b.order)||0));
-                else if (activeTab === "最新入庫") list.sort((a, b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-                else if (activeTab) list = list.filter(g => g.category === activeTab);
-                else list.sort((a, b) => (b.updatedAt?.seconds || b.createdAt?.seconds || 0) - (a.updatedAt?.seconds || a.createdAt?.seconds || 0));
                 return list;
             }, [games, searchQuery, activeTab]);
 
@@ -883,45 +889,27 @@
             }, [games, nameColorMap]);
 
             const TimeSelector = ({ value, onChange }) => {
-                const [h, m] = (value || "18:00").split(':').map(Number);
+                const parts = (value || "18:00").split(':');
+                const h = parseInt(parts[0]) || 0;
+                const m = parseInt(parts[1]) || 0;
                 const period = h >= 12 ? '下午' : '上午';
                 const displayH = h % 12 || 12;
-
                 const updateTime = (newPeriod, newH, newM) => {
                     let finalH = parseInt(newH);
                     if (newPeriod === '下午' && finalH !== 12) finalH += 12;
                     if (newPeriod === '上午' && finalH === 12) finalH = 0;
-                    const timeStr = `${String(finalH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
-                    onChange(timeStr);
+                    onChange(`${String(finalH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
                 };
-
                 return (
                     <div className="flex gap-2 w-full">
-                        <select 
-                            className="modal-input-base flex-1 text-xs font-black"
-                            value={period}
-                            onChange={(e) => updateTime(e.target.value, displayH, m)}
-                        >
-                            <option value="上午">上午</option>
-                            <option value="下午">下午</option>
+                        <select className="modal-input-base flex-1 text-xs font-black" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}>
+                            <option value="上午">上午</option><option value="下午">下午</option>
                         </select>
-                        <select 
-                            className="modal-input-base flex-1 text-xs font-black"
-                            value={displayH}
-                            onChange={(e) => updateTime(period, e.target.value, m)}
-                        >
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map(val => (
-                                <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>
-                            ))}
+                        <select className="modal-input-base flex-1 text-xs font-black" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>)}
                         </select>
-                        <select 
-                            className="modal-input-base flex-1 text-xs font-black"
-                            value={m}
-                            onChange={(e) => updateTime(period, displayH, e.target.value)}
-                        >
-                            {Array.from({ length: 60 }, (_, i) => i).map(val => (
-                                <option key={val} value={val}>{String(val).padStart(2, '0')} 分</option>
-                            ))}
+                        <select className="modal-input-base flex-1 text-xs font-black" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>
+                            {Array.from({ length: 60 }, (_, i) => i).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 分</option>)}
                         </select>
                     </div>
                 );
@@ -929,16 +917,12 @@
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
-                    {notification && (
-                        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">
-                            {notification}
-                        </div>
-                    )}
-                    
+                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-6">
-                                <Icon name="film" className="w-14 h-14 text-[#ffbae9]" />
+                                {/* 更換為用戶提供的自定義標題圖示 */}
+                                <TitleIcon />
                                 <div>
                                     <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div>
                                     <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1>
@@ -968,7 +952,6 @@
                                     ))}
                                 </div>
                             </div>
-
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3">
                                 <div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div>
                                 <div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">
@@ -982,10 +965,8 @@
                                     <input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} />
                                 </div>
                             </div>
-
                             <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col">
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
-                                
                                 <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest">
                                     <div className="flex items-center gap-3">
                                         <span>成員統計</span>
@@ -994,7 +975,6 @@
                                         <input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} />
                                     </div>
                                 </div>
-
                                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
                                     <table className="w-full text-[11px] font-black border-collapse">
                                         <thead>
@@ -1038,7 +1018,6 @@
                                     {!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}
                                 </div>
                             </nav> 
-
                             <div className="component-view">
                                 <ul>
                                     {isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> :
@@ -1049,12 +1028,10 @@
                                                 setEditingId(item.id); 
                                                 const sObj = customSources.find(s => s.name === item.source);
                                                 setFormData({ 
-                                                    ...item, 
+                                                    ...item, name: item.name || '', source: item.source || '',
                                                     manualUpdatedAt: formatDate(item.manualUpdatedAt) || formatDate(item.updatedAt || new Date(), true), 
-                                                    updateDay: item.updateDay || '',
-                                                    updateTime: item.updateTime || '18:00',
-                                                    sourceIcon: sObj?.icon || '', 
-                                                    watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
+                                                    updateDay: item.updateDay || '', updateTime: item.updateTime || '18:00',
+                                                    sourceIcon: sObj?.icon || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
                                                 }); 
                                                 setIsModalOpen(true); 
                                             }}
@@ -1096,7 +1073,7 @@
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
-                                                    <input type="number" className="modal-input-base w-full text-center font-black" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} placeholder="0" />
+                                                    <input type="number" className="modal-input-base w-full text-center font-black" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} placeholder="自動分配最小空號" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
@@ -1105,7 +1082,6 @@
                                                     </select>
                                                 </div>
                                             </div>
-
                                             <div className="md:col-span-8 space-y-5">
                                                 <div>
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label>
@@ -1130,55 +1106,41 @@
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-總集數-</label>
+                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-總集數-</label>
                                                         <input type="number" className="modal-input-base w-full font-black text-sm" value={formData.totalEpisodes} onChange={e=>setFormData({...formData, totalEpisodes: e.target.value})} />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新至-</label>
+                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新至-</label>
                                                         <input type="number" className="modal-input-base w-full font-black text-sm" value={formData.updatedEpisodes} onChange={e=>setFormData({...formData, updatedEpisodes: e.target.value})} />
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
+                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
                                                         <select className="modal-input-base w-full text-sm font-bold" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
-                                                            <option value="">- 選擇星期 -</option>
-                                                            {['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
+                                                            <option value="">- 選擇星期 -</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
                                                         </select>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間 (上下午切換)-</label>
-                                                        <TimeSelector 
-                                                            value={formData.updateTime} 
-                                                            onChange={(newTime) => setFormData({...formData, updateTime: newTime})} 
-                                                        />
+                                                    <div><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
+                                                        <TimeSelector value={formData.updateTime} onChange={(newTime) => setFormData({...formData, updateTime: newTime})} />
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-cyan-400 uppercase mb-2">-觀看進度-</label>
+                                                    <div><label className="block text-[11px] font-black text-cyan-400 uppercase mb-2">-觀看進度-</label>
                                                         <input step="any" className="modal-input-base w-full font-black text-cyan-400 text-sm" value={formData.watchedProgress} onChange={e=>setFormData({...formData, watchedProgress: e.target.value})} placeholder="我看完第幾集" />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新 (年-月-日)-</label>
+                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新 (年-月-日)-</label>
                                                         <input className="modal-input-base w-full font-black text-sm" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} placeholder="2024-01-01" />
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看 (多選)-</label>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看 (多選)-</label>
                                                     <div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">
-                                                        {allMemberIDs.map(name => (
-                                                            <div key={name} onClick={() => {
-                                                                const list = [...(formData.watchingBy || [])];
-                                                                const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name];
-                                                                setFormData({...formData, watchingBy: nList});
-                                                            }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>
-                                                        ))}
+                                                        {allMemberIDs.map(name => (<div key={name} onClick={() => {
+                                                            const list = [...(formData.watchingBy || [])];
+                                                            const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name];
+                                                            setFormData({...formData, watchingBy: nList});
+                                                        }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
                                                     <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} placeholder="https://..." />
                                                 </div>
                                             </div>
@@ -1206,7 +1168,6 @@
                             </div>
                         </div>
                     )}
-
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                             <div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center">
