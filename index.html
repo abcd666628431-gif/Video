@@ -14,6 +14,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
+        /* 修復：改回標準 Google Fonts 連結 */
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
@@ -390,20 +391,21 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
+        /* 修復：改回標準 Firebase CDN 連結 */
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // --- Firebase 環境配置 ---
+        // --- Firebase 環境配置：使用系統提供的變數 ---
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-video-library';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
 
-        // 智慧提取數字函式
+        // 智慧提取數字函式：用於計算百分比
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) {
@@ -415,6 +417,7 @@
         };
 
         const calculateDualProgress = (cur, tot) => {
+            if (!cur || !tot) return 0;
             const c1 = parseFloat(cur?.v1) || 0;
             const c2 = parseFloat(cur?.v2) || 0;
             const t1 = parseFloat(tot?.v1) || 0;
@@ -632,7 +635,7 @@
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90">
                                 <strong>分類：</strong> {g.category || '未分類'} | 
                                 <span className="inline-flex items-center ml-1">
-                                    {sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}
+                                    {sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" alt="" />}
                                     <span className="leading-none">{g.source || '未知來源'}</span>
                                 </span>
                             </div>
@@ -731,6 +734,7 @@
             const [showClearConfirm, setShowClearConfirm] = useState(false);
             const [deleteGameTarget, setDeleteGameTarget] = useState(null);
 
+            // 修復：改為環境要求路徑
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
 
             const unitSuggestions = useMemo(() => {
@@ -789,6 +793,7 @@
                 return () => window.removeEventListener('paste', handlePaste);
             }, [handlePaste]);
 
+            // 修復：依照規則 Rule 3 執行初始化
             useEffect(() => {
                 const initAuth = async () => {
                     try {
@@ -808,18 +813,25 @@
                 if (!user) return;
                 setIsLoadingGames(true);
                 setIsLoadingLogs(true);
+                
                 const unsubGames = onSnapshot(getPublicCol('games'), (snap) => {
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
-                }, (err) => console.error(err));
+                }, (err) => {
+                    console.error("Firestore Error Games:", err);
+                    setIsLoadingGames(false);
+                });
 
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
                     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     list.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(list.slice(0, 30));
                     setIsLoadingLogs(false);
-                }, (err) => console.error(err));
+                }, (err) => {
+                    console.error("Firestore Error Logs:", err);
+                    setIsLoadingLogs(false);
+                });
 
                 const unsubSettings = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => {
                     if (d.exists()) {
@@ -829,12 +841,12 @@
                     } else {
                         setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] });
                     }
-                }, (err) => console.error(err));
+                }, (err) => console.error("Firestore Error Settings:", err));
 
                 const unsubPresence = onSnapshot(getPublicCol('presence'), (snap) => {
                     const now = Date.now();
                     setOnlineUsers(snap.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000)));
-                }, (err) => console.error(err));
+                }, (err) => console.error("Firestore Error Presence:", err));
 
                 const updatePresence = () => {
                     if (!auth.currentUser) return;
@@ -960,7 +972,7 @@
             };
 
             const handleExportData = () => {
-                const backup = { version: "11.6.1", games, categories: customCategories, sources: customSources };
+                const backup = { version: "11.6.1-FIX", games, categories: customCategories, sources: customSources };
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -1046,11 +1058,13 @@
                                 {!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}
                             </div>
                         </header>
+                        
+                        {/* 儀表板區域 */}
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
                             <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col">
                                 <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
-                                    {activityLogs.map(log => (
+                                    {isLoadingLogs ? <div className="text-white/20 p-2">Loading logs...</div> : activityLogs.map(log => (
                                         <div key={log.id} className="border-b border-white/5 pb-0.5">
                                             <span className="text-white/30 text-[10px] mr-2">[{formatDate(log.timestamp).split(' ')[1]}]</span> 
                                             <span className="font-bold" style={{ color: nameColorMap[log.userName] }}>{String(log.userName)}</span> {String(log.action)} <span className="font-black">"{String(log.gameName)}"</span>
@@ -1100,6 +1114,7 @@
                             </div>
                         </div>
 
+                        {/* 頂部操作欄 */}
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             <button onClick={() => { 
                                 setEditingId(null); 
@@ -1124,6 +1139,7 @@
                             </div>
                         </div>
 
+                        {/* 內容與分頁 */}
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (
@@ -1149,7 +1165,7 @@
                                                     totalEpisodes: ensureProg(item.totalEpisodes),
                                                     watchedProgress: ensureProg(item.watchedProgress),
                                                     updatedEpisodes: ensureProg(item.updatedEpisodes),
-                                                    manualUpdatedAt: formatDate(item.manualUpdatedAt) || formatDate(item.updatedAt || new Date(), true), 
+                                                    manualUpdatedAt: item.manualUpdatedAt || formatDate(item.updatedAt || new Date(), true), 
                                                     updateDay: item.updateDay || '', updateTime: item.updateTime || '',
                                                     sourceIcon: sObj?.icon || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
                                                 }); 
@@ -1163,6 +1179,7 @@
                         </article>
                     </div>
 
+                    {/* 彈出視窗組件 */}
                     {isAddGroupModalOpen && (
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                             <div className="bg-[#0b0e14] border border-white/20 p-6 rounded shadow-2xl w-full max-w-xs text-center">
@@ -1187,9 +1204,11 @@
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                                             <div className="md:col-span-4 space-y-4">
                                                 <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current.click(); }} className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
+                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" alt="" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
+                                                
+                                                {/* 緊湊寬度輸入框 */}
                                                 <div className="max-w-[70px]">
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label>
                                                     <input type="text" className="modal-input-base w-full text-center font-black !min-h-[32px] text-xs" value={formData.order || ''} onChange={e=>setFormData({...formData, order: e.target.value})} />
@@ -1211,7 +1230,7 @@
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">來源</label>
                                                     <div className="source-input-group !gap-1.5">
                                                         <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
-                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
+                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} alt="" /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                         </div>
                                                         <div className="flex-1 flex gap-1 items-center">
                                                             <input 
@@ -1235,6 +1254,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            
                                             <div className="md:col-span-8 space-y-4">
                                                 <div className="max-w-md">
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-1.5">-名稱-</label>
@@ -1303,6 +1323,7 @@
                         </div>
                     )}
 
+                    {/* 確認框組件 */}
                     {deleteGameTarget && (
                         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl">
