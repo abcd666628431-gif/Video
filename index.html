@@ -11,10 +11,12 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        /* 兼容繁簡中文的 Noto Sans 字體導入 */
+        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
-            font-family: 'Noto Sans TC', sans-serif; 
+            /* 優先使用繁體與簡體字型 */
+            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
             background-color: #3f5968; 
             color: #fff;
             margin: 0;
@@ -154,6 +156,7 @@
         }
 
         .desc .title-link { 
+            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif;
             font-size: 1.4rem; 
             font-weight: 900; 
             display: -webkit-box;
@@ -386,7 +389,6 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
-        // 格式化日期
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -437,7 +439,6 @@
             );
         });
 
-        // 自定義標題圖示組件
         const TitleIcon = () => (
             <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741394999999999 28.34337L28.254675 28.34337C29.447565000000004 28.34337 30.414675000000003 27.376275 30.414675000000003 26.183370000000004L30.414675000000003 9.510465C30.414675000000003 8.317544999999999 29.447565000000004 7.350465 28.254675 7.350465L7.74141 7.350465C6.548475 7.350465 5.58141 8.317544999999999 5.58141 9.510465L5.58141 26.183370000000004C5.58141 27.376275 6.548475 28.34337 7.741394999999999 28.34337z" fill="#9796EDff"></path>
@@ -921,7 +922,6 @@
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-6">
-                                {/* 更換為用戶提供的自定義標題圖示 */}
                                 <TitleIcon />
                                 <div>
                                     <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div>
@@ -995,7 +995,7 @@
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
-                            <button onClick={() => { setEditingId(null); setFormData({ name: '', addedBy: userName, order: '', url: '', cover: null, totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: formatDate(new Date(), true), watchingBy: [], updateDay: '', updateTime: '18:00' }); setIsModalOpen(true); }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
+                            <button onClick={() => { setEditingId(null); setFormData({ name: '', addedBy: userName, order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: '', watchedProgress: '', updatedEpisodes: '', airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: formatDate(new Date(), true), watchingBy: [], updateDay: '', updateTime: '18:00' }); setIsModalOpen(true); }} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0">
                                 <Icon name="search" className="w-5 h-5 text-white/40 mr-4" />
                                 <input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -1096,12 +1096,29 @@
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-來源-</label>
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-來源 (可輸入或選擇)-</label>
                                                         <div className="source-input-group">
                                                             <div className={`source-icon-preview-box ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
                                                                 {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-4 h-4 text-white/20" />}
                                                             </div>
-                                                            <input className="modal-input-base w-full text-sm font-bold" value={formData.source} onChange={e=>setFormData({...formData, source: e.target.value})} placeholder="輸入來源..." />
+                                                            <input 
+                                                                list="source-list"
+                                                                className="modal-input-base w-full text-sm font-bold" 
+                                                                value={formData.source} 
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    const existing = customSources.find(s => s.name === val);
+                                                                    setFormData({
+                                                                        ...formData, 
+                                                                        source: val,
+                                                                        sourceIcon: existing ? existing.icon : formData.sourceIcon
+                                                                    });
+                                                                }} 
+                                                                placeholder="輸入來源..." 
+                                                            />
+                                                            <datalist id="source-list">
+                                                                {customSources.map(s => <option key={s.name} value={s.name} />)}
+                                                            </datalist>
                                                         </div>
                                                     </div>
                                                 </div>
