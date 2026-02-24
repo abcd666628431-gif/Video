@@ -14,11 +14,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* 兼容繁簡中文的 Noto Sans 字體導入 */
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
         body { 
-            /* 優先使用繁體與簡體字型，確保文字不破字 */
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
             background-color: #3f5968; 
             color: #fff;
@@ -129,7 +127,7 @@
             height: 100%; 
             flex-shrink: 0;
             display: block;
-            background: transparent; /* 優化：移除黑色背景，解決左右黑邊視覺問題 */
+            background: transparent;
             transition: width 0.2s ease;
             border-right: 1px solid rgba(255,255,255,0.05);
             position: relative;
@@ -138,7 +136,7 @@
         .image {
             width: 100%;
             height: 100%;
-            background-size: contain; /* 自動縮放到全圖 */
+            background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
@@ -157,7 +155,7 @@
             margin-bottom: 0.3rem; 
             display: flex;
             align-items: flex-start;
-            padding-right: 45px; /* 為右上角百分比留出空間 */
+            padding-right: 45px;
         }
 
         .desc .title-link { 
@@ -374,13 +372,12 @@
         .source-icon-preview-box {
             width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1);
             border-radius: 4px; display: flex; align-items: center; justify-content: center;
-            background: transparent; /* 優化：移除黑色背景 */
+            background: transparent;
             cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0;
         }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
 
-        /* 新增：雙單位輸入網格佈局 */
         .progress-input-row {
             display: grid;
             grid-template-columns: 2fr 1.2fr 2fr 1.2fr;
@@ -399,25 +396,15 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // --- Firebase 設定 ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
-            authDomain: "video-b02b3.firebaseapp.com",
-            projectId: "video-b02b3",
-            storageBucket: "video-b02b3.firebasestorage.app",
-            messagingSenderId: "25339039789",
-            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
-        };
-        
+        // --- Firebase 配置 ---
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'video-library-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-video-library';
 
-        // 智慧提取數字函式：用於計算百分比
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
-            // 如果傳入的是物件結構
             if (typeof val === 'object' && val.v1 !== undefined) {
                 return parseFloat(val.v1) || 0;
             }
@@ -426,9 +413,6 @@
             return match ? parseFloat(match[1]) : 0;
         };
 
-        /**
-         * 雙單位進度綜合計算法
-         */
         const calculateDualProgress = (cur, tot) => {
             const c1 = parseFloat(cur?.v1) || 0;
             const c2 = parseFloat(cur?.v2) || 0;
@@ -452,7 +436,6 @@
             }
         };
 
-        // 格式化進度顯示字串
         const formatProgressText = (prog) => {
             if (!prog || typeof prog !== 'object') return prog || "0";
             let parts = [];
@@ -461,7 +444,6 @@
             return parts.join(' ') || "0";
         };
 
-        // 格式化日期
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
@@ -513,7 +495,6 @@
             });
         };
 
-        // 元件 1: Lucide 圖標
         const Icon = memo(({ name, className, onClick, title }) => {
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
@@ -525,14 +506,13 @@
             );
         });
 
-        // 元件 2: 進度輸入框 (修復: 定義在 App 外部)
         const ProgressInputField = memo(({ label, value, onChange, labelClass }) => {
             const handleChange = (field, val) => {
                 onChange({ ...value, [field]: val });
             };
             return (
-                <div>
-                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                <div className="max-w-[300px]">
+                    <label className={`block text-[11px] font-black uppercase mb-1.5 ${labelClass || 'text-white/40'}`}>-{label}-</label>
                     <div className="progress-input-row">
                         <input type="number" className="modal-input-base w-full font-black text-sm p-2" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <input list="unit-list" className="modal-input-base w-full font-black text-xs p-2" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
@@ -543,7 +523,6 @@
             );
         });
 
-        // 元件 3: 時間選擇器 (修復: 定義在 App 外部)
         const TimeSelector = memo(({ value, onChange }) => {
             if (!value) {
                 return (
@@ -564,18 +543,18 @@
                 onChange(`${String(finalH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
             };
             return (
-                <div className="flex gap-2 w-full">
-                    <select className="modal-input-base flex-1 text-xs font-black" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}>
+                <div className="flex gap-1.5 w-full">
+                    <select className="modal-input-base flex-1 text-[11px] font-black" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}>
                         <option value="上午">上午</option><option value="下午">下午</option>
                     </select>
-                    <select className="modal-input-base flex-1 text-xs font-black" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>
+                    <select className="modal-input-base flex-1 text-[11px] font-black" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 時</option>)}
                     </select>
-                    <select className="modal-input-base flex-1 text-xs font-black" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>
+                    <select className="modal-input-base flex-1 text-[11px] font-black" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>
                         {Array.from({ length: 60 }, (_, i) => i).map(val => <option key={val} value={val}>{String(val).padStart(2, '0')} 分</option>)}
                     </select>
-                    <button type="button" onClick={() => onChange("")} className="w-8 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors">
-                        <Icon name="trash-2" className="w-4 h-4" />
+                    <button type="button" onClick={() => onChange("")} className="w-6 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors">
+                        <Icon name="trash-2" className="w-3.5 h-3.5" />
                     </button>
                 </div>
             );
@@ -811,7 +790,11 @@
             useEffect(() => {
                 const initAuth = async () => {
                     try {
-                        await signInAnonymously(auth);
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
                     } catch (e) { console.error("Auth failed", e); }
                 };
                 initAuth();
@@ -827,13 +810,15 @@
                     setGames(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setIsLoadingGames(false);
                     setLastSynced(new Date());
-                });
+                }, (err) => console.error(err));
+
                 const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (snap) => {
                     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     list.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(list.slice(0, 30));
                     setIsLoadingLogs(false);
-                });
+                }, (err) => console.error(err));
+
                 const unsubSettings = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => {
                     if (d.exists()) {
                         const data = d.data();
@@ -842,11 +827,13 @@
                     } else {
                         setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] });
                     }
-                });
+                }, (err) => console.error(err));
+
                 const unsubPresence = onSnapshot(getPublicCol('presence'), (snap) => {
                     const now = Date.now();
                     setOnlineUsers(snap.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000)));
-                });
+                }, (err) => console.error(err));
+
                 const updatePresence = () => {
                     if (!auth.currentUser) return;
                     setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), {
@@ -1193,43 +1180,41 @@
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
                                 <div className="p-8">
-                                    <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                                    <h3 className="text-2xl font-black italic mb-6 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
+                                    <form onSubmit={handleSaveGame} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                                             <div className="md:col-span-4 space-y-4">
                                                 <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current.click(); }} className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                     {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
-                                                    <input type="text" className="modal-input-base w-full text-center font-black" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
+                                                <div className="max-w-[80px]">
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label>
+                                                    <input type="text" className="modal-input-base w-full text-center font-black !min-h-[36px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
-                                                    <select className="modal-input-base w-full text-xs font-black" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
+                                                <div className="max-w-[120px]">
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1">狀態</label>
+                                                    <select className="modal-input-base w-full text-[11px] font-black !min-h-[36px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
                                                         <option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option>
                                                     </select>
                                                 </div>
-                                                {/* 分類移到這裡 */}
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
-                                                    <select className="modal-input-base w-full text-sm font-bold" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
+                                                <div className="max-w-[150px]">
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1">分類</label>
+                                                    <select className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
                                                         <option value="">- 選擇分類 -</option>
                                                         {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                     </select>
                                                 </div>
-                                                {/* 來源移到這裡 */}
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label>
-                                                    <div className="source-input-group">
-                                                        <div className={`source-icon-preview-box ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
-                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-4 h-4 text-white/20" />}
+                                                <div className="max-w-[200px]">
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1">來源</label>
+                                                    <div className="source-input-group !gap-2">
+                                                        <div className={`source-icon-preview-box !w-9 !h-9 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
+                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3.5 h-3.5 text-white/20" />}
                                                         </div>
                                                         <div className="flex-1 flex gap-1 items-center">
                                                             <input 
                                                                 list="source-list"
-                                                                className="modal-input-base w-full text-sm font-bold" 
+                                                                className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" 
                                                                 value={formData.source} 
                                                                 onChange={e => {
                                                                     const val = e.target.value;
@@ -1242,8 +1227,8 @@
                                                                 }} 
                                                             />
                                                             {customSources.some(s => s.name === formData.source) && (
-                                                                <button type="button" onClick={() => handleDeleteSource(formData.source)} className="p-2 text-red-400/60 hover:text-red-400 transition-colors" title="刪除此來源選項">
-                                                                    <Icon name="trash-2" className="w-4 h-4" />
+                                                                <button type="button" onClick={() => handleDeleteSource(formData.source)} className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors" title="刪除此來源選項">
+                                                                    <Icon name="trash-2" className="w-3.5 h-3.5" />
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1253,10 +1238,10 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="md:col-span-8 space-y-5">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label>
-                                                    <input required className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
+                                            <div className="md:col-span-8 space-y-4">
+                                                <div className="max-w-lg">
+                                                    <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-1.5">-名稱-</label>
+                                                    <input required className="modal-input-base w-full font-black text-white text-lg !min-h-[44px]" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
                                                 </div>
                                                 
                                                 <ProgressInputField 
@@ -1271,13 +1256,13 @@
                                                     onChange={v => setFormData({ ...formData, updatedEpisodes: v })} 
                                                 />
 
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
-                                                        <select className="modal-input-base w-full text-sm font-bold" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
+                                                <div className="grid grid-cols-2 gap-4 max-w-[320px]">
+                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1.5">-更新星期-</label>
+                                                        <select className="modal-input-base w-full text-[11px] font-bold !min-h-[36px]" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
                                                             <option value="">(不設定)</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
                                                         </select>
                                                     </div>
-                                                    <div><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
+                                                    <div><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-1.5">-更新時間-</label>
                                                         <TimeSelector value={formData.updateTime} onChange={(newTime) => setFormData({...formData, updateTime: newTime})} />
                                                     </div>
                                                 </div>
@@ -1289,31 +1274,31 @@
                                                     onChange={v => setFormData({ ...formData, watchedProgress: v })} 
                                                 />
 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-xl">
                                                     <div className="md:col-span-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
-                                                        <input className="modal-input-base w-full font-black text-sm" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-1">-最後更新-</label>
+                                                        <input className="modal-input-base w-full font-black text-[11px] !min-h-[36px]" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
                                                     </div>
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
-                                                        <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-1">-連結-</label>
+                                                        <input className="modal-input-base w-full font-mono text-[10px] text-cyan-500 !min-h-[36px]" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
                                                     </div>
                                                 </div>
                                                 
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
-                                                    <div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1.5">-誰在看-</label>
+                                                    <div className="flex flex-wrap gap-1.5 p-2 bg-black/30 border border-white/5 rounded min-h-[36px] max-w-xl">
                                                         {allMemberIDs.map(name => (<div key={name} onClick={() => {
                                                             const list = [...(formData.watchingBy || [])];
                                                             const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name];
                                                             setFormData({...formData, watchingBy: nList});
-                                                        }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}
+                                                        }} className={`watcher-tag !px-2.5 !py-1 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-6 flex gap-4">
-                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase hover:bg-white/10 transition-colors border border-white/5">取消修改</button>
-                                            <button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase active:scale-95 transition-all">確認提交資料</button>
+                                        <div className="pt-4 flex gap-3">
+                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase hover:bg-white/10 transition-colors border border-white/5">取消修改</button>
+                                            <button type="submit" className="flex-[2] py-3 bg-[#ffbae9] text-[#3f5968] text-[11px] font-black rounded shadow-lg uppercase active:scale-95 transition-all">確認提交資料</button>
                                         </div>
                                     </form>
                                 </div>
