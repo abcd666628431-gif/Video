@@ -386,6 +386,38 @@
             gap: 4px;
             align-items: center;
         }
+
+        /* 裁剪視窗樣式 */
+        .crop-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .crop-hole {
+            width: 300px;
+            aspect-ratio: 3 / 4;
+            outline: 2000px solid rgba(0,0,0,0.7);
+            border: 2px solid #ffbae9;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 10;
+        }
+        .crop-hole::after {
+            content: '拖動圖片以裁剪 (3:4)';
+            position: absolute;
+            top: -30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #ffbae9;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -413,7 +445,7 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
-        // 智慧提取數字函式
+        // --- Helper Functions ---
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) {
@@ -429,9 +461,7 @@
             const c2 = parseFloat(cur?.v2) || 0;
             const t1 = parseFloat(tot?.v1) || 0;
             const t2 = parseFloat(tot?.v2) || 0;
-
             if (t1 <= 0) return 0;
-
             if (c1 < t1) {
                 const microProgress = (c2 / 100) * (1 / t1);
                 return Math.floor(Math.min(((c1 / t1) + microProgress) * 100, 99)); 
@@ -458,30 +488,18 @@
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
-
             let date;
             try {
-                if (ts && typeof ts.toDate === 'function') {
-                    date = ts.toDate();
-                } else if (ts && ts.seconds !== undefined) {
-                    date = new Date(ts.seconds * 1000);
-                } else if (ts instanceof Date) {
-                    date = ts;
-                } else {
-                    date = new Date(ts);
-                }
-            } catch (e) { 
-                return "NOW"; 
-            }
-
+                if (ts && typeof ts.toDate === 'function') date = ts.toDate();
+                else if (ts && ts.seconds !== undefined) date = new Date(ts.seconds * 1000);
+                else if (ts instanceof Date) date = ts;
+                else date = new Date(ts);
+            } catch (e) { return "NOW"; }
             if (!date || isNaN(date.getTime())) return "NOW";
-            
             const Y = date.getFullYear();
             const M = (date.getMonth() + 1).toString().padStart(2, '0');
             const D = date.getDate().toString().padStart(2, '0');
-            
             if (dateOnly) return `${Y}-${M}-${D}`;
-            
             const h = date.getHours().toString().padStart(2, '0');
             const m = date.getMinutes().toString().padStart(2, '0');
             return `${Y}-${M}-${D} ${h}:${m}`; 
@@ -505,6 +523,109 @@
                 img.src = dataUrl;
             });
         };
+
+        // --- Components ---
+
+        // 裁剪組件
+        const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
+            const [position, setPosition] = useState({ x: 0, y: 0 });
+            const [scale, setScale] = useState(1);
+            const containerRef = useRef(null);
+            const imgRef = useRef(null);
+            const isDragging = useRef(false);
+            const lastPos = useRef({ x: 0, y: 0 });
+
+            const handleMouseDown = (e) => {
+                isDragging.current = true;
+                lastPos.current = { x: e.clientX, y: e.clientY };
+            };
+
+            const handleMouseMove = (e) => {
+                if (!isDragging.current) return;
+                const dx = e.clientX - lastPos.current.x;
+                const dy = e.clientY - lastPos.current.y;
+                setPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                lastPos.current = { x: e.clientX, y: e.clientY };
+            };
+
+            const handleMouseUp = () => { isDragging.current = false; };
+
+            const handleWheel = (e) => {
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                setScale(prev => Math.max(0.1, Math.min(5, prev + delta)));
+            };
+
+            const handleConfirm = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 450;
+                canvas.height = 600; // 3:4 比例
+
+                const img = imgRef.current;
+                const holeSize = { w: 300, h: 400 };
+                const centerX = containerRef.current.offsetWidth / 2;
+                const centerY = containerRef.current.offsetHeight / 2;
+
+                // 計算圖片在 Canvas 上的繪製位置與縮放
+                // 邏輯：將當前預覽的狀態繪製到固定比例的畫布
+                const ratio = canvas.width / holeSize.w;
+                
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 獲取圖片原始寬高
+                const iw = img.naturalWidth;
+                const ih = img.naturalHeight;
+                
+                // 預覽容器中圖片的中心點相對於洞中心的偏移
+                const drawW = (iw * (img.offsetWidth / iw)) * scale;
+                const drawH = (ih * (img.offsetHeight / ih)) * scale;
+
+                // 畫布座標轉換
+                const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * ratio;
+                const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * ratio;
+
+                ctx.drawImage(img, finalX, finalY, drawW * ratio, drawH * ratio);
+                onCrop(canvas.toDataURL('image/jpeg', 0.9));
+            };
+
+            return (
+                <div className="fixed inset-0 z-[500] bg-black flex flex-col">
+                    <div className="flex-1 relative overflow-hidden bg-slate-900 cursor-move" 
+                        ref={containerRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onWheel={handleWheel}
+                    >
+                        <img 
+                            ref={imgRef}
+                            src={imageSrc} 
+                            style={{ 
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                maxWidth: 'none',
+                                userSelect: 'none',
+                                pointerEvents: 'none'
+                            }} 
+                        />
+                        <div className="crop-overlay">
+                            <div className="crop-hole" style={{ width: '300px', height: '400px' }}></div>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex justify-between items-center">
+                        <div className="text-[10px] font-black text-white/40 uppercase">滾輪縮放 • 拖動調整位置</div>
+                        <div className="flex gap-4">
+                            <button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
+                            <button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪並套用</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        });
 
         const Icon = memo(({ name, className, onClick, title }) => {
             useEffect(() => {
@@ -575,7 +696,7 @@
             <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741394999999999 28.34337L28.254675 28.34337C29.447565000000004 28.34337 30.414675000000003 27.376275 30.414675000000003 26.183370000000004L30.414675000000003 9.510465C30.414675000000003 8.317544999999999 29.447565000000004 7.350465 28.254675 7.350465L7.74141 7.350465C6.548475 7.350465 5.58141 8.317544999999999 5.58141 9.510465L5.58141 26.183370000000004C5.58141 27.376275 6.548475 28.34337 7.741394999999999 28.34337z" fill="#9796ED"></path>
                 <path d="M8.237805 10.726875C8.237805 11.323335 8.721345 11.806875 9.317805 11.806875L11.308215 11.806875C11.904675 11.806875 12.388215 11.323335 12.388215 10.726875C12.388215 10.130415 11.904675 9.646875000000001 11.308215 9.646875000000001L9.317805 9.646875000000001C8.721345 9.646875000000001 8.237805 10.130415 8.237805 10.726875z" fill="#6D69E4"></path>
-                <path d="M16.03455 10.726875C16.03455 11.323335 16.51809 11.806875 17.11455 11.806875L19.104915000000002 11.806875C19.70136 11.806875 20.184915 11.323335 20.184915 10.726875C20.184915 10.130415 19.70136 9.646875000000001 19.104915000000002 9.646875000000001L17.11455 9.646875000000001C16.51809 9.646875000000001 16.03455 10.130415 16.03455 10.726875z" fill="#6D69E4"></path>
+                <path d="M16.03455 10.726875C16.03455 11.323335 16.51809 11.806875 17.11455 11.806875L19.104915000000002 11.806875C19.70136 11.806875 20.184915 11.323335 20.184915 10.726875C20.184915 10.130415 19.70136 9.646875000000001 19.104915000000002 9.646875000000001L19.104915000000002 9.646875000000001L17.11455 9.646875000000001C16.51809 9.646875000000001 16.03455 10.130415 16.03455 10.726875z" fill="#6D69E4"></path>
                 <path d="M23.830995 10.726875C23.830995 11.323335 24.314550000000004 11.806875 24.910995 11.806875L26.901359999999997 11.806875C27.497805 11.806875 27.981360000000002 11.323335 27.981360000000002 10.726875C27.981360000000002 10.130415 27.497805 9.646875000000001 26.901359999999997 9.646875000000001L24.910995 9.646875000000001C24.314550000000004 9.646875000000001 23.830995 10.130415 23.830995 10.726875z" fill="#6D69E4"></path>
                 <path d="M8.237805 25.721130000000002C8.237805 26.317725 8.721345 26.80113 9.317805 26.80113L11.308215 26.80113C11.904675 26.80113 12.388215 26.317725 12.388215 25.721130000000002C12.388215 25.124685 11.904675 24.641130000000004 11.308215 24.641130000000004L9.317805 24.641130000000004C8.721345 24.641130000000004 8.237805 25.124685 8.237805 25.721130000000002z" fill="#6D69E4"></path>
                 <path d="M16.03455 25.721130000000002C16.03455 26.317725 16.51809 26.80113 17.11455 26.80113L19.104915000000002 26.80113C19.70136 26.80113 20.184915 26.317725 20.184915 25.721130000000002C20.184915 25.124685 19.70136 24.641130000000004 19.104915000000002 24.641130000000004L17.11455 24.641130000000004C16.51809 24.641130000000004 16.03455 25.124685 16.03455 25.721130000000002z" fill="#6D69E4"></path>
@@ -592,7 +713,6 @@
             const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             const sourceInfo = useMemo(() => allSources.find(s => s.name === g.source), [allSources, g.source]);
-
             const getStatusBadge = () => {
                 if (!g.airingStatus) return null;
                 let cls = "badge-waiting";
@@ -600,7 +720,6 @@
                 if (g.airingStatus === "已完結") cls = "badge-completed";
                 return <span className={`status-badge ${cls}`}>{g.airingStatus}</span>;
             };
-
             const getDisplayUpdateTime = (timeStr) => {
                 if (!timeStr) return "";
                 const parts = timeStr.split(':');
@@ -610,7 +729,6 @@
                 const displayH = h % 12 || 12;
                 return `${period} ${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
             };
-
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -621,17 +739,13 @@
                             <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>
                         )}
                     </div> 
-
                     <div className="desc">
                         <div className="update-progress-circle">
                             <span>{updatePercentage}%</span>
                         </div>
                         <div className="title-container">
                             <div className="title-link" onClick={(e) => {
-                                if (g.url) {
-                                    e.stopPropagation(); 
-                                    window.open(g.url, '_blank');
-                                }
+                                if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); }
                             }}>
                                 <span className="id-label">#{g.order || 0}</span>
                                 {g.name}
@@ -740,6 +854,10 @@
             const [showClearConfirm, setShowClearConfirm] = useState(false);
             const [deleteGameTarget, setDeleteGameTarget] = useState(null);
 
+            // 裁剪相關狀態
+            const [isCropping, setIsCropping] = useState(false);
+            const [rawImageData, setRawImageData] = useState(null);
+
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
 
             const unitSuggestions = useMemo(() => {
@@ -784,10 +902,17 @@
                     if (items[i].type.indexOf("image") !== -1) {
                         const blob = items[i].getAsFile();
                         const url = URL.createObjectURL(blob);
-                        const compressed = await compressImage(url, lastSelectedImgZone === 'source' ? 100 : 400);
-                        if (lastSelectedImgZone === 'source') setFormData(prev => ({ ...prev, sourceIcon: compressed }));
-                        else setFormData(prev => ({ ...prev, cover: compressed }));
-                        showNotify("圖片已貼上");
+                        
+                        if (lastSelectedImgZone === 'source') {
+                            const compressed = await compressImage(url, 100);
+                            setFormData(prev => ({ ...prev, sourceIcon: compressed }));
+                            showNotify("來源圖標已貼上");
+                        } else {
+                            // 封面進入裁剪模式
+                            setRawImageData(url);
+                            setIsCropping(true);
+                            showNotify("進入裁剪模式");
+                        }
                         break;
                     }
                 }
@@ -800,9 +925,7 @@
 
             useEffect(() => {
                 const initAuth = async () => {
-                    try {
-                        await signInAnonymously(auth);
-                    } catch (e) { console.error("Auth failed", e); }
+                    try { await signInAnonymously(auth); } catch (e) { console.error("Auth failed", e); }
                 };
                 initAuth();
                 const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -1187,10 +1310,17 @@
                                     <form onSubmit={handleSaveGame} className="space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                                             <div className="md:col-span-4 space-y-4">
-                                                <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current.click(); }} className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊上傳<br/>或<br/>CTRL+V 貼上</div>}
+                                                {/* 封面區域：取消點擊，僅限貼上 */}
+                                                <div 
+                                                    onClick={() => setLastSelectedImgZone('cover')}
+                                                    className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
+                                                >
+                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
                                                 </div>
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), lastSelectedImgZone === 'source' ? 100 : 400); if(lastSelectedImgZone === 'source') setFormData(p=>({...p, sourceIcon: c})); else setFormData(p=>({...p, cover: c})); } }} />
+                                                
+                                                {/* 來源圖標：保留點擊與貼上 */}
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
+                                                
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
                                                     <input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
@@ -1211,7 +1341,7 @@
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label>
                                                     <div className="source-input-group max-w-[175px]">
-                                                        <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>
+                                                        <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>
                                                             {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                         </div>
                                                         <div className="flex-1 flex gap-1 items-center">
@@ -1246,19 +1376,8 @@
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label>
                                                     <input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
                                                 </div>
-                                                
-                                                <ProgressInputField 
-                                                    label="總集數" 
-                                                    value={formData.totalEpisodes} 
-                                                    onChange={v => setFormData({ ...formData, totalEpisodes: v })} 
-                                                />
-
-                                                <ProgressInputField 
-                                                    label="更新至" 
-                                                    value={formData.updatedEpisodes} 
-                                                    onChange={v => setFormData({ ...formData, updatedEpisodes: v })} 
-                                                />
-
+                                                <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
+                                                <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} />
                                                 <div className="flex items-end gap-3">
                                                     <div className="w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
                                                         <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
@@ -1269,14 +1388,7 @@
                                                         <TimeSelector value={formData.updateTime} onChange={(newTime) => setFormData({...formData, updateTime: newTime})} />
                                                     </div>
                                                 </div>
-
-                                                <ProgressInputField 
-                                                    label="觀看進度" 
-                                                    labelClass="text-cyan-400"
-                                                    value={formData.watchedProgress} 
-                                                    onChange={v => setFormData({ ...formData, watchedProgress: v })} 
-                                                />
-
+                                                <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} />
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="md:col-span-1 max-w-[125px]">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
@@ -1287,7 +1399,6 @@
                                                         <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
                                                     </div>
                                                 </div>
-                                                
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
                                                     <div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">
                                                         {allMemberIDs.map(name => (<div key={name} onClick={() => {
@@ -1307,6 +1418,23 @@
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* 裁剪模式彈窗 */}
+                    {isCropping && (
+                        <ImageCropperModal 
+                            imageSrc={rawImageData} 
+                            onCrop={(croppedData) => {
+                                setFormData(prev => ({ ...prev, cover: croppedData }));
+                                setIsCropping(false);
+                                setRawImageData(null);
+                                showNotify("封面已更新");
+                            }}
+                            onCancel={() => {
+                                setIsCropping(false);
+                                setRawImageData(null);
+                            }}
+                        />
                     )}
 
                     {deleteGameTarget && (
