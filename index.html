@@ -225,7 +225,7 @@
             top: 10px;
             right: 10px;
             font-size: 11px; 
-            padding: 3px 10px;
+            padding: 3px 8px; /* 修改：縮減內距 */
             border-radius: 4px;
             font-weight: 900;
             text-transform: uppercase;
@@ -234,12 +234,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 64px;
+            min-width: 52px; /* 修改：縮小寬度 */
             letter-spacing: 0.05em; 
             text-shadow: 0 1px 1px rgba(0,0,0,0.2); 
             border: 1px solid rgba(255,255,255,0.3);
             line-height: 1.2;
-            backdrop-filter: blur(8px); 
+            /* 修改：移除模糊效果 */
+            backdrop-filter: none; 
         }
         .badge-airing { background-color: #16a34a; color: #fff; border-color: rgba(255,255,255,0.4); }
         .badge-completed { background-color: #dc2626; color: #fff; border-color: rgba(255,255,255,0.4); }
@@ -389,21 +390,34 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
+        // 格式化日期
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
             if (typeof ts === 'string') return ts;
+
             let date;
             try {
-                if (ts && typeof ts.toDate === 'function') date = ts.toDate();
-                else if (ts && ts.seconds !== undefined) date = new Date(ts.seconds * 1000);
-                else if (ts instanceof Date) date = ts;
-                else date = new Date(ts);
-            } catch (e) { return "NOW"; }
+                if (ts && typeof ts.toDate === 'function') {
+                    date = ts.toDate();
+                } else if (ts && ts.seconds !== undefined) {
+                    date = new Date(ts.seconds * 1000);
+                } else if (ts instanceof Date) {
+                    date = ts;
+                } else {
+                    date = new Date(ts);
+                }
+            } catch (e) { 
+                return "NOW"; 
+            }
+
             if (!date || isNaN(date.getTime())) return "NOW";
+            
             const Y = date.getFullYear();
             const M = (date.getMonth() + 1).toString().padStart(2, '0');
             const D = date.getDate().toString().padStart(2, '0');
+            
             if (dateOnly) return `${Y}-${M}-${D}`;
+            
             const h = date.getHours().toString().padStart(2, '0');
             const m = date.getMinutes().toString().padStart(2, '0');
             return `${Y}-${M}-${D} ${h}:${m}`; 
