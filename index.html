@@ -171,7 +171,7 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
-        const compressImage = (dataUrl, maxWidth = 400) => {
+        const compressImage = (dataUrl, maxWidth = 800) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
@@ -180,7 +180,7 @@
                     if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    resolve(canvas.toDataURL('image/jpeg', 0.95)); // 高品質輸出
                 };
                 img.src = dataUrl;
             });
@@ -209,17 +209,28 @@
             const handleConfirm = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                canvas.width = 450; canvas.height = 600;
+                // 解析度優化：使用 900x1200 確保在高解析度螢幕也清晰
+                canvas.width = 900; canvas.height = 1200;
                 const img = imgRef.current, holeSize = { w: 300, h: 400 };
                 const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
-                const ratio = canvas.width / holeSize.w;
+                
+                // 計算比例轉換 (解析度與畫布視覺尺寸之比)
+                const resRatio = canvas.width / holeSize.w;
+                
                 ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                const drawW = (img.naturalWidth * (img.offsetWidth / img.naturalWidth)) * scale;
-                const drawH = (img.naturalHeight * (img.offsetHeight / img.naturalHeight)) * scale;
-                const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * ratio;
-                const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * ratio;
-                ctx.drawImage(img, finalX, finalY, drawW * ratio, drawH * ratio);
-                onCrop(canvas.toDataURL('image/jpeg', 0.9));
+                
+                // 計算圖片在視覺容器中的實際縮放寬高
+                // 使用 NaturalWidth 確保基於原始畫質計算而非目前的 CSS 顯示尺寸
+                const displayRatio = img.offsetWidth / img.naturalWidth;
+                const drawW = img.naturalWidth * displayRatio * scale;
+                const drawH = img.naturalHeight * displayRatio * scale;
+                
+                // 換算至解析度畫布座標
+                const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * resRatio;
+                const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * resRatio;
+                
+                ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
+                onCrop(canvas.toDataURL('image/jpeg', 0.95)); // 高品質保存
             };
 
             return (
@@ -367,11 +378,11 @@
                         const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
                         if (lastSelectedImgZone === 'source') { const c = await compressImage(url, 100); setFormData(p => ({ ...p, sourceIcon: c })); showNotify("來源圖標已貼上"); }
                         else { 
-                            // 封面改為自動縮放，不自動跳裁剪
-                            const c = await compressImage(url, 400); 
+                            // 貼上時先以較大寬度壓縮 (800) 並保留原始 Blob URL 作為裁剪原始圖源
+                            const c = await compressImage(url, 800); 
                             setFormData(p => ({ ...p, cover: c }));
                             setRawImageData(url); 
-                            showNotify("封面已自動縮放貼上"); 
+                            showNotify("封面已縮放貼上"); 
                         }
                         break;
                     }
@@ -492,7 +503,11 @@
                                                     {formData.cover && (
                                                         <button 
                                                             type="button"
-                                                            onClick={() => { setRawImageData(formData.cover); setIsCropping(true); }}
+                                                            onClick={() => { 
+                                                                // 使用原始圖源進行裁剪，避免使用縮小後的圖源
+                                                                setRawImageData(rawImageData || formData.cover); 
+                                                                setIsCropping(true); 
+                                                            }}
                                                             className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"
                                                         >
                                                             <Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化
