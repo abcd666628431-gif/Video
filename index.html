@@ -144,7 +144,7 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
-        const compressImage = (dataUrl, maxWidth = 1200) => {
+        const compressImage = (dataUrl, maxWidth = 800) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onerror = reject;
@@ -157,7 +157,7 @@
                     ctx.imageSmoothingEnabled = true;
                     ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.98)); 
+                    resolve(canvas.toDataURL('image/jpeg', 0.9)); 
                 };
                 img.src = dataUrl;
             });
@@ -181,8 +181,6 @@
                 lastPos.current = { x: e.clientX, y: e.clientY };
             };
             const handleMouseUp = () => { isDragging.current = false; };
-            
-            // 滾輪精細度調整：單次捲動量從 0.1 降為 0.02
             const handleWheel = (e) => {
                 const step = 0.02;
                 setScale(prev => Math.max(0.1, Math.min(5, prev + (e.deltaY > 0 ? -step : step))));
@@ -191,7 +189,7 @@
             const handleConfirm = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                canvas.width = 1200; canvas.height = 1600;
+                canvas.width = 800; canvas.height = 1066;
                 const img = imgRef.current, holeSize = { w: 300, h: 400 };
                 const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
                 const resRatio = canvas.width / holeSize.w;
@@ -204,32 +202,18 @@
                 const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * resRatio;
                 const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * resRatio;
                 ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
-                onCrop(canvas.toDataURL('image/jpeg', 0.98)); 
+                onCrop(canvas.toDataURL('image/jpeg', 0.9)); 
             };
 
             return (
                 <div className="fixed inset-0 z-[500] bg-black flex flex-col">
-                    <div className="flex-1 relative overflow-hidden bg-slate-900 cursor-move" 
-                        ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}
-                    >
+                    <div className="flex-1 relative overflow-hidden bg-slate-900 cursor-move" ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
                         <img ref={imgRef} src={imageSrc} style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none' }} />
                         <div className="crop-overlay"><div className="crop-hole" style={{ width: '300px', height: '400px' }}></div></div>
                     </div>
                     <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精細縮放控制 (步進 0.001)</span>
-                            <div className="flex items-center gap-4">
-                                <Icon name="minus" className="w-3 h-3 text-white/20" />
-                                {/* 拉桿精細度調整：step 由 0.01 提升至 0.001 */}
-                                <input type="range" min="0.1" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" />
-                                <Icon name="plus" className="w-3 h-3 text-white/20" />
-                                <span className="text-[10px] font-mono text-[#ffbae9] min-w-[40px]">{scale.toFixed(3)}x</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
-                            <button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪並套用</button>
-                        </div>
+                        <div className="flex flex-col gap-2 w-full md:w-auto"><span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精細縮放控制 (步進 0.001)</span><div className="flex items-center gap-4"><Icon name="minus" className="w-3 h-3 text-white/20" /><input type="range" min="0.1" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" /><Icon name="plus" className="w-3 h-3 text-white/20" /><span className="text-[10px] font-mono text-[#ffbae9] min-w-[40px]">{scale.toFixed(3)}x</span></div></div>
+                        <div className="flex gap-4"><button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button><button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪並套用</button></div>
                     </div>
                 </div>
             );
@@ -238,9 +222,7 @@
         const Icon = memo(({ name, className, onClick, title }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return (
-                <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}>
-                    <i data-lucide={name} style={{ width: '100%', height: '100%' }}></i>
-                </span>
+                <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
             );
         });
 
@@ -332,7 +314,7 @@
         function App() {
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
-            const [onlineUsers, setOnlineUsers] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
+            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
@@ -342,9 +324,27 @@
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+            
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
-            const nameColorMap = useMemo(() => { const m = { [userName]: userColor }; onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); games.forEach(g => { if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); }); return m; }, [onlineUsers, userName, userColor, games]);
-            const allMemberIDs = useMemo(() => { const ids = new Set([userName]); onlineUsers.forEach(u => ids.add(u.name)); games.forEach(g => { if(g.addedBy) ids.add(g.addedBy); if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); }); return Array.from(ids).filter(Boolean).sort(); }, [userName, onlineUsers, games]);
+            
+            // 優化顏色映射表：優先本地 -> 持久化 Profile -> 即時 Presence -> 預設灰
+            const nameColorMap = useMemo(() => { 
+                const m = {};
+                // 1. 持久化 Profile
+                userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
+                // 2. 即時 Presence (可能覆蓋舊 Profile)
+                onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
+                // 3. 本地設定 (絕對優先)
+                m[userName] = userColor;
+                // 4. 遊戲數據中未記錄顏色的人員預設灰
+                games.forEach(g => { 
+                    if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
+                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
+                }); 
+                return m; 
+            }, [onlineUsers, userProfiles, userName, userColor, games]);
+
+            const allMemberIDs = useMemo(() => { const ids = new Set([userName]); onlineUsers.forEach(u => ids.add(u.name)); userProfiles.forEach(p => ids.add(p.name)); games.forEach(g => { if(g.addedBy) ids.add(g.addedBy); if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); }); return Array.from(ids).filter(Boolean).sort(); }, [userName, onlineUsers, userProfiles, games]);
 
             const handlePaste = useCallback(async (e) => {
                 if (!isModalOpen) return;
@@ -369,6 +369,7 @@
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
             useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
+            
             useEffect(() => {
                 if (!user) return;
                 setIsLoadingGames(true); setIsLoadingLogs(true);
@@ -376,8 +377,21 @@
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { const l = s.docs.map(d => ({ id: d.id, ...d.data() })); l.sort((a,b) => (b.timestamp?.seconds || 0)-(a.timestamp?.seconds || 0)); setActivityLogs(l.slice(0, 30)); setIsLoadingLogs(false); }, (err) => console.error(err));
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
                 const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
-                const updP = () => { if(auth.currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true }); };
-                updP(); const inv = setInterval(updP, 120000); return () => { ug(); ul(); us(); up(); clearInterval(inv); };
+                
+                // 獲取用戶持久化 Profile
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
+
+                const updP = () => { 
+                    if(auth.currentUser) {
+                        // 1. 更新 Presence (即時)
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
+                        // 2. 保存 Profile (持久化 ID 顏色)
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
+                    }
+                };
+                updP(); 
+                const inv = setInterval(updP, 120000); 
+                return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
             }, [user, userName, userColor]);
 
             const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
@@ -541,15 +555,7 @@
                     )}
 
                     {isCropping && (
-                        <ImageCropperModal 
-                            imageSrc={rawImageData || formData.cover} 
-                            onCrop={(c) => { 
-                                setFormData(p => ({ ...p, cover: c })); 
-                                setIsCropping(false); 
-                                showNotify("封面已優化"); 
-                            }} 
-                            onCancel={() => setIsCropping(false)} 
-                        />
+                        <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />
                     )}
 
                     {deleteGameTarget && (
