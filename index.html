@@ -193,6 +193,7 @@
                 const ctx = canvas.getContext('2d');
                 canvas.width = 800; canvas.height = 1066;
                 
+                // 改用主背景色 #3f5968 作為填充底色，以配合卡片視覺。
                 ctx.fillStyle = "#3f5968";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
@@ -344,11 +345,6 @@
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
-            
-            // 篩選相關狀態
-            const [filterMember, setFilterMember] = useState(null);
-            const [filterType, setFilterType] = useState('total'); // 'total', 'unstarted', 'watching', 'completed'
-
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
             const [formData, setFormData] = useState({ name: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
@@ -370,6 +366,7 @@
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
 
+            // 只抓取已有的選項，不再抓取線上人員
             const allMemberIDs = useMemo(() => { 
                 const ids = new Set([userName]); 
                 games.forEach(g => { 
@@ -409,6 +406,7 @@
                 const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (err) => console.error(err));
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    // 在客戶端進行排序
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(logs.slice(0, 30)); 
                     setIsLoadingLogs(false); 
@@ -477,69 +475,16 @@
             };
 
             const filteredGames = useMemo(() => {
-                let l = [...games]; 
-                const q = searchQuery.toLowerCase().trim(); 
-                if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
-                
-                // 應用成員與狀態篩選
-                if(filterMember) {
-                    l = l.filter(g => {
-                        const watching = Array.isArray(g.watchingBy) ? g.watchingBy : [];
-                        if (!watching.includes(filterMember)) return false;
-                        
-                        if (filterType === 'total') return true;
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-                        if (filterType === 'unstarted') return p === 0;
-                        if (filterType === 'watching') return p > 0 && p < 100;
-                        if (filterType === 'completed') return p >= 100;
-                        return true;
-                    });
-                }
-
-                if (activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                else if (activeTab === "編號排序") l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                else if (activeTab) {
-                    l = l.filter(g => g.category === activeTab);
-                    l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                }
+                let l = [...games]; const q = searchQuery.toLowerCase().trim(); if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
+                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
                 return l;
-            }, [games, searchQuery, activeTab, filterMember, filterType]);
+            }, [games, searchQuery, activeTab]);
 
             const memberStats = useMemo(() => {
-                const sm = {}; 
-                games.forEach(g => { 
-                    const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
-                    w.forEach(n => { 
-                        if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; 
-                        sm[n].total++; 
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); 
-                        if(p === 0) sm[n].unstarted++; 
-                        else if(p >= 100) sm[n].completed++; 
-                        else sm[n].watching++; 
-                    }); 
-                });
+                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
-
-            // 處理篩選點擊
-            const handleStatClick = (name, type) => {
-                if (filterMember === name && filterType === type) {
-                    setFilterMember(null);
-                    setFilterType('total');
-                } else {
-                    setFilterMember(name);
-                    setFilterType(type);
-                }
-            };
-
-            const getStatusText = (type) => {
-                switch(type) {
-                    case 'unstarted': return '未開始';
-                    case 'watching': return '觀看中';
-                    case 'completed': return '已看完';
-                    default: return '全部內容';
-                }
-            };
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
@@ -553,23 +498,22 @@
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
                             <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
-                            
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計 (點擊數字篩選)</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1 pl-2">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5 transition-colors"><td className={`py-1.5 pl-2 transition-all ${filterMember === m.name ? 'bg-[#ffbae9]/10 border-l-2 border-l-[#ffbae9]' : ''}`} style={{ color: m.color }}>{m.name}</td><td onClick={() => handleStatClick(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-all ${filterMember === m.name && filterType === 'total' ? 'ring-1 ring-[#ffbae9]/40 bg-[#ffbae9]/5' : ''}`}>{m.stats.total}</td><td onClick={() => handleStatClick(m.name, 'unstarted')} className={`py-1.5 text-center opacity-40 cursor-pointer hover:bg-white/10 transition-all ${filterMember === m.name && filterType === 'unstarted' ? 'ring-1 ring-white/30 bg-white/5 opacity-100' : ''}`}>{m.stats.unstarted}</td><td onClick={() => handleStatClick(m.name, 'watching')} className={`py-1.5 text-center text-cyan-400/60 cursor-pointer hover:bg-white/10 transition-all ${filterMember === m.name && filterType === 'watching' ? 'ring-1 ring-cyan-400/30 bg-cyan-400/5 text-cyan-400' : ''}`}>{m.stats.watching}</td><td onClick={() => handleStatClick(m.name, 'completed')} className={`py-1.5 text-center text-green-400/60 cursor-pointer hover:bg-white/10 transition-all ${filterMember === m.name && filterType === 'completed' ? 'ring-1 ring-green-400/30 bg-green-400/5 text-green-400' : ''}`}>{m.stats.completed}</td></tr>))}</tbody></table></div></div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td className="py-1.5" style={{ color: m.color }}>{m.name}</td><td className="py-1.5 text-center">{m.stats.total}</td><td className="py-1.5 text-center opacity-40">{m.stats.unstarted}</td><td className="py-1.5 text-center text-cyan-400/60">{m.stats.watching}</td><td className="py-1.5 text-center text-green-400/60">{m.stats.completed}</td></tr>))}</tbody></table></div></div>
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
-                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder={filterMember ? `正在篩選 "${filterMember}" 的 ${getStatusText(filterType)}...` : "搜尋標題或分類..."} className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />{filterMember && <button onClick={() => { setFilterMember(null); setFilterType('total'); }} className="ml-4 px-3 py-1 bg-white/10 text-[10px] font-black rounded border border-white/10 hover:bg-red-500/20 hover:text-red-400 transition-all uppercase">清除成員篩選</button>}</div>
+                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                             <div className="px-8 flex items-center justify-end py-4 md:py-0"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
                         </div>
 
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
-                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && activeTab !== "最新入庫" && activeTab !== "編號排序" && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
+                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {filterMember && `(成員: ${filterMember})`}</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
                                     setEditingId(item.id); 
                                     setRawImageData(item.cover); 
                                     const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
@@ -633,7 +577,7 @@
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
                                                 <div className="flex gap-2">
-                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.filter(c => c !== "最新入庫" && c !== "編號排序").map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
                                                     <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
                                                 </div>
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
