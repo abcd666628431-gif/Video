@@ -356,7 +356,6 @@
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             
             const [memberFilter, setMemberFilter] = useState(null);
-            // --- 新增：當前正在修改顏色的成員名稱 ---
             const [colorChangingMember, setColorChangingMember] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
@@ -372,6 +371,8 @@
                     if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
                     if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
                 }); 
+                // --- 修改：強制指定「糖糖」的顏色 ---
+                m["糖糖"] = "#ffbae9";
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
 
@@ -417,6 +418,7 @@
                     if (snap.exists()) {
                         const data = snap.data();
                         if (data.name) setUserName(data.name);
+                        // 本地同步，但如果 ID 是糖糖，則 UI mapping 會覆蓋它
                         if (data.color) setUserColor(data.color);
                     }
                 };
@@ -532,19 +534,29 @@
                 }
             };
 
-            // --- 新增：執行成員顏色修改 ---
             const handleExecMemberColorChange = async (newColor) => {
-                if (!colorChangingMember) return;
+                if (!colorChangingMember || !user) return;
+                
+                // 「糖糖」的顏色已被固定在 nameColorMap 中，這裡只處理雲端資料的寫入
+                if (colorChangingMember === userName) {
+                    setUserColor(newColor);
+                    localStorage.setItem('steam_user_color', newColor);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
+                    showNotify(`已更新本人顏色`);
+                    setColorChangingMember(null);
+                    return;
+                }
+
                 const profile = userProfiles.find(p => p.name === colorChangingMember);
                 if (profile?.uid) {
                     try {
                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
-                        showNotify(`已更新 ${colorChangingMember} 的顏色`);
+                        showNotify(`已同步更新 ${colorChangingMember} 的雲端顏色`);
                     } catch (e) {
-                        showNotify("更新失敗，權限不足或網路問題");
+                        showNotify("更新失敗，權限不足");
                     }
                 } else {
-                    showNotify(`找不到 ${colorChangingMember} 的設定檔，無法修改`);
+                    showNotify(`「${colorChangingMember}」目前僅為文字紀錄，尚未建立雲端設定檔，無法修改顏色`);
                 }
                 setColorChangingMember(null);
             };
@@ -554,7 +566,6 @@
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
                     
-                    {/* 隱藏的成員顏色選擇器 */}
                     <input 
                         type="color" 
                         ref={memberColorPickerRef} 
