@@ -38,13 +38,11 @@
         .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
         .component-view li:hover { background: rgba(0, 0, 0, 0.3); border-color: #ffbae9; transform: translateY(-2px); }
         
-        /* 手機版封面寬度優化 */
         .image-link { width: 130px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: all 0.3s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         @media (min-width: 768px) { .image-link { width: 180px; } }
         
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         
-        /* 手機版文字空間優化 */
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.6rem 0.8rem 0.8rem 0.8rem; }
         @media (min-width: 768px) { .desc { padding: 0.75rem 1.25rem 1rem 1.25rem; } }
         
@@ -112,6 +110,10 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
         .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
         .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
+        
+        /* 選項小按鈕樣式 */
+        .quick-pick-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 900; color: #cbd5e1; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .quick-pick-btn:hover { border-color: #ffbae9; color: #fff; background: rgba(255,186,233,0.1); }
     </style>
 </head>
 <body>
@@ -196,8 +198,6 @@
                 img.src = dataUrl;
             });
         };
-
-        // --- Components ---
 
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -347,7 +347,7 @@
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
             return (
                 <div className={`max-w-[192px] ${containerClass || ''}`}>
-                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                    <label className={`block text-[11px] font-black uppercase mb-1.5 md:mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
                     <div className="progress-input-row">
                         <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
@@ -391,6 +391,9 @@
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             
             const [memberFilter, setMemberFilter] = useState(null);
+            
+            // 追蹤近期選過的分類
+            const [recentCategories, setRecentCategories] = useState(() => JSON.parse(localStorage.getItem('recent_categories') || '[]'));
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             
@@ -495,6 +498,13 @@
             const handleSaveGame = async (e) => {
                 if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user) return;
                 try {
+                    // 更新近期選過的分類
+                    if (formData.category) {
+                        const newRecent = [formData.category, ...recentCategories.filter(c => c !== formData.category)].slice(0, 2);
+                        setRecentCategories(newRecent);
+                        localStorage.setItem('recent_categories', JSON.stringify(newRecent));
+                    }
+
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
                     if(formData.order === "") while(orders.includes(to)) to++;
@@ -683,53 +693,114 @@
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-8 overflow-hidden relative shadow-2xl rounded-sm">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
-                                <div className="p-8">
-                                    <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                                            <div className="md:col-span-4 space-y-4">
-                                                <div onClick={() => setLastSelectedImgZone('cover')} className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 font-black uppercase">僅支援 CTRL+V 貼上</div>}
+                                <div className="p-4 md:p-8">
+                                    <h3 className="text-xl md:text-2xl font-black italic mb-4 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
+                                    <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+                                            {/* 左側：圖片與基本訊息 */}
+                                            <div className="md:col-span-4 space-y-3 md:space-y-4">
+                                                <div onClick={() => setLastSelectedImgZone('cover')} className={`w-[130px] md:w-full mx-auto md:mx-0 aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 md:p-4 text-[9px] md:text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援 CTRL+V 貼上</div>}
                                                 </div>
                                                 {formData.cover && (
-                                                    <button type="button" onClick={() => setIsCropping(true)} className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all">
+                                                    <button type="button" onClick={() => setIsCropping(true)} className="w-full md:w-full mx-auto block py-1.5 md:py-2 bg-white/5 border border-white/10 rounded text-[9px] md:text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all">
                                                         裁剪封面
                                                     </button>
                                                 )}
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
-                                                <div className="flex gap-2">
-                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
+                                                
+                                                <div className="flex flex-wrap gap-3">
+                                                    <div className="flex-1 min-w-[60px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                    <div className="flex-1 min-w-[90px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
                                                 </div>
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => setLastSelectedImgZone('source')}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} /></div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1">分類</label>
+                                                    <div className="space-y-1.5">
+                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
+                                                            <option value="">- 分類 -</option>
+                                                            {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                                                        </select>
+                                                        {recentCategories.length > 0 && (
+                                                            <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                                                                <span className="text-[9px] font-black text-white/20 uppercase self-center whitespace-nowrap">近期:</span>
+                                                                {recentCategories.map(rc => (
+                                                                    <button key={rc} type="button" onClick={() => setFormData({...formData, category: rc})} className="quick-pick-btn">{rc}</button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
+                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">來源</label><div className="source-icon-preview-box !w-8 !h-8 mx-auto" onClick={() => setLastSelectedImgZone('source')}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div></div>
+                                                </div>
+
+                                                <div>
+                                                    <div className="flex gap-1 items-center">
+                                                        <div className="flex-1 relative">
+                                                            <input list="source-list" placeholder="輸入來源..." className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />
+                                                            <datalist id="source-list">
+                                                                {customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                                                            </datalist>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        {customSources.map(s => (
+                                                            <button key={s.name} type="button" onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className={`quick-pick-btn flex items-center gap-1.5 ${formData.source === s.name ? '!border-[#ffbae9] !text-[#ffbae9]' : ''}`}>
+                                                                {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />} {s.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="md:col-span-8 space-y-5">
-                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
-                                                <div className="flex flex-col md:flex-row gap-4">
+
+                                            {/* 右側：詳細表單內容 */}
+                                            <div className="md:col-span-8 space-y-3 md:space-y-5">
+                                                <div><label className="block text-[10px] md:text-[11px] font-black text-[#ffbae9]/60 uppercase mb-1">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-base md:text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                
+                                                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
                                                 </div>
-                                                <div className="flex items-end gap-3"><div className="w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
-                                                <div className="flex flex-col md:flex-row gap-4">
+
+                                                <div className="flex items-end gap-3"><div className="w-[105px]"><label className="block text-[10px] md:text-[11px] font-black text-white/40 uppercase mb-1">-更新星期-</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div><div className="flex-1"><label className="block text-[10px] md:text-[11px] font-black text-[#ffbae9]/80 uppercase mb-1">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
+                                                
+                                                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                                                     <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="flex-1" />
                                                 </div>
+
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="md:col-span-1 max-w-[125px]">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
+                                                        <label className="block text-[10px] md:text-[11px] font-black text-white/40 uppercase mb-1">-最後更新-</label>
                                                         <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
                                                     </div>
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
+                                                        <label className="block text-[10px] md:text-[11px] font-black text-white/40 uppercase mb-1">-連結-</label>
                                                         <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
                                                     </div>
                                                 </div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
+
+                                                <div>
+                                                    <label className="block text-[10px] md:text-[11px] font-black text-white/40 uppercase mb-1">-誰在看-</label>
+                                                    <div className="inline-flex flex-wrap gap-2 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px]">
+                                                        {["糖糖", "雲雲"].map(name => (
+                                                            <div key={name} onClick={() => { 
+                                                                const list = [...(formData.watchingBy || [])]; 
+                                                                const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; 
+                                                                setFormData({...formData, watchingBy: nList}); 
+                                                            }} className={`watcher-tag !px-2.5 !py-1 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>
+                                                                {name}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div><label className="block text-[10px] md:text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
                                             </div>
                                         </div>
-                                        <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase">確認提交</button></div>
+                                        <div className="pt-4 md:pt-6 flex gap-3 md:gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-3 md:py-4 bg-[#ffbae9] text-[#3f5968] text-[11px] md:text-[12px] font-black rounded shadow-lg uppercase transition-all hover:brightness-110">確認提交</button></div>
                                     </form>
                                 </div>
                             </div>
