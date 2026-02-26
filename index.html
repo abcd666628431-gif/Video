@@ -367,7 +367,7 @@
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
             
             const isDuplicateName = useMemo(() => {
-                const currentName = formData.name.trim().toLowerCase();
+                const currentName = (formData.name || "").trim().toLowerCase();
                 if (!currentName) return false;
                 return games.some(g => (g.name || "").trim().toLowerCase() === currentName && g.id !== editingId);
             }, [formData.name, games, editingId]);
@@ -419,8 +419,9 @@
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
             
+            // 初始化驗證
             useEffect(() => { 
-                const init = async () => { 
+                const initAuth = async () => { 
                     try { 
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
@@ -431,10 +432,12 @@
                         console.error("Auth error:", e);
                     } 
                 }; 
-                init(); 
-                return onAuthStateChanged(auth, setUser); 
+                initAuth(); 
+                const unsubscribe = onAuthStateChanged(auth, setUser); 
+                return () => unsubscribe();
             }, []);
             
+            // 數據監聽
             useEffect(() => {
                 if (!user) return;
                 setIsLoadingGames(true); setIsLoadingLogs(true);
@@ -456,7 +459,14 @@
                     setActivityLogs(logs.slice(0, 30)); 
                     setIsLoadingLogs(false); 
                 }, (err) => console.error(err));
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
+                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
+                    if(d.exists()) { 
+                        setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); 
+                        setCustomSources(d.data().sources || []); 
+                    } else {
+                        setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] });
+                    }
+                }, (err) => console.error(err));
                 const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
                 const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
 
@@ -469,7 +479,7 @@
                 updP(); 
                 const inv = setInterval(updP, 120000); 
                 return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
-            }, [user, userName, userColor]);
+            }, [user]); // 僅依賴於 user，內部狀態變化不觸發重新掛載監聽器以防當機
 
             const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
             const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
