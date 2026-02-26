@@ -25,8 +25,7 @@
         .animate-text-shimmer { background: linear-gradient(to right, #ffffff, #ffbae9, #818cf8, #ffffff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmer 4s linear infinite; }
         @keyframes shimmer { to { background-position: 200% center; } }
         .tab-content { width: 100%; margin-top: 1rem; }
-        .tab-bar { display: flex; flex-wrap: nowrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); overflow-x: auto; scrollbar-width: none; }
-        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; }
         .tab:hover { border-color: #ffbae9; }
         .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
@@ -36,89 +35,86 @@
         .tab-action-btn.btn-minus:hover { background: #ef4444; color: #fff; }
         .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
-        .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
+        
+        /* 響應式卡片高度：手機版自動，電腦版固定 240px */
+        .component-view li { 
+            background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; 
+            position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; 
+            height: auto; min-height: 200px;
+        }
+        @media (min-width: 768px) { .component-view li { height: 240px; } }
         .component-view li:hover { background: rgba(0, 0, 0, 0.3); border-color: #ffbae9; transform: translateY(-2px); }
         
-        /* 手機版優化：圖片寬度在小螢幕上縮減 */
-        .image-link { width: 110px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
-        @media (min-width: 640px) { .image-link { width: 180px; } }
+        /* 響應式封面寬度：手機版縮小以騰出文字空間 */
+        .image-link { width: 110px; height: auto; min-height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
+        @media (min-width: 768px) { .image-link { width: 180px; } }
         
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
-        .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1rem 1rem 1rem; }
-        @media (min-width: 640px) { .desc { padding: 0.75rem 1.25rem 1rem 1.25rem; } }
+        .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.6rem 0.8rem 0.8rem 0.8rem; }
+        @media (min-width: 768px) { .desc { padding: 0.75rem 1.25rem 1rem 1.25rem; } }
         
-        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 35px; }
-        @media (min-width: 640px) { .title-container { padding-right: 45px; } }
+        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 40px; }
         
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.15rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
-        @media (min-width: 640px) { .desc .title-link { font-size: 1.4rem; } }
+        /* 手機版標題字體略微縮小 */
+        .desc .title-link { 
+            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.15rem; font-weight: 900; 
+            display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; 
+            color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; 
+            letter-spacing: -0.01em; word-break: break-all; 
+        }
+        @media (min-width: 768px) { .desc .title-link { font-size: 1.4rem; } }
         
-        .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; font-weight: 900; margin-right: 6px; vertical-align: 2px; display: inline-block; }
-        @media (min-width: 640px) { .id-label { font-size: 11px; padding: 1px 6px; margin-right: 8px; } }
-        
+        .desc .title-link:hover { color: #ffbae9; }
+        .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; font-weight: 900; margin-right: 6px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; }
-        @media (min-width: 640px) { .meta { font-size: 0.85rem; line-height: 1.6; } }
-        
+        @media (min-width: 768px) { .meta { font-size: 0.85rem; line-height: 1.6; } }
         .meta strong { color: #ffbae9; margin-right: 0.3rem; }
-        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 18px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
+        @media (min-width: 768px) { .progress-container { height: 20px; } }
         .progress-fill { height: 100%; background: #ffbae9; transition: width 0.5s ease; }
-        .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
+        .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
         
-        .status-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 900; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); z-index: 10; display: flex; align-items: center; justify-content: center; min-width: 45px; border: 1px solid rgba(255,255,255,0.3); }
-        @media (min-width: 640px) { .status-badge { font-size: 11px; padding: 3px 8px; min-width: 52px; } }
+        .status-badge { position: absolute; top: 8px; right: 8px; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 900; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); z-index: 10; display: flex; align-items: center; justify-content: center; min-width: 48px; letter-spacing: 0.05em; text-shadow: 0 1px 1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); line-height: 1.2; }
+        @media (min-width: 768px) { .status-badge { top: 10px; right: 10px; font-size: 11px; padding: 3px 8px; min-width: 52px; } }
         
         .badge-airing { background-color: #16a34a; color: #fff; }
         .badge-completed { background-color: #dc2626; color: #fff; }
         .badge-waiting { background-color: #475569; color: #fff; }
-        .year-badge { position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 900; color: #fff; z-index: 10; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-        @media (min-width: 640px) { .year-badge { font-size: 12px; } }
+        .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         
-        .update-progress-circle { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        @media (min-width: 640px) { .update-progress-circle { width: 42px; height: 42px; } }
+        .update-progress-circle { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        @media (min-width: 768px) { .update-progress-circle { top: 15px; right: 15px; width: 42px; height: 42px; } }
+        .update-progress-circle span { font-size: 9px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
+        @media (min-width: 768px) { .update-progress-circle span { font-size: 11px; } }
         
-        .update-progress-circle span { font-size: 10px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
-        @media (min-width: 640px) { .update-progress-circle span { font-size: 11px; } }
-        
-        .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 0.75rem; min-height: 180px; }
-        @media (min-width: 640px) { .dashboard-panel { padding: 1rem; } }
+        /* 響應式儀表板：手機版自動高度防溢出 */
+        .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; min-height: 180px; height: auto; }
+        @media (min-width: 1024px) { .dashboard-panel { height: 180px; } }
         
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
-        .btn-delete-bottom { position: absolute; bottom: 12px; right: 12px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
+        .btn-delete-bottom { position: absolute; bottom: 8px; right: 8px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
         li:hover .btn-delete-bottom { opacity: 1; }
         .btn-delete-bottom:hover { background: #ef4444; color: #fff; transform: translateY(-2px); }
-        .source-icon-small { height: 1.1em; width: auto; max-width: 20px; border-radius: 2px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 4px; position: relative; flex-shrink: 0; }
-        @media (min-width: 640px) { .source-icon-small { max-width: 24px; margin-right: 6px; } }
-        
-        .member-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 9px; font-weight: 900; border: 1px solid rgba(255,255,255,0.15); line-height: 1.1; }
-        @media (min-width: 640px) { .member-badge { padding: 2px 8px; font-size: 10px; } }
-        
-        .watcher-tag { padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
-        @media (min-width: 640px) { .watcher-tag { padding: 4px 10px; font-size: 11px; } }
-        
+        .source-icon-small { height: 1.1em; width: auto; max-width: 24px; border-radius: 2px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 6px; position: relative; flex-shrink: 0; }
+        .member-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.15); line-height: 1; }
+        .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
         .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .progress-stat { display: flex; align-items: baseline; gap: 2px; }
         .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.1rem; line-height: 1; }
-        @media (min-width: 640px) { .progress-val-current { font-size: 1.25rem; } }
-        
-        .source-input-group { display: flex; gap: 0.5rem; align-items: flex-start; }
-        @media (min-width: 640px) { .source-input-group { gap: 0.75rem; } }
-        
-        .source-icon-preview-box { width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
-        @media (min-width: 640px) { .source-icon-preview-box { width: 40px; height: 40px; } }
-        
+        @media (min-width: 768px) { .progress-val-current { font-size: 1.25rem; } }
+        .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
+        .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
         .progress-input-row { display: grid; grid-template-columns: 2fr 1.2fr 2fr 1.2fr; gap: 4px; align-items: center; }
         .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .crop-hole { width: 260px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
-        @media (min-width: 640px) { .crop-hole { width: 300px; } }
-        
-        .crop-hole::after { content: '拖動或縮放 (3:4)'; position: absolute; top: -25px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 11px; font-weight: 900; }
+        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
+        .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
-        .fab-btn { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
-        @media (min-width: 640px) { .fab-btn { bottom: 30px; right: 30px; } }
+        .fab-btn { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.8; }
+        @media (min-width: 768px) { .fab-btn { bottom: 30px; right: 30px; opacity: 0.7; } }
         .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
     </style>
 </head>
@@ -229,8 +225,7 @@
                 ctx.fillStyle = "#3f5968";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                const img = imgRef.current;
-                const holeSize = window.innerWidth < 640 ? { w: 260, h: 346.6 } : { w: 300, h: 400 };
+                const img = imgRef.current, holeSize = { w: 300, h: 400 };
                 const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
                 const resRatio = canvas.width / holeSize.w;
                 
@@ -253,12 +248,12 @@
                     <div className="flex-1 relative overflow-hidden bg-[#3f5968] cursor-move" ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
                         <img ref={imgRef} src={imageSrc} style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none' }} />
                         <div className="crop-overlay">
-                            <div className="crop-hole"></div>
+                            <div className="crop-hole" style={{ width: '300px', height: '400px' }}></div>
                         </div>
                     </div>
-                    <div className="p-4 sm:p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
+                    <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
                         <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center md:text-left">精密縮放控制 (步進 0.005)</span>
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精密縮放控制 (步進 0.005)</span>
                             <div className="flex items-center gap-4">
                                 <Icon name="minus" className="w-3 h-3 text-white/20" />
                                 <input type="range" min="0.01" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" />
@@ -266,9 +261,9 @@
                                 <span className="text-[10px] font-mono text-[#ffbae9] min-w-[40px]">{scale.toFixed(3)}x</span>
                             </div>
                         </div>
-                        <div className="flex gap-4 w-full md:w-auto">
-                            <button onClick={onCancel} className="flex-1 md:flex-none px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
-                            <button onClick={handleConfirm} className="flex-1 md:flex-none px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪</button>
+                        <div className="flex gap-4">
+                            <button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
+                            <button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪</button>
                         </div>
                     </div>
                 </div>
@@ -283,7 +278,7 @@
         });
 
         const TitleIcon = () => (
-            <svg className="w-10 h-10 sm:w-14 sm:h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-10 h-10 md:w-14 md:h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
                 <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
                 <path d="M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z" fill="#6D69E4"></path>
@@ -316,28 +311,31 @@
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
                                 <span className="id-label">#{g.order || 0}</span>{g.name}
                             </div> 
-                            <div className="text-[12px] sm:text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
+                            <div className="text-[12px] md:text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
                         </div>
-                        <div className="meta space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-start">
-                            <div className="flex items-center flex-wrap gap-x-1 opacity-90 truncate"><strong className="whitespace-nowrap">分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知'}</span></span></div>
-                            <div className="text-[10px] sm:text-[11px] opacity-90 leading-tight">
-                                <strong className="whitespace-nowrap">更新：</strong> 
-                                <span className="text-white/95">至 {formatProgressText(g.updatedEpisodes)}</span>
-                                {(g.updateDay || g.updateTime) && <span className="ml-1 text-[#ffbae9] font-black border-l border-white/20 pl-1">周{g.updateDay ? `(${g.updateDay})` : ''}</span>}
+                        <div className="meta space-y-1 md:space-y-1.5 flex-1 flex flex-col justify-start">
+                            <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
+                            <div className="text-[10px] md:text-[11px] opacity-90">
+                                <strong>更新：</strong> 
+                                <span className="text-white/95">至 {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
+                                {g.paidProgress && extractFirstNumber(g.paidProgress) > 0 && (
+                                    <span className="ml-1 text-yellow-400 font-black border-l border-white/20 pl-1">付費至 {formatProgressText(g.paidProgress)}</span>
+                                )}
+                                {(g.updateDay || g.updateTime) && <span className="ml-1 text-[#ffbae9] font-black border-l border-white/20 pl-1">周{g.updateDay ? `(${g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下' + (g.updateTime.split(':')[0] % 12 || 12) : '上' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}</span>}
                             </div>
-                            <div className="mt-auto pt-1 sm:pt-2">
-                                <div className="flex justify-between items-center w-full gap-1">
-                                    <div className="flex items-center gap-1 flex-shrink-0"><strong className="text-[10px] sm:text-[11px]">進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress)}</span></div></div>
-                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1 min-w-0"><div className="flex flex-wrap justify-end gap-0.5 sm:gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
+                            <div className="mt-auto pt-1 md:pt-2">
+                                <div className="flex justify-between items-center w-full gap-2">
+                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[10px] md:text-[11px]">進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress)}</span></div></div>
+                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1 overflow-hidden"><div className="flex flex-wrap justify-end gap-1">{watchingByList.slice(0, 2).map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}{watchingByList.length > 2 && <span className="text-[9px] opacity-50">+{watchingByList.length - 2}</span>}</div></div>}
                                 </div>
-                                <div className="flex justify-between items-center w-full mt-1.5 pt-1 border-t border-white/10 mb-1">
-                                    <div className="truncate text-[9px] sm:text-[10px]"><strong className="opacity-50 text-[8px] sm:text-[9px] uppercase">CREATOR</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
-                                    {g.manualUpdatedAt && <div className="text-[9px] sm:text-[10px] opacity-60">UP: {g.manualUpdatedAt}</div>}
+                                <div className="flex justify-between items-center w-full mt-1.5 pt-1.5 border-t border-white/10 mb-1">
+                                    <div className="truncate text-[9px] md:text-[10px]"><strong className="opacity-50 text-[8px] md:text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
+                                    {g.manualUpdatedAt && <div className="text-[9px] md:text-[10px] opacity-60">{g.manualUpdatedAt}</div>}
                                 </div>
                                 <div className="progress-container"><div className="progress-fill" style={{ width: `${percentage}%` }}></div><div className="progress-text-overlay">{percentage}%</div></div>
                             </div>
                         </div>
-                        {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除</button>}
+                        {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
                     </div>
                 </li>
             );
@@ -346,8 +344,8 @@
         const ProgressInputField = memo(({ label, value, onChange, labelClass, containerClass }) => {
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
             return (
-                <div className={`w-full sm:max-w-[192px] ${containerClass || ''}`}>
-                    <label className={`block text-[11px] font-black uppercase mb-1.5 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                <div className={`max-w-full md:max-w-[192px] ${containerClass || ''}`}>
+                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
                     <div className="progress-input-row">
                         <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
@@ -369,11 +367,11 @@
                 onChange(`${String(fH).padStart(2, '0')}:${String(nM).padStart(2, '0')}`);
             };
             return (
-                <div className="flex gap-1.5 w-full max-w-[144px]">
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}><option value="上午">上午</option><option value="下午">下午</option></select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
-                    <button type="button" onClick={() => onChange("")} className="w-5 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>
+                <div className="flex gap-1 md:gap-1.5 w-full max-w-[144px]">
+                    <select className="modal-input-base flex-1 text-[10px] md:text-[11px] font-black px-1" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}><option value="上午">上</option><option value="下午">下</option></select>
+                    <select className="modal-input-base flex-1 text-[10px] md:text-[11px] font-black px-1" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <select className="modal-input-base flex-1 text-[10px] md:text-[11px] font-black px-1" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <button type="button" onClick={() => onChange("")} className="w-5 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3.5 h-3.5" /></button>
                 </div>
             );
         });
@@ -406,7 +404,9 @@
                     if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
                     if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
                 }); 
-                m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff";
+                m["糖糖"] = "#ffbae9";
+                m["神雲"] = "#47daff";
+                m["雲雲"] = "#47daff";
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
 
@@ -426,9 +426,14 @@
                     if (items[i].type.indexOf("image") !== -1) {
                         const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
                         if (lastSelectedImgZone === 'source') { 
-                            const c = await compressImage(url, 100); setFormData(p => ({ ...p, sourceIcon: c })); showNotify("來源圖標已貼上"); 
+                            const c = await compressImage(url, 100); 
+                            setFormData(p => ({ ...p, sourceIcon: c })); 
+                            showNotify("來源圖標已貼上"); 
                         } else { 
-                            setRawImageData(url); const c = await compressImage(url, 1000); setFormData(p => ({ ...p, cover: c })); showNotify("封面已縮放貼上"); 
+                            setRawImageData(url); 
+                            const c = await compressImage(url, 1000); 
+                            setFormData(p => ({ ...p, cover: c }));
+                            showNotify("封面已縮放貼上"); 
                         }
                         break;
                     }
@@ -468,7 +473,8 @@
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    setActivityLogs(logs.slice(0, 30)); setIsLoadingLogs(false); 
+                    setActivityLogs(logs.slice(0, 30)); 
+                    setIsLoadingLogs(false); 
                 }, (err) => console.error(err));
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
                 const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
@@ -480,7 +486,8 @@
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
                     }
                 };
-                updP(); const inv = setInterval(updP, 120000); 
+                updP(); 
+                const inv = setInterval(updP, 120000); 
                 return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
             }, [user, userName, userColor]);
 
@@ -490,7 +497,8 @@
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
             
             const handleOpenAddModal = () => {
-                setEditingId(null); setRawImageData(null); 
+                setEditingId(null); 
+                setRawImageData(null); 
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             };
@@ -508,7 +516,8 @@
                     }
                     const sv = formData.source.trim();
                     if(sv) { 
-                        let sources = [...customSources]; const idx = sources.findIndex(s => s.name === sv); 
+                        let sources = [...customSources]; 
+                        const idx = sources.findIndex(s => s.name === sv); 
                         if(idx === -1) sources.push({ name: sv, icon: formData.sourceIcon || '' }); 
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
@@ -518,7 +527,7 @@
                     if(editingId) { await updateDoc(doc(getPublicCol('games'), editingId), finalData); logActivity("修改", cn); }
                     else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", cn); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { showNotify("操作失敗"); }
+                } catch(e) { console.error(e); showNotify("操作失敗"); }
             };
 
             const handleDeleteGame = async (id) => { if(!user) return; const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知"); showNotify("已刪除"); setDeleteGameTarget(null); };
@@ -540,13 +549,16 @@
                         if (extractFirstNumber(g.order) !== newOrder) updates.push(updateDoc(doc(getPublicCol('games'), g.id), { order: newOrder }));
                     });
                     if (updates.length > 0) {
-                        await Promise.all(updates); logActivity("重排編號", `共修正 ${updates.length} 項`); showNotify(`排列完成！已修正 ${updates.length} 個編號斷層`);
-                    } else showNotify("編號序列已是完整連續狀態");
+                        await Promise.all(updates);
+                        logActivity("重排編號", `共修正 ${updates.length} 項`);
+                        showNotify(`排列完成！已修正 ${updates.length} 個編號斷層`);
+                    } else showNotify("編號序列已是完整連續狀態，無需調整");
                 } catch (e) { showNotify("重排失敗"); }
             };
 
             const filteredGames = useMemo(() => {
-                let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
+                let l = [...games]; 
+                const q = searchQuery.toLowerCase().trim(); 
                 if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
                 if (memberFilter) {
                     const { name, type } = memberFilter;
@@ -584,46 +596,41 @@
             const handleExecMemberColorChange = async (newColor) => {
                 if (!colorChangingMember || !user) return;
                 if (colorChangingMember === userName) {
-                    setUserColor(newColor); localStorage.setItem('steam_user_color', newColor);
+                    setUserColor(newColor);
+                    localStorage.setItem('steam_user_color', newColor);
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
                     showNotify(`已更新本人顏色`);
                 } else {
                     const profile = userProfiles.find(p => p.name === colorChangingMember);
                     if (profile?.uid) {
-                        try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true }); showNotify(`已更新 ${colorChangingMember} 顏色`); } catch (e) { showNotify("更新失敗"); }
+                        try {
+                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
+                            showNotify(`已更新 ${colorChangingMember} 顏色`);
+                        } catch (e) { showNotify("更新失敗"); }
                     } else showNotify("此成員尚未註冊");
                 }
                 setColorChangingMember(null);
             };
 
             return (
-                <div className="min-h-screen p-3 sm:p-4 md:p-8 relative text-white pb-24 overflow-x-hidden">
-                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-4 sm:px-6 py-2 rounded-full border-2 border-white shadow-2xl text-sm sm:text-base whitespace-nowrap">{notification}</div>}
+                <div className="min-h-screen p-3 md:p-8 relative text-white pb-24">
+                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl text-xs md:text-sm">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
                     
                     <input type="color" ref={memberColorPickerRef} className="hidden" onChange={(e) => handleExecMemberColorChange(e.target.value)} />
 
                     <div className="max-w-[1800px] mx-auto">
-                        <header className="mb-6 sm:mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-4 sm:gap-6 w-full md:w-auto">
-                                <TitleIcon />
-                                <div>
-                                    <div className="flex items-center gap-2 mb-0.5 sm:mb-1"><div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#ffbae9]"></div><span className="text-[10px] sm:text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div>
-                                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
-                                <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 border rounded text-[9px] sm:text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-3 h-3 sm:w-4 sm:h-4" /> <div className="flex flex-col"><span className="uppercase text-[8px] sm:text-[10px]">即時同步中</span><span className="text-[8px] sm:text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
-                                {!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-[10px] sm:text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-3 h-3 sm:w-4 sm:h-4" /> 清除</button>}
-                            </div>
+                        <header className="mb-6 md:mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 md:gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-[10px] md:text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
+                            <div className="flex items-center gap-2 md:gap-3"><div className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-3.5 h-3.5 md:w-4 md:h-4" /> <div className="flex flex-col"><span className="uppercase text-[8px] md:text-[10px]">即時同步中</span><span className="text-[8px] md:text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-[10px] md:text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-3.5 h-3.5 md:w-4 md:h-4" /> 清除</button>}</div>
                         </header>
                         
-                        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6 mb-8">
-                            <div className="lg:col-span-4 dashboard-panel overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[11px] sm:text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[9px] sm:text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
-                            <div className="lg:col-span-2 dashboard-panel flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2 content-start">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
-                            <div className="lg:col-span-4 dashboard-panel relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse min-w-[300px]"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開</th><th className="pb-1 text-center text-cyan-400">看中</th><th className="pb-1 text-center text-green-400">看完</th></tr></thead><tbody>{memberStats.map(m => (
+                        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 md:gap-6 mb-8">
+                            <div className="lg:col-span-4 dashboard-panel overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[12px] md:text-[13px] space-y-1 text-white/70 max-h-[120px] lg:max-h-full">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[9px] md:text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
+                            <div className="lg:col-span-2 dashboard-panel flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-lg md:text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[10px] md:text-[11px] rounded flex flex-wrap gap-2 max-h-[80px] lg:max-h-full">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
+                            <div className="lg:col-span-4 dashboard-panel relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[120px] lg:max-h-full"><table className="w-full text-[10px] md:text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未</th><th className="pb-1 text-center text-cyan-400">中</th><th className="pb-1 text-center text-green-400">完</th></tr></thead><tbody>{memberStats.map(m => (
                                 <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                    <td className="py-1.5 truncate max-w-[80px]" style={{ color: m.color }}>{m.name}</td>
+                                    <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
                                     <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${memberFilter?.name === m.name && memberFilter?.type === 'total' ? 'bg-[#ffbae9]/20 text-[#ffbae9]' : ''}`}>{m.stats.total}</td>
                                     <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${memberFilter?.name === m.name && memberFilter?.type === 'unstarted' ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
                                     <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${memberFilter?.name === m.name && memberFilter?.type === 'watching' ? 'bg-cyan-400/20' : 'text-cyan-400'}`}>{m.stats.watching}</td>
@@ -633,30 +640,28 @@
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
-                            <button onClick={handleOpenAddModal} className="px-6 sm:px-10 py-4 sm:py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-4 sm:border-l-8 border-white uppercase tracking-widest text-xs sm:text-sm">+ 錄入新內容</button>
-                            <div className="flex-grow flex items-center px-6 sm:px-8 border-y md:border-y-0 border-white/5 py-3 sm:py-0"><Icon name="search" className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-xs sm:text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                            <div className="px-6 sm:px-8 flex items-center justify-between md:justify-end py-3 sm:py-0 gap-3">
-                                {memberFilter && <button onClick={() => setMemberFilter(null)} className="px-2 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[9px] font-black rounded flex items-center gap-1 hover:bg-[#ffbae9]/20 transition-all truncate max-w-[100px]"><Icon name="filter" className="w-3 h-3" /> {memberFilter.name} <Icon name="x" className="w-2.5 h-2.5" /></button>}
-                                <div className="flex items-center gap-2">
-                                    {!isEditLocked && <button onClick={handleReorderIDs} className="px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[9px] uppercase hover:bg-cyan-500/20 transition-all flex items-center gap-1.5"><Icon name="list-ordered" className="w-2.5 h-2.5" /> 重排</button>}
-                                    <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-black text-[10px] sm:text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1.5 sm:mr-2 inline" /> {isEditLocked ? "唯讀" : "管理"}</button>
-                                </div>
+                            <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-4 md:py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-4 md:border-l-8 border-white uppercase tracking-widest text-xs md:text-sm">+ 錄入新內容</button>
+                            <div className="flex-grow flex items-center px-6 md:px-8 border-y md:border-y-0 border-white/5 py-3 md:py-0"><Icon name="search" className="w-4 h-4 md:w-5 md:h-5 text-white/40 mr-3 md:mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-xs md:text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                            {memberFilter && <div className="px-4 py-2 flex items-center"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[9px] md:text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all"><Icon name="filter" className="w-2.5 h-2.5 md:w-3 md:h-3" /> 篩選: {memberFilter.name} <Icon name="x" className="w-2.5 h-2.5 md:w-3 md:h-3 ml-1" /></button></div>}
+                            <div className="px-6 md:px-8 flex items-center justify-end py-3 md:py-0 gap-2 md:gap-3">
+                                {!isEditLocked && <button onClick={handleReorderIDs} className="px-3 md:px-4 py-1.5 md:py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[9px] md:text-[10px] uppercase hover:bg-cyan-500/20 transition-all flex items-center gap-1 md:gap-2"><Icon name="list-ordered" className="w-2.5 h-2.5 md:w-3 md:h-3" /> 重排</button>}
+                                <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full font-black text-[10px] md:text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-2.5 h-2.5 md:w-3 md:h-3 mr-1.5 md:mr-2 inline" /> {isEditLocked ? "唯讀" : "管理"}</button>
                             </div>
                         </div>
 
-                        <article className="tab-content bg-black/10 border-x border-b border-white/10 p-4 sm:p-6 rounded-b-lg shadow-2xl">
+                        <article className="tab-content bg-black/10 border-x border-b border-white/10 p-4 md:p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
-                                <div className="ml-auto sticky right-0 flex gap-2 pl-4 bg-transparent backdrop-blur-sm">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
+                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase text-sm sm:text-base">目前無資料</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { setEditingId(item.id); setRawImageData(item.cover); const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; const sObj = customSources.find(s => s.name === item.source); setFormData({ ...item, sourceIcon: sObj ? sObj.icon : '', year: item.year || '', totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); setIsModalOpen(true); }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { setEditingId(item.id); setRawImageData(item.cover); const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; const sObj = customSources.find(s => s.name === item.source); setFormData({ ...item, sourceIcon: sObj ? sObj.icon : '', year: item.year || '', totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); setIsModalOpen(true); }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
                             </div> 
                         </article>
                     </div>
 
                     <div className="fab-btn" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "解鎖" : "錄入"}>
-                        {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-6 h-6 sm:w-8 sm:h-8" /> : <Icon key="plus-icon" name="plus" className="w-6 h-6 sm:w-8 sm:h-8" />}
+                        {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-7 h-7" /> : <Icon key="plus-icon" name="plus" className="w-7 h-7" />}
                     </div>
 
                     {isAddGroupModalOpen && (
@@ -666,50 +671,50 @@
                     )}
 
                     {isModalOpen && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto sm:my-8 overflow-hidden relative shadow-2xl rounded-sm">
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
-                                <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
-                                <div className="p-4 sm:p-8">
-                                    <h3 className="text-xl sm:text-2xl font-black italic mb-6 sm:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-5 sm:space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8">
+                                <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-3 top-3 md:right-4 md:top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
+                                <div className="p-5 md:p-8">
+                                    <h3 className="text-xl md:text-2xl font-black italic mb-6 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
+                                    <form onSubmit={handleSaveGame} className="space-y-5 md:space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
                                             <div className="md:col-span-4 space-y-4">
                                                 <div onClick={() => setLastSelectedImgZone('cover')} className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[9px] sm:text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">CTRL+V<br/>貼上封面</div>}
+                                                    {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">點擊並<br/>貼上封面</div>}
                                                 </div>
-                                                {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="w-full mt-1 py-1.5 bg-white/5 border border-white/10 rounded text-[9px] sm:text-[10px] font-black uppercase hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all flex items-center justify-center gap-2"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
+                                                {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="w-full mt-1 py-1.5 bg-white/5 border border-white/10 rounded text-[9px] font-black uppercase hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all flex items-center justify-center gap-2"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
-                                                <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+                                                <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                                                     <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
-                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-1" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
+                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[10px] md:text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-1" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
+                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[10px] md:text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[10px] md:text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
                                                 </div>
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group"><div className={`source-icon-preview-box ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center min-w-0"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1 min-w-0" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[10px] md:text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
                                             </div>
-                                            <div className="md:col-span-8 space-y-5">
-                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
-                                                <div className="flex flex-col sm:flex-row gap-4">
+                                            <div className="md:col-span-8 space-y-4 md:space-y-5">
+                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-base md:text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
                                                 </div>
-                                                <div className="flex items-end gap-2 sm:gap-3"><div className="w-[90px] sm:w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新日-</label><select className="modal-input-base w-full text-[11px] font-bold px-1" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
-                                                <div className="flex flex-col sm:flex-row gap-4">
+                                                <div className="flex items-end gap-3"><div className="w-[90px] md:w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新日-</label><select className="modal-input-base w-full text-[10px] md:text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>周({d})</option>)}</select></div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
+                                                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                                                     <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="flex-1" />
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                    <div className="sm:col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /></div>
-                                                    <div className="sm:col-span-2"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="md:col-span-1 max-w-full md:max-w-[125px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label><input className="modal-input-base w-full font-black text-[10px] md:text-[11px] p-1.5" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /></div>
+                                                    <div className="md:col-span-2"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[10px] md:text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
                                                 </div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-1.5 sm:gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[10px] md:text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 sm:pt-6 flex gap-3 sm:gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-3 sm:py-4 bg-white/5 text-[11px] sm:text-[12px] font-black rounded uppercase border border-white/5">取消</button><button type="submit" className="flex-[2] py-3 sm:py-4 bg-[#ffbae9] text-[#3f5968] text-[11px] sm:text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交</button></div>
+                                        <div className="pt-4 md:pt-6 flex gap-3 md:gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase border border-white/5">取消</button><button type="submit" className="flex-[2] py-3 md:py-4 bg-[#ffbae9] text-[#3f5968] text-[11px] md:text-[12px] font-black rounded shadow-lg uppercase transition-all">提交資料</button></div>
                                     </form>
                                 </div>
                             </div>
@@ -719,10 +724,10 @@
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
 
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-8 sm:p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-10 h-10 sm:w-12 sm:h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic truncate px-2">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 px-2 leading-relaxed">確定要清空嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 px-2">確定要清空嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
                     )}
                 </div>
             );
