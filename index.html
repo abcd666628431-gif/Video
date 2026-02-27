@@ -40,8 +40,8 @@
         .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
-        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
+        .title-container { height: 3.5rem; margin-bottom: 0.3rem; display: flex; align-items: flex-start; padding-right: 45px; }
+        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
         .desc .title-link:hover { color: #ffbae9; }
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
@@ -87,14 +87,13 @@
 
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // Firebase 設置 - 適應當前環境
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "",
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
             authDomain: "video-b02b3.firebaseapp.com",
             projectId: "video-b02b3",
             storageBucket: "video-b02b3.firebasestorage.app",
@@ -105,7 +104,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+        const appId = 'video-library-v1';
 
         // --- Helpers ---
         const extractFirstNumber = (val) => {
@@ -279,10 +278,7 @@
                     <div className="desc">
                         <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
                         <div className="title-container">
-                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                <span className="id-label">#{g.order || 0}</span>{g.name}
-                            </div> 
-                            <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
+                            <div className="title-link" onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}><span className="id-label">#{g.order || 0}</span>{g.name}</div> 
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
@@ -355,7 +351,7 @@
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [formData, setFormData] = useState({ name: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             
@@ -366,13 +362,6 @@
             
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
             
-            // 新增：檢查名稱是否重複
-            const isDuplicateName = useMemo(() => {
-                const currentName = formData.name.trim().toLowerCase();
-                if (!currentName) return false;
-                return games.some(g => (g.name || "").trim().toLowerCase() === currentName && g.id !== editingId);
-            }, [formData.name, games, editingId]);
-
             const nameColorMap = useMemo(() => { 
                 const m = {};
                 userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
@@ -383,8 +372,8 @@
                     if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
                 }); 
                 m["糖糖"] = "#ffbae9";
-                m["神雲"] = "#47daff";
-                m["雲雲"] = "#47daff";
+                m["神雲"] = "#47daff"; // rgb(71, 218, 255)
+                m["雲雲"] = "#47daff"; // rgb(71, 218, 255)
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
 
@@ -419,22 +408,7 @@
             }, [isModalOpen, lastSelectedImgZone, showNotify]);
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            
-            useEffect(() => { 
-                const init = async () => { 
-                    try { 
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        console.error("Auth error:", e);
-                    } 
-                }; 
-                init(); 
-                return onAuthStateChanged(auth, setUser); 
-            }, []);
+            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
             
             useEffect(() => {
                 if (!user) return;
@@ -480,14 +454,12 @@
             const handleOpenAddModal = () => {
                 setEditingId(null); 
                 setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setFormData({ name: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             };
 
             const handleSaveGame = async (e) => {
-                if(e) e.preventDefault();
-                const cn = formData.name.trim(); 
-                if(!cn || !user || isDuplicateName) return; 
+                if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user) return;
                 try {
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
@@ -635,11 +607,14 @@
                             <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
                             
+                            {/* 修改：成員統計區移除透明度，移除提示文字 */}
                             <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => {
                                 const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
                                 return (
                                     <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                        {/* 修改：移除 pointer 與 hover 改色提示效果 */}
                                         <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
+                                        {/* 修改：移除了數字的不透明度，確保文字清晰 */}
                                         <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10 text-white ring-1 ring-inset ring-white/30' : ''}`}>{m.stats.unstarted}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400 ring-1 ring-inset ring-cyan-400/50' : 'text-cyan-400'}`}>{m.stats.watching}</td>
@@ -690,7 +665,6 @@
                                         watchedProgress: ensureP(item.watchedProgress), 
                                         updatedEpisodes: ensureP(item.updatedEpisodes), 
                                         paidProgress: ensureP(item.paidProgress),
-                                        notes: item.notes || '',
                                         manualUpdatedAt: item.manualUpdatedAt || '', 
                                         watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
                                     }); 
@@ -723,15 +697,15 @@
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-8 overflow-hidden relative shadow-2xl rounded-sm">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
-                                <div className="p-5 md:p-8">
-                                    <h3 className="text-xl md:text-2xl font-black italic mb-6 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-5 md:space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-8">
+                                <div className="p-8">
+                                    <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
+                                    <form onSubmit={handleSaveGame} className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                                             <div className="md:col-span-4 space-y-4">
                                                 <div>
                                                     <div 
                                                         onClick={() => setLastSelectedImgZone('cover')}
-                                                        className={`w-full max-md:max-w-[180px] max-md:mx-auto aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
+                                                        className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
                                                     >
                                                         {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
                                                     </div>
@@ -739,23 +713,15 @@
                                                         <button 
                                                             type="button"
                                                             onClick={() => setIsCropping(true)}
-                                                            className="w-full max-md:max-w-[180px] max-md:mx-auto mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"
+                                                            className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"
                                                         >
                                                             <Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化
                                                         </button>
                                                     )}
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
-                                                <div className="flex md:block gap-4">
-                                                    <div className="flex-1 md:mb-4">
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
-                                                        <input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
-                                                    </div>
-                                                    <div className="flex-[2]">
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
-                                                        <select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select>
-                                                    </div>
-                                                </div>
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
                                                 <div className="flex gap-2">
                                                     <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
                                                     <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
@@ -763,13 +729,7 @@
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
                                             </div>
                                             <div className="md:col-span-8 space-y-5">
-                                                <div>
-                                                    <label className={`block text-[11px] font-black uppercase mb-2 ${isDuplicateName ? 'text-red-500' : 'text-[#ffbae9]/60'}`}>
-                                                        -名稱- {isDuplicateName && "(重複名稱)"}
-                                                    </label>
-                                                    <input required className={`modal-input-base w-full max-w-xl font-black text-lg ${isDuplicateName ? 'text-red-500 border-red-500' : 'text-white'}`} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
-                                                    {isDuplicateName && <div className="text-red-500 text-[10px] font-black mt-1 uppercase">此名稱已存在於系統中，請更改後再提交</div>}
-                                                </div>
+                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
                                                 
                                                 <div className="flex flex-col md:flex-row gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
@@ -794,23 +754,9 @@
                                                     </div>
                                                 </div>
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
-                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
-                                                </div>
                                             </div>
                                         </div>
-                                        <div className="pt-6 flex flex-col-reverse md:flex-row gap-3 md:gap-4">
-                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button>
-                                            <button 
-                                                type="submit" 
-                                                disabled={isDuplicateName}
-                                                className={`flex-[2] py-4 text-[12px] font-black rounded shadow-lg uppercase transition-all ${isDuplicateName ? 'bg-slate-700 text-white/20 cursor-not-allowed border border-white/10' : 'bg-[#ffbae9] text-[#3f5968] active:scale-95'}`}
-                                            >
-                                                {isDuplicateName ? '無法提交：名稱重複' : '確認提交資料'}
-                                            </button>
-                                        </div>
+                                        <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
                                     </form>
                                 </div>
                             </div>
