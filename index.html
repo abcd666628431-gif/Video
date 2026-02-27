@@ -233,7 +233,6 @@
         });
 
         const Icon = memo(({ name, className, onClick, title }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return (
                 <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
             );
@@ -260,6 +259,7 @@
             const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             const sourceInfo = allSources.find(s => s.name === g.source);
+            
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -287,7 +287,7 @@
                             </div>
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress)}</span></div></div>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress) || '0'}</span></div></div>
                                     {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1"><strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
                                 </div>
                                 <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
@@ -357,20 +357,15 @@
             
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
             
+            // 優化：顏色映射計算
             const nameColorMap = useMemo(() => { 
                 const m = {};
                 userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
                 onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
                 m[userName] = userColor;
-                games.forEach(g => { 
-                    if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
-                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
-                }); 
-                m["糖糖"] = "#ffbae9";
-                m["神雲"] = "#47daff";
-                m["雲雲"] = "#47daff";
+                m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff";
                 return m; 
-            }, [onlineUsers, userProfiles, userName, userColor, games]);
+            }, [onlineUsers, userProfiles, userName, userColor]);
 
             const allMemberIDs = useMemo(() => { 
                 const ids = new Set([userName]); 
@@ -441,17 +436,51 @@
                 return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
             }, [user, userName, userColor]);
 
-            const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
+            // 優化：改為異步圖標刷新，解決模式切換卡頓
+            useEffect(() => {
+                if (window.lucide) {
+                    const tid = setTimeout(() => window.lucide.createIcons(), 50);
+                    return () => clearTimeout(tid);
+                }
+            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery]);
+
+            // 修改：logActivity 新增 gameOrder 參數
+            const logActivity = async (action, gameName, gameOrder) => { 
+                if(!user) return; 
+                try { 
+                    await addDoc(getPublicCol('activity_logs'), { 
+                        userName, 
+                        action, 
+                        gameName, 
+                        gameOrder: gameOrder || '',
+                        timestamp: serverTimestamp() 
+                    }); 
+                } catch(e) {} 
+            };
+
             const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
             const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
             
-            const handleOpenAddModal = () => {
-                setEditingId(null); 
-                setRawImageData(null); 
+            const handleOpenAddModal = useCallback(() => {
+                setEditingId(null); setRawImageData(null); 
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
-            };
+            }, [userName, games.length]);
+
+            const handleOpenEdit = useCallback((item) => {
+                setEditingId(item.id); setRawImageData(item.cover); 
+                const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
+                const sObj = customSources.find(s => s.name === item.source);
+                setFormData({ 
+                    ...item, sourceIcon: sObj ? sObj.icon : '',
+                    totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), 
+                    updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress),
+                    notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', 
+                    watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
+                }); 
+                setIsModalOpen(true); 
+            }, [customSources]);
 
             const handleSaveGame = async (e) => {
                 if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user) return;
@@ -464,41 +493,43 @@
                         while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
                         chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
-                    const sv = formData.source.trim();
-                    if(sv) { 
-                        let sources = [...customSources]; 
-                        const idx = sources.findIndex(s => s.name === sv); 
-                        if(idx === -1) sources.push({ name: sv, icon: formData.sourceIcon || '' }); 
+                    if(formData.source.trim()) { 
+                        let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
+                        if(idx === -1) sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
                     const { sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, name: cn, source: sv, addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
-                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", cn); }
-                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", cn); }
+                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
+                    if(editingId) { 
+                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
+                        logActivity("修改", cn, to); // 加入編號
+                    } else { 
+                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
+                        logActivity("錄入", cn, to); // 加入編號
+                    }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch(e) { console.error(e); showNotify("操作失敗"); }
             };
 
-            const handleDeleteGame = async (id) => { if(!user) return; const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知"); showNotify("已刪除"); setDeleteGameTarget(null); };
+            const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
+            const handleDeleteGame = async (id) => { 
+                if(!user) return; const g = games.find(x => x.id === id); 
+                const order = g?.order;
+                await deleteDoc(doc(getPublicCol('games'), id)); 
+                logActivity("刪除", g?.name || "未知", order); // 加入編號
+                showNotify("已刪除"); setDeleteGameTarget(null); 
+            };
 
-            // 修復：點擊清空後關閉視窗，並執行深度全庫清除
             const handleClearAllData = async () => { 
-                if(!user) return; 
-                setShowClearConfirm(false); // 修復 1：立即關閉視窗
+                if(!user) return; setShowClearConfirm(false); 
                 try { 
                     showNotify("正在啟動深度清空程序...");
-                    // 修復 2：直接從 collection 獲取所有文檔，確保徹底清除殘留數據
                     const querySnapshot = await getDocs(getPublicCol('games'));
                     const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(doc(getPublicCol('games'), docSnap.id)));
                     await Promise.all(deletePromises);
-                    
-                    showNotify("數據已從雲端彻底抹除"); 
-                    logActivity("清空全庫", "全部內容");
-                } catch(e) { 
-                    console.error(e);
-                    showNotify("清空程序異常，請檢查權限"); 
-                } 
+                    showNotify("數據已徹底抹除"); logActivity("清空全庫", "全部內容", "ALL");
+                } catch(e) { console.error(e); showNotify("清空程序異常"); } 
             };
 
             const handleExportData = () => { const blob = new Blob([JSON.stringify({ version: "11.6", games, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
@@ -507,25 +538,17 @@
                 const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
                 r.onload = async (ev) => { 
                     try { 
-                        const d = JSON.parse(ev.target.result); 
-                        showNotify("正在啟動 ID 修復導入..."); 
+                        const d = JSON.parse(ev.target.result); showNotify("正在修復導入..."); 
                         if(d.games) {
                             for(const g of d.games) {
                                 const { id, ...gameData } = g;
                                 const targetDoc = id ? doc(getPublicCol('games'), id) : doc(getPublicCol('games'));
-                                await setDoc(targetDoc, { 
-                                    ...gameData, 
-                                    updatedAt: serverTimestamp(),
-                                    createdAt: gameData.createdAt || serverTimestamp() 
-                                }, { merge: true });
+                                await setDoc(targetDoc, { ...gameData, updatedAt: serverTimestamp(), createdAt: gameData.createdAt || serverTimestamp() }, { merge: true });
                             }
                         }
                         if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); 
-                        showNotify("導入成功，已自動校準 ID 映射"); 
-                    } catch(e) { 
-                        showNotify("導入失敗，請確認檔案格式"); 
-                        console.error(e);
-                    } 
+                        showNotify("導入成功"); 
+                    } catch(e) { showNotify("導入失敗"); } 
                 }; 
                 r.readAsText(f);
             };
@@ -533,40 +556,28 @@
             const handleReorderIDs = async () => {
                 if (!user || games.length === 0) return;
                 try {
-                    showNotify("正在智慧重新排列編號...");
+                    showNotify("正在智慧重新排列...");
                     const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                    const updates = [];
-                    
-                    sorted.forEach((g, index) => {
+                    const updates = sorted.map((g, index) => {
                         const newOrder = index + 1;
-                        if (extractFirstNumber(g.order) !== newOrder) {
-                            updates.push(setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }));
-                        }
-                    });
-
+                        return extractFirstNumber(g.order) !== newOrder ? setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }) : null;
+                    }).filter(Boolean);
                     if (updates.length > 0) {
                         await Promise.all(updates);
-                        logActivity("重排編號", `共修正 ${updates.length} 項`);
-                        showNotify(`排列完成！已修正 ${updates.length} 個編號斷層`);
-                    } else {
-                        showNotify("編號序列已是完整連續狀態，無需調整");
-                    }
-                } catch (e) {
-                    showNotify("重排失敗，請檢查網路連線");
-                }
+                        logActivity("重排編號", `共修正 ${updates.length} 項`, "BATCH");
+                        showNotify(`排列完成！已修正 ${updates.length} 個編號`);
+                    } else { showNotify("無需調整"); }
+                } catch (e) { showNotify("重排失敗"); }
             };
 
             const filteredGames = useMemo(() => {
-                let l = [...games]; 
-                const q = searchQuery.toLowerCase().trim(); 
+                let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
                 if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
-                
                 if (memberFilter) {
                     const { name, type } = memberFilter;
                     l = l.filter(g => {
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
                         if (!watchers.includes(name)) return false;
-                        
                         const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
                         if (type === 'unstarted') return p === 0;
                         if (type === 'watching') return p > 0 && p < 100;
@@ -574,7 +585,6 @@
                         return true;
                     });
                 }
-
                 if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                 else { 
                     if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); 
@@ -588,46 +598,14 @@
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
 
-            const toggleMemberFilter = (name, type) => {
-                if (memberFilter?.name === name && memberFilter?.type === type) {
-                    setMemberFilter(null);
-                } else {
-                    setMemberFilter({ name, type });
-                    showNotify(`篩選中: ${name} 的 ${type === 'total' ? '全部' : type === 'unstarted' ? '未開始' : type === 'watching' ? '觀看中' : '已看完'}`);
-                }
-            };
-
-            const handleExecMemberColorChange = async (newColor) => {
-                if (!colorChangingMember || !user) return;
-                
-                if (colorChangingMember === userName) {
-                    setUserColor(newColor);
-                    localStorage.setItem('steam_user_color', newColor);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
-                    showNotify(`已更新本人顏色`);
-                    setColorChangingMember(null);
-                    return;
-                }
-
-                const profile = userProfiles.find(p => p.name === colorChangingMember);
-                if (profile?.uid) {
-                    try {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
-                        showNotify(`已同步更新 ${colorChangingMember} 的雲端顏色`);
-                    } catch (e) {
-                        showNotify("更新失敗，權限不足");
-                    }
-                } else {
-                    showNotify(`「${colorChangingMember}」目前僅為文字紀錄，尚未建立雲端設定檔，無法修改顏色`);
-                }
-                setColorChangingMember(null);
-            };
+            const toggleMemberFilter = useCallback((name, type) => {
+                setMemberFilter(prev => (prev?.name === name && prev?.type === type) ? null : { name, type });
+            }, []);
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
-                    
                     <input type="color" ref={memberColorPickerRef} className="hidden" onChange={(e) => handleExecMemberColorChange(e.target.value)} />
 
                     <div className="max-w-[1800px] mx-auto">
@@ -636,18 +614,30 @@
                             <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}</div>
                         </header>
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
-                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+                                {activityLogs.map(l => (
+                                    <div key={l.id} className="border-b border-white/5 pb-0.5">
+                                        <span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
+                                        <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                                        {l.action} 
+                                        <span className="font-black ml-1">
+                                            {l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}
+                                            "{l.gameName}"
+                                        </span>
+                                    </div>
+                                ))}
+                            </div></div>
+                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
                             
                             <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => {
                                 const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
                                 return (
                                     <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10 text-white ring-1 ring-inset ring-white/30' : ''}`}>{m.stats.unstarted}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400 ring-1 ring-inset ring-cyan-400/50' : 'text-cyan-400'}`}>{m.stats.watching}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400 ring-1 ring-inset ring-green-400/50' : 'text-green-400'}`}>{m.stats.completed}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20' : 'text-cyan-400'}`}>{m.stats.watching}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20' : 'text-green-400'}`}>{m.stats.completed}</td>
                                     </tr>
                                 )
                             })}</tbody></table></div></div>
@@ -666,11 +656,7 @@
                             )}
 
                             <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
-                                {!isEditLocked && (
-                                    <button onClick={handleReorderIDs} className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 transition-all flex items-center gap-2">
-                                        <Icon name="list-ordered" className="w-3 h-3" /> 重排編號
-                                    </button>
-                                )}
+                                {!isEditLocked && <button onClick={handleReorderIDs} className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 flex items-center gap-2 transition-all"><Icon name="list-ordered" className="w-3 h-3" /> 重排編號</button>}
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
                             </div>
                         </div>
@@ -681,31 +667,15 @@
                                 <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
-                                    setEditingId(item.id); 
-                                    setRawImageData(item.cover); 
-                                    const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
-                                    const sObj = customSources.find(s => s.name === item.source);
-                                    setFormData({ 
-                                        ...item, 
-                                        sourceIcon: sObj ? sObj.icon : '',
-                                        year: item.year || '',
-                                        totalEpisodes: ensureP(item.totalEpisodes), 
-                                        watchedProgress: ensureP(item.watchedProgress), 
-                                        updatedEpisodes: ensureP(item.updatedEpisodes), 
-                                        paidProgress: ensureP(item.paidProgress),
-                                        notes: item.notes || '',
-                                        manualUpdatedAt: item.manualUpdatedAt || '', 
-                                        watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
-                                    }); 
-                                    setIsModalOpen(true); 
-                                }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (
+                                    <GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={handleDeleteTarget} />
+                                ))}</ul>
                             </div> 
                         </article>
                     </div>
 
                     <div className="fab-btn" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}>
-                        {isEditLocked ? (<Icon key="lock-icon" name="lock" className="w-8 h-8" />) : (<Icon key="plus-icon" name="plus" className="w-8 h-8" />)}
+                        {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-8 h-8" /> : <Icon key="plus-icon" name="plus" className="w-8 h-8" />}
                     </div>
 
                     {isAddGroupModalOpen && (
@@ -729,9 +699,7 @@
                                                         {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
                                                     </div>
                                                     {formData.cover && (
-                                                        <button type="button" onClick={() => setIsCropping(true)} className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2">
-                                                            <Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化
-                                                        </button>
+                                                        <button type="button" onClick={() => setIsCropping(true)} className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"><Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化</button>
                                                     )}
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
@@ -744,7 +712,7 @@
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
                                             </div>
                                             <div className="md:col-span-8 space-y-5">
-                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
                                                 <div className="flex flex-col md:flex-row gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
@@ -755,20 +723,11 @@
                                                     <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="flex-1" />
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div className="md:col-span-1 max-w-[125px]">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
-                                                        <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
-                                                    </div>
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
-                                                        <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
-                                                    </div>
+                                                    <div className="md:col-span-1 max-w-[125px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /></div>
+                                                    <div className="md:col-span-2"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
                                                 </div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
-                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
-                                                </div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; setFormData({...formData, watchingBy: list.includes(name) ? list.filter(n => n !== name) : [...list, name]}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
                                             </div>
                                         </div>
                                         <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
@@ -778,9 +737,7 @@
                         </div>
                     )}
 
-                    {isCropping && (
-                        <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化並限制檔案大小"); }} onCancel={() => setIsCropping(false)} />
-                    )}
+                    {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
 
                     {deleteGameTarget && (
                         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
