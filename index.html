@@ -1,830 +1,791 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>影片庫統計系統</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 36 36' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z' fill='%239796ED'%3E%3C/path%3E%3Cpath d='M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 26.901 9.647L24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641L11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M16.035 25.721C16.035 26.318 16.518 26.801 17.115 26.801L19.105 26.801C19.701 26.801 20.185 26.318 20.185 25.721C20.185 25.125 19.701 24.641L19.105 24.641L17.115 24.641C16.518 24.641 16.035 25.125 16.035 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M23.831 25.721C23.831 26.318 24.315 26.801 24.911 26.801L26.901 26.801C27.498 26.801 27.981 26.318 27.981 25.721C27.981 25.125 27.498 24.641L26.901 24.641L24.911 24.641C24.315 24.641 23.831 25.125 23.831 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M5.581 22.439L30.415 22.439L30.415 13.254L5.581 13.254L5.581 22.439z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M14.817 19.422C14.873 19.272 14.901 19.197 14.928 19.162C15.043 19.013 15.267 19.013 15.382 19.162C15.409 19.197 15.437 19.272 15.493 19.422C15.802 20.258 16.462 20.918 17.298 21.227C17.448 21.283 17.523 21.311 17.558 21.338C17.707 21.453 17.707 21.677 17.558 21.792C17.523 21.819 17.448 21.847 17.298 21.903C16.462 22.212 15.802 22.871 15.493 23.708C15.437 23.858 15.409 23.933 15.382 23.968C15.267 24.116 15.043 24.116 14.928 23.968C14.9 23.933 14.873 23.858 14.817 23.708C14.508 22.871 13.849 22.212 13.012 21.903C12.862 21.847 12.787 21.819 12.752 21.792C12.604 21.677 12.604 21.453 12.752 21.338C12.787 21.311 12.862 21.283 13.012 21.227C13.849 20.918 14.508 20.258 14.817 19.422z' fill='%23FDDE80'%3E%3C/path%3E%3Cpath d='M20.132 10.496C20.259 10.153 20.323 9.981 20.385 9.901C20.648 9.562 21.16 9.562 21.423 9.901C21.485 9.981 21.549 10.153 21.676 10.496C22.384 12.408 23.891 13.916 25.803 14.624C26.147 14.751 26.319 14.814 26.399 14.877C26.737 15.14 26.737 15.651 26.399 15.915C26.319 15.977 26.147 16.041 25.803 16.168C23.891 16.875 22.384 18.383 21.676 20.295C21.549 20.639 21.485 20.81 21.423 20.891C21.16 21.229 20.648 21.229 20.385 20.891C20.323 20.81 20.259 20.639 20.132 20.295C19.424 18.383 17.917 16.875 16.005 16.168C15.661 16.041 15.489 15.977 15.409 15.915C15.071 15.651 15.071 15.14 15.409 14.877C15.489 14.814 15.661 14.751 16.005 14.624C17.917 13.916 19.424 12.408 20.132 10.496z' fill='%23FDDE80'%3E%3C/path%3E%3C/svg%3E" />
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        
-        body { 
-            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
-            background-color: #3f5968; color: #fff; margin: 0; overflow-x: hidden; font-size: 16px; user-select: text;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-        .animate-text-shimmer { background: linear-gradient(to right, #ffffff, #ffbae9, #818cf8, #ffffff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmer 4s linear infinite; }
-        @keyframes shimmer { to { background-position: 200% center; } }
-        .tab-content { width: 100%; margin-top: 1rem; }
-        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; }
-        .tab:hover { border-color: #ffbae9; }
-        .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
-        .tab-action-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #ffffff; color: #3f5968; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; flex-shrink: 0; position: relative; }
-        .tab-action-btn:hover { transform: scale(1.1); z-index: 10; }
-        .tab-action-btn.btn-plus:hover { background: #ffbae9; }
-        .tab-action-btn.btn-minus:hover { background: #ef4444; color: #fff; }
-        .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
-        @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
-        .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
-        .component-view li:hover { background: rgba(0, 0, 0, 0.3); border-color: #ffbae9; transform: translateY(-2px); }
-        .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
-        .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
-        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
-        .desc .title-link:hover { color: #ffbae9; }
-        .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
-        .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
-        .meta strong { color: #ffbae9; margin-right: 0.3rem; }
-        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
-        .progress-fill { height: 100%; background: #ffbae9; transition: width 0.5s ease; }
-        .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
-        .status-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 900; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); z-index: 10; display: flex; align-items: center; justify-content: center; min-width: 52px; letter-spacing: 0.05em; text-shadow: 0 1px 1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); line-height: 1.2; }
-        .badge-airing { background-color: #16a34a; color: #fff; }
-        .badge-completed { background-color: #dc2626; color: #fff; }
-        .badge-waiting { background-color: #475569; color: #fff; }
-        .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-        .update-progress-circle { position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
-        .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
-        .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
-        .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
-        .btn-delete-bottom { position: absolute; bottom: 12px; right: 12px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
-        li:hover .btn-delete-bottom { opacity: 1; }
-        .btn-delete-bottom:hover { background: #ef4444; color: #fff; transform: translateY(-2px); }
-        .source-icon-small { height: 1.1em; width: auto; max-width: 24px; border-radius: 2px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 6px; position: relative; flex-shrink: 0; }
-        .member-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.15); line-height: 1; }
-        .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
-        .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
-        .progress-stat { display: flex; align-items: baseline; gap: 2px; }
-        .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
-        .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
-        .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
-        .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
-        .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
-        .progress-input-row { display: grid; grid-template-columns: 2fr 1.2fr 2fr 1.2fr; gap: 4px; align-items: center; }
-        .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
-        .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
-        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
-        .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
-        .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影片庫統計系統</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 36 36' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z' fill='%239796ED'%3E%3C/path%3E%3Cpath d='M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 26.901 9.647L24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641L11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M16.035 25.721C16.035 26.318 16.518 26.801 17.115 26.801L19.105 26.801C19.701 26.801 20.185 26.318 20.185 25.721C20.185 25.125 19.701 24.641L19.105 24.641L17.115 24.641C16.518 24.641 16.035 25.125 16.035 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M23.831 25.721C23.831 26.318 24.315 26.801 24.911 26.801L26.901 26.801C27.498 26.801 27.981 26.318 27.981 25.721C27.981 25.125 27.498 24.641L26.901 24.641L24.911 24.641C24.315 24.641 23.831 25.125 23.831 25.721z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M5.581 22.439L30.415 22.439L30.415 13.254L5.581 13.254L5.581 22.439z' fill='%236D69E4'%3E%3C/path%3E%3Cpath d='M14.817 19.422C14.873 19.272 14.901 19.197 14.928 19.162C15.043 19.013 15.267 19.013 15.382 19.162C15.409 19.197 15.437 19.272 15.493 19.422C15.802 20.258 16.462 20.918 17.298 21.227C17.448 21.283 17.523 21.311 17.558 21.338C17.707 21.453 17.707 21.677 17.558 21.792C17.523 21.819 17.448 21.847 17.298 21.903C16.462 22.212 15.802 22.871 15.493 23.708C15.437 23.858 15.409 23.933 15.382 23.968C15.267 24.116 15.043 24.116 14.928 23.968C14.9 23.933 14.873 23.858 14.817 23.708C14.508 22.871 13.849 22.212 13.012 21.903C12.862 21.847 12.787 21.819 12.752 21.792C12.604 21.677 12.604 21.453 12.752 21.338C12.787 21.311 12.862 21.283 13.012 21.227C13.849 20.918 14.508 20.258 14.817 19.422z' fill='%23FDDE80'%3E%3C/path%3E%3Cpath d='M20.132 10.496C20.259 10.153 20.323 9.981 20.385 9.901C20.648 9.562 21.16 9.562 21.423 9.901C21.485 9.981 21.549 10.153 21.676 10.496C22.384 12.408 23.891 13.916 25.803 14.624C26.147 14.751 26.319 14.814 26.399 14.877C26.737 15.14 26.737 15.651 26.399 15.915C26.319 15.977 26.147 16.041 25.803 16.168C23.891 16.875 22.384 18.383 21.676 20.295C21.549 20.639 21.485 20.81 21.423 20.891C21.16 21.229 20.648 21.229 20.385 20.891C20.323 20.81 20.259 20.639 20.132 20.295C19.424 18.383 17.917 16.875 16.005 16.168C15.661 16.041 15.489 15.977 15.409 15.915C15.071 15.651 15.071 15.14 15.409 14.877C15.489 14.814 15.661 14.751 16.005 14.624C17.917 13.916 19.424 12.408 20.132 10.496z' fill='%23FDDE80'%3E%3C/path%3E%3C/svg%3E" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
+            background-color: #3f5968; color: #fff; margin: 0; overflow-x: hidden; font-size: 16px; user-select: text;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .animate-text-shimmer { background: linear-gradient(to right, #ffffff, #ffbae9, #818cf8, #ffffff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmer 4s linear infinite; }
+        @keyframes shimmer { to { background-position: 200% center; } }
+        .tab-content { width: 100%; margin-top: 1rem; }
+        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; }
+        .tab:hover { border-color: #ffbae9; }
+        .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
+        .tab-action-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #ffffff; color: #3f5968; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; flex-shrink: 0; position: relative; }
+        .tab-action-btn:hover { transform: scale(1.1); z-index: 10; }
+        .tab-action-btn.btn-plus:hover { background: #ffbae9; }
+        .tab-action-btn.btn-minus:hover { background: #ef4444; color: #fff; }
+        .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
+        @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
+        .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
+        .component-view li:hover { background: rgba(0, 0, 0, 0.3); border-color: #ffbae9; transform: translateY(-2px); }
+        .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
+        .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
+        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
+        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
+        .desc .title-link:hover { color: #ffbae9; }
+        .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
+        .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
+        .meta strong { color: #ffbae9; margin-right: 0.3rem; }
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
+        .progress-fill { height: 100%; background: #ffbae9; transition: width 0.5s ease; }
+        .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
+        .status-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 900; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); z-index: 10; display: flex; align-items: center; justify-content: center; min-width: 52px; letter-spacing: 0.05em; text-shadow: 0 1px 1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); line-height: 1.2; }
+        .badge-airing { background-color: #16a34a; color: #fff; }
+        .badge-completed { background-color: #dc2626; color: #fff; }
+        .badge-waiting { background-color: #475569; color: #fff; }
+        .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .update-progress-circle { position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
+        .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
+        .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
+        .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
+        .btn-delete-bottom { position: absolute; bottom: 12px; right: 12px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
+        li:hover .btn-delete-bottom { opacity: 1; }
+        .btn-delete-bottom:hover { background: #ef4444; color: #fff; transform: translateY(-2px); }
+        .source-icon-small { height: 1.1em; width: auto; max-width: 24px; border-radius: 2px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 6px; position: relative; flex-shrink: 0; }
+        .member-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.15); line-height: 1; }
+        .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
+        .progress-stat { display: flex; align-items: baseline; gap: 2px; }
+        .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
+        .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
+        .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
+        .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
+        .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
+        .progress-input-row { display: grid; grid-template-columns: 2fr 1.2fr 2fr 1.2fr; gap: 4px; align-items: center; }
+        .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
+        .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
+        .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
+        .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
+    </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
-        const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
+        const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // Firebase 設置 - 適應當前環境
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "",
-            authDomain: "video-b02b3.firebaseapp.com",
-            projectId: "video-b02b3",
-            storageBucket: "video-b02b3.firebasestorage.app",
-            messagingSenderId: "25339039789",
-            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
+            authDomain: "video-b02b3.firebaseapp.com",
+            projectId: "video-b02b3",
+            storageBucket: "video-b02b3.firebasestorage.app",
+            messagingSenderId: "25339039789",
+            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'video-library-v1';
 
-        // --- Helpers ---
-        const extractFirstNumber = (val) => {
-            if (val === undefined || val === null || val === "") return 0;
-            if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
-            const match = String(val).match(/(\d+(\.\d+)?)/);
-            return match ? parseFloat(match[1]) : 0;
-        };
+        // --- Helpers ---
+        const extractFirstNumber = (val) => {
+            if (val === undefined || val === null || val === "") return 0;
+            if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
+            const match = String(val).match(/(\d+(\.\d+)?)/);
+            return match ? parseFloat(match[1]) : 0;
+        };
 
-        const calculateDualProgress = (cur, tot) => {
-            const c1 = parseFloat(cur?.v1) || 0, c2 = parseFloat(cur?.v2) || 0;
-            const t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
-            if (t1 <= 0) return 0;
-            if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
-            if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
-            return 100;
-        };
+        const calculateDualProgress = (cur, tot) => {
+            const c1 = parseFloat(cur?.v1) || 0, c2 = parseFloat(cur?.v2) || 0;
+            const t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
+            if (t1 <= 0) return 0;
+            if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
+            if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
+            return 100;
+        };
 
-        const formatProgressText = (prog) => {
-            if (!prog || typeof prog !== 'object') return prog || "0";
-            let parts = [];
-            if (prog.v1 && prog.v1 !== "") parts.push(`${prog.v1}${prog.u1 || ''}`);
-            if (prog.v2 && prog.v2 !== "") parts.push(`${prog.v2}${prog.u2 || ''}`);
-            return parts.join(' ') || "0";
-        };
+        const formatProgressText = (prog) => {
+            if (!prog || typeof prog !== 'object') return prog || "0";
+            let parts = [];
+            if (prog.v1 && prog.v1 !== "") parts.push(`${prog.v1}${prog.u1 || ''}`);
+            if (prog.v2 && prog.v2 !== "") parts.push(`${prog.v2}${prog.u2 || ''}`);
+            return parts.join(' ') || "0";
+        };
 
-        const formatDate = (ts, dateOnly = false) => { 
-            if (!ts) return ""; 
-            if (typeof ts === 'string') return ts;
-            let date;
-            try {
-                if (ts?.toDate) date = ts.toDate();
-                else if (ts?.seconds !== undefined) date = new Date(ts.seconds * 1000);
-                else date = new Date(ts);
-            } catch (e) { return "NOW"; }
-            if (!date || isNaN(date.getTime())) return "NOW";
-            const Y = date.getFullYear(), M = (date.getMonth() + 1).toString().padStart(2, '0'), D = date.getDate().toString().padStart(2, '0');
-            if (dateOnly) return `${Y}-${M}-${D}`;
-            return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
-        };
+        const formatDate = (ts, dateOnly = false) => { 
+            if (!ts) return ""; 
+            if (typeof ts === 'string') return ts;
+            let date;
+            try {
+                if (ts?.toDate) date = ts.toDate();
+                else if (ts?.seconds !== undefined) date = new Date(ts.seconds * 1000);
+                else date = new Date(ts);
+            } catch (e) { return "NOW"; }
+            if (!date || isNaN(date.getTime())) return "NOW";
+            const Y = date.getFullYear(), M = (date.getMonth() + 1).toString().padStart(2, '0'), D = date.getDate().toString().padStart(2, '0');
+            if (dateOnly) return `${Y}-${M}-${D}`;
+            return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
+        };
 
-        const compressImage = (dataUrl, maxWidth = 800) => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onerror = reject;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
-                };
-                img.src = dataUrl;
-            });
-        };
+        const compressImage = (dataUrl, maxWidth = 800) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onerror = reject;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                };
+                img.src = dataUrl;
+            });
+        };
 
-        // --- Components ---
+        // --- Components ---
 
-        const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
-            const [position, setPosition] = useState({ x: 0, y: 0 });
-            const [scale, setScale] = useState(1);
-            const containerRef = useRef(null);
-            const imgRef = useRef(null);
-            const isDragging = useRef(false);
-            const lastPos = useRef({ x: 0, y: 0 });
+        const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
+            const [position, setPosition] = useState({ x: 0, y: 0 });
+            const [scale, setScale] = useState(1);
+            const containerRef = useRef(null);
+            const imgRef = useRef(null);
+            const isDragging = useRef(false);
+            const lastPos = useRef({ x: 0, y: 0 });
 
-            const handleMouseDown = (e) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY }; };
-            const handleMouseMove = (e) => {
-                if (!isDragging.current) return;
-                const dx = e.clientX - lastPos.current.x, dy = e.clientY - lastPos.current.y;
-                setPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-                lastPos.current = { x: e.clientX, y: e.clientY };
-            };
-            const handleMouseUp = () => { isDragging.current = false; };
-            const handleWheel = (e) => {
-                const step = 0.005; 
-                setScale(prev => Math.max(0.01, Math.min(10, prev + (e.deltaY > 0 ? -step : step))));
-            };
+            const handleMouseDown = (e) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY }; };
+            const handleMouseMove = (e) => {
+                if (!isDragging.current) return;
+                const dx = e.clientX - lastPos.current.x, dy = e.clientY - lastPos.current.y;
+                setPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                lastPos.current = { x: e.clientX, y: e.clientY };
+            };
+            const handleMouseUp = () => { isDragging.current = false; };
+            const handleWheel = (e) => {
+                const step = 0.005; 
+                setScale(prev => Math.max(0.01, Math.min(10, prev + (e.deltaY > 0 ? -step : step))));
+            };
 
-            const handleConfirm = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 800; canvas.height = 1066;
-                ctx.fillStyle = "#3f5968";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const img = imgRef.current, holeSize = { w: 300, h: 400 };
-                const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
-                const resRatio = canvas.width / holeSize.w;
-                
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                
-                const displayRatio = img.offsetWidth / img.naturalWidth;
-                const drawW = img.naturalWidth * displayRatio * scale;
-                const drawH = img.naturalHeight * displayRatio * scale;
-                
-                const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * resRatio;
-                const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * resRatio;
-                
-                ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
-                onCrop(canvas.toDataURL('image/jpeg', 0.7)); 
-            };
+            const handleConfirm = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 800; canvas.height = 1066;
+                ctx.fillStyle = "#3f5968";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const img = imgRef.current, holeSize = { w: 300, h: 400 };
+                const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
+                const resRatio = canvas.width / holeSize.w;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                const displayRatio = img.offsetWidth / img.naturalWidth;
+                const drawW = img.naturalWidth * displayRatio * scale;
+                const drawH = img.naturalHeight * displayRatio * scale;
+                
+                const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * resRatio;
+                const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * resRatio;
+                
+                ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
+                onCrop(canvas.toDataURL('image/jpeg', 0.7)); 
+            };
 
-            return (
-                <div className="fixed inset-0 z-[500] bg-[#3f5968] flex flex-col">
-                    <div className="flex-1 relative overflow-hidden bg-[#3f5968] cursor-move" ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
-                        <img ref={imgRef} src={imageSrc} style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none' }} />
-                        <div className="crop-overlay">
-                            <div className="crop-hole" style={{ width: '300px', height: '400px' }}></div>
-                        </div>
-                    </div>
-                    <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精密縮放控制 (步進 0.005)</span>
-                            <div className="flex items-center gap-4">
-                                <Icon name="minus" className="w-3 h-3 text-white/20" />
-                                <input type="range" min="0.01" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" />
-                                <Icon name="plus" className="w-3 h-3 text-white/20" />
-                                <span className="text-[10px] font-mono text-[#ffbae9] min-w-[40px]">{scale.toFixed(3)}x</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
-                            <button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        });
+            return (
+                <div className="fixed inset-0 z-[500] bg-[#3f5968] flex flex-col">
+                    <div className="flex-1 relative overflow-hidden bg-[#3f5968] cursor-move" ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
+                        <img ref={imgRef} src={imageSrc} style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none' }} />
+                        <div className="crop-overlay">
+                            <div className="crop-hole" style={{ width: '300px', height: '400px' }}></div>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
+                        <div className="flex flex-col gap-2 w-full md:w-auto">
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精密縮放控制 (步進 0.005)</span>
+                            <div className="flex items-center gap-4">
+                                <Icon name="minus" className="w-3 h-3 text-white/20" />
+                                <input type="range" min="0.01" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" />
+                                <Icon name="plus" className="w-3 h-3 text-white/20" />
+                                <span className="text-[10px] font-mono text-[#ffbae9] min-w-[40px]">{scale.toFixed(3)}x</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={onCancel} className="px-6 py-2 bg-white/5 text-xs font-black rounded uppercase">取消</button>
+                            <button onClick={handleConfirm} className="px-10 py-2 bg-[#ffbae9] text-[#3f5968] text-xs font-black rounded uppercase shadow-lg">確認裁剪</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        });
 
-        const Icon = memo(({ name, className, onClick, title }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
-            return (
-                <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
-            );
-        });
+        const Icon = memo(({ name, className, onClick, title }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+            return (
+                <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
+            );
+        });
 
-        const TitleIcon = () => (
-            <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
-                <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
-                <path d="M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z" fill="#6D69E4"></path>
-                <path d="M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 26.901 9.647L24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z" fill="#6D69E4"></path>
-                <path d="M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641L11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z" fill="#6D69E4"></path>
-                <path d="M16.035 25.721C16.035 26.318 16.518 26.801 17.115 26.801L19.105 26.801C19.701 26.801 20.185 26.318 20.185 25.721C20.185 25.125 19.701 24.641L19.105 24.641L17.115 24.641C16.518 24.641 16.035 25.125 16.035 25.721z" fill="#6D69E4"></path>
-                <path d="M23.831 25.721C23.831 26.318 24.315 26.801 24.911 26.801L26.901 26.801C27.498 26.801 27.981 26.318 27.981 25.721C27.981 25.125 27.498 24.641L26.901 24.641L24.911 24.641C24.315 24.641 23.831 25.125 23.831 25.721z" fill="#6D69E4"></path>
-                <path d="M5.581 22.439L30.415 22.439L30.415 13.254L5.581 13.254L5.581 22.439z" fill="#6D69E4"></path>
-                <path d="M14.817 19.422C14.873 19.272 14.901 19.197 14.928 19.162C15.043 19.013 15.267 19.013 15.382 19.162C15.409 19.197 15.437 19.272 15.493 19.422C15.802 20.258 16.462 20.918 17.298 21.227C17.448 21.283 17.523 21.311 17.558 21.338C17.707 21.453 17.707 21.677 17.558 21.792C17.523 21.819 17.448 21.847 17.298 21.903C16.462 22.212 15.802 22.871 15.493 23.708C15.437 23.858 15.409 23.933 15.382 23.968C15.267 24.116 15.043 24.116 14.928 23.968C14.9 23.933 14.873 23.858 14.817 23.708C14.508 22.871 13.849 22.212 13.012 21.903C12.862 21.847 12.787 21.819 12.752 21.792C12.604 21.677 12.604 21.453 12.752 21.338C12.787 21.311 12.862 21.283 13.012 21.227C13.849 20.918 14.508 20.258 14.817 19.422z" fill="#FDDE80"></path>
-                <path d="M20.132 10.496C20.259 10.153 20.323 9.981 20.385 9.901C20.648 9.562 21.16 9.562 21.423 9.901C21.485 9.981 21.549 10.153 21.676 10.496C22.384 12.408 23.891 13.916 25.803 14.624C26.147 14.751 26.319 14.814 26.399 14.877C26.737 15.14 26.737 15.651 26.399 15.915C26.319 15.977 26.147 16.041 25.803 16.168C23.891 16.875 22.384 18.383 21.676 20.295C21.549 20.639 21.485 20.81 21.423 20.891C21.16 21.229 20.648 21.229 20.385 20.891C20.323 20.81 20.259 20.639 20.132 20.295C19.424 18.383 17.917 16.875 16.005 16.168C15.661 16.041 15.489 15.977 15.409 15.915C15.071 15.651 15.071 15.14 15.409 14.877C15.489 14.814 15.661 14.751 16.005 14.624C17.917 13.916 19.424 12.408 20.132 10.496z" fill="#FDDE80"></path>
-            </svg>
-        );
+        const TitleIcon = () => (
+            <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
+                <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
+                <path d="M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z" fill="#6D69E4"></path>
+                <path d="M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 26.901 9.647L24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z" fill="#6D69E4"></path>
+                <path d="M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641L11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z" fill="#6D69E4"></path>
+                <path d="M16.035 25.721C16.035 26.318 16.518 26.801 17.115 26.801L19.105 26.801C19.701 26.801 20.185 26.318 20.185 25.721C20.185 25.125 19.701 24.641L19.105 24.641L17.115 24.641C16.518 24.641 16.035 25.125 16.035 25.721z" fill="#6D69E4"></path>
+                <path d="M23.831 25.721C23.831 26.318 24.315 26.801 24.911 26.801L26.901 26.801C27.498 26.801 27.981 26.318 27.981 25.721C27.981 25.125 27.498 24.641L26.901 24.641L24.911 24.641C24.315 24.641 23.831 25.125 23.831 25.721z" fill="#6D69E4"></path>
+                <path d="M5.581 22.439L30.415 22.439L30.415 13.254L5.581 13.254L5.581 22.439z" fill="#6D69E4"></path>
+                <path d="M14.817 19.422C14.873 19.272 14.901 19.197 14.928 19.162C15.043 19.013 15.267 19.013 15.382 19.162C15.409 19.197 15.437 19.272 15.493 19.422C15.802 20.258 16.462 20.918 17.298 21.227C17.448 21.283 17.523 21.311 17.558 21.338C17.707 21.453 17.707 21.677 17.558 21.792C17.523 21.819 17.448 21.847 17.298 21.903C16.462 22.212 15.802 22.871 15.493 23.708C15.437 23.858 15.409 23.933 15.382 23.968C15.267 24.116 15.043 24.116 14.928 23.968C14.9 23.933 14.873 23.858 14.817 23.708C14.508 22.871 13.849 22.212 13.012 21.903C12.862 21.847 12.787 21.819 12.752 21.792C12.604 21.677 12.604 21.453 12.752 21.338C12.787 21.311 12.862 21.283 13.012 21.227C13.849 20.918 14.508 20.258 14.817 19.422z" fill="#FDDE80"></path>
+                <path d="M20.132 10.496C20.259 10.153 20.323 9.981 20.385 9.901C20.648 9.562 21.16 9.562 21.423 9.901C21.485 9.981 21.549 10.153 21.676 10.496C22.384 12.408 23.891 13.916 25.803 14.624C26.147 14.751 26.319 14.814 26.399 14.877C26.737 15.14 26.737 15.651 26.399 15.915C26.319 15.977 26.147 16.041 25.803 16.168C23.891 16.875 22.384 18.383 21.676 20.295C21.549 20.639 21.485 20.81 21.423 20.891C21.16 21.229 20.648 21.229 20.385 20.891C20.323 20.81 20.259 20.639 20.132 20.295C19.424 18.383 17.917 16.875 16.005 16.168C15.661 16.041 15.489 15.977 15.409 15.915C15.071 15.651 15.071 15.14 15.409 14.877C15.489 14.814 15.661 14.751 16.005 14.624C17.917 13.916 19.424 12.408 20.132 10.496z" fill="#FDDE80"></path>
+            </svg>
+        );
 
-        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
-            const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
-            const percentage = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-            const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
-            const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-            const sourceInfo = allSources.find(s => s.name === g.source);
-            return (
-                <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
-                    <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
-                        {g.year && <span className="year-badge">{g.year}</span>}
-                        {g.airingStatus && <span className={`status-badge ${g.airingStatus === "連載中" ? "badge-airing" : g.airingStatus === "已完結" ? "badge-completed" : "badge-waiting"}`}>{g.airingStatus}</span>}
-                        {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
-                    </div> 
-                    <div className="desc">
-                        <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
-                        <div className="title-container">
-                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                <span className="id-label">#{g.order || 0}</span>{g.name}
-                            </div> 
-                            <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
-                        </div>
-                        <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
-                            <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
-                            <div className="text-[11px] opacity-90">
-                                <strong>更新進度：</strong> 
-                                <span className="text-white/95">更新至 {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
-                                {g.paidProgress && extractFirstNumber(g.paidProgress) > 0 && (
-                                    <span className="ml-2 text-yellow-400 font-black border-l border-white/20 pl-2">已付費至 {formatProgressText(g.paidProgress)}</span>
-                                )}
-                                {(g.updateDay || g.updateTime) && <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">每周{g.updateDay ? `(${g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下午 ' + (g.updateTime.split(':')[0] % 12 || 12) : '上午 ' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}</span>}
-                            </div>
-                            <div className="mt-auto pt-2">
-                                <div className="flex justify-between items-center w-full gap-2">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress)}</span></div></div>
-                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1"><strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
-                                </div>
-                                <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
-                                    <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
-                                    {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
-                                </div>
-                                <div className="progress-container"><div className="progress-fill" style={{ width: `${percentage}%` }}></div><div className="progress-text-overlay">{percentage}%</div></div>
-                            </div>
-                        </div>
-                        {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
-                    </div>
-                </li>
-            );
-        });
+        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
+            const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
+            const percentage = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
+            const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
+            const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
+            const sourceInfo = allSources.find(s => s.name === g.source);
+            return (
+                <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
+                    <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
+                        {g.year && <span className="year-badge">{g.year}</span>}
+                        {g.airingStatus && <span className={`status-badge ${g.airingStatus === "連載中" ? "badge-airing" : g.airingStatus === "已完結" ? "badge-completed" : "badge-waiting"}`}>{g.airingStatus}</span>}
+                        {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
+                    </div> 
+                    <div className="desc">
+                        <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
+                        <div className="title-container">
+                            {/* 修改：加入 title 屬性以便滑鼠指住時顯示完整名稱 */}
+                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
+                                <span className="id-label">#{g.order || 0}</span>{g.name}
+                            </div> 
+                            <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
+                        </div>
+                        <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
+                            <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
+                            <div className="text-[11px] opacity-90">
+                                <strong>更新進度：</strong> 
+                                <span className="text-white/95">更新至 {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
+                                {g.paidProgress && extractFirstNumber(g.paidProgress) > 0 && (
+                                    <span className="ml-2 text-yellow-400 font-black border-l border-white/20 pl-2">已付費至 {formatProgressText(g.paidProgress)}</span>
+                                )}
+                                {(g.updateDay || g.updateTime) && <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">每周{g.updateDay ? `(${g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下午 ' + (g.updateTime.split(':')[0] % 12 || 12) : '上午 ' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}</span>}
+                            </div>
+                            <div className="mt-auto pt-2">
+                                <div className="flex justify-between items-center w-full gap-2">
+                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress)}</span></div></div>
+                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1"><strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
+                                </div>
+                                <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
+                                    <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
+                                    {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
+                                </div>
+                                <div className="progress-container"><div className="progress-fill" style={{ width: `${percentage}%` }}></div><div className="progress-text-overlay">{percentage}%</div></div>
+                            </div>
+                        </div>
+                        {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
+                    </div>
+                </li>
+            );
+        });
 
-        const ProgressInputField = memo(({ label, value, onChange, labelClass, containerClass }) => {
-            const handleChange = (field, val) => onChange({ ...value, [field]: val });
-            return (
-                <div className={`max-w-[192px] ${containerClass || ''}`}>
-                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
-                    <div className="progress-input-row">
-                        <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
-                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
-                        <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
-                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u2} onChange={e=>handleChange('u2', e.target.value)} />
-                    </div>
-                </div>
-            );
-        });
+        const ProgressInputField = memo(({ label, value, onChange, labelClass, containerClass }) => {
+            const handleChange = (field, val) => onChange({ ...value, [field]: val });
+            return (
+                <div className={`max-w-[192px] ${containerClass || ''}`}>
+                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                    <div className="progress-input-row">
+                        <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
+                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
+                        <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
+                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u2} onChange={e=>handleChange('u2', e.target.value)} />
+                    </div>
+                </div>
+            );
+        });
 
-        const TimeSelector = memo(({ value, onChange }) => {
-            if (!value) return <div onClick={() => onChange("18:00")} className="modal-input-base w-full max-w-[85px] flex items-center justify-center text-[10px] font-black text-white/30 cursor-pointer">點擊設定</div>;
-            const parts = value.split(':'), h = parseInt(parts[0]) || 0, m = parseInt(parts[1]) || 0;
-            const period = h >= 12 ? '下午' : '上午', displayH = h % 12 || 12;
-            const updateTime = (nP, nH, nM) => {
-                let fH = parseInt(nH);
-                if (nP === '下午' && fH !== 12) fH += 12;
-                if (nP === '上午' && fH === 12) fH = 0;
-                onChange(`${String(fH).padStart(2, '0')}:${String(nM).padStart(2, '0')}`);
-            };
-            return (
-                <div className="flex gap-1.5 w-full max-w-[144px]">
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}><option value="上午">上午</option><option value="下午">下午</option></select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
-                    <button type="button" onClick={() => onChange("")} className="w-6 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3.5 h-3.5" /></button>
-                </div>
-            );
-        });
+        const TimeSelector = memo(({ value, onChange }) => {
+            if (!value) return <div onClick={() => onChange("18:00")} className="modal-input-base w-full max-w-[85px] flex items-center justify-center text-[10px] font-black text-white/30 cursor-pointer">點擊設定</div>;
+            const parts = value.split(':'), h = parseInt(parts[0]) || 0, m = parseInt(parts[1]) || 0;
+            const period = h >= 12 ? '下午' : '上午', displayH = h % 12 || 12;
+            const updateTime = (nP, nH, nM) => {
+                let fH = parseInt(nH);
+                if (nP === '下午' && fH !== 12) fH += 12;
+                if (nP === '上午' && fH === 12) fH = 0;
+                onChange(`${String(fH).padStart(2, '0')}:${String(nM).padStart(2, '0')}`);
+            };
+            return (
+                <div className="flex gap-1.5 w-full max-w-[144px]">
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}><option value="上午">上午</option><option value="下午">下午</option></select>
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <button type="button" onClick={() => onChange("")} className="w-6 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3.5 h-3.5" /></button>
+                </div>
+            );
+        });
 
-        function App() {
-            const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null), memberColorPickerRef = useRef(null);
-            const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
-            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
-            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
-            const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
-            const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
-            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
-            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
-            const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
-            
-            const [memberFilter, setMemberFilter] = useState(null);
-            const [colorChangingMember, setColorChangingMember] = useState(null);
+        function App() {
+            const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null), memberColorPickerRef = useRef(null);
+            const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
+            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
+            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
+            const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
+            const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
+            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
+            const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
+            
+            const [memberFilter, setMemberFilter] = useState(null);
+            const [colorChangingMember, setColorChangingMember] = useState(null);
 
-            const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-            
-            const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
-            
-            // 新增：檢查名稱是否重複
-            const isDuplicateName = useMemo(() => {
-                const currentName = formData.name.trim().toLowerCase();
-                if (!currentName) return false;
-                return games.some(g => (g.name || "").trim().toLowerCase() === currentName && g.id !== editingId);
-            }, [formData.name, games, editingId]);
+            const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+            
+            const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
+            
+            const nameColorMap = useMemo(() => { 
+                const m = {};
+                userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
+                onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
+                m[userName] = userColor;
+                games.forEach(g => { 
+                    if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
+                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
+                }); 
+                m["糖糖"] = "#ffbae9";
+                m["神雲"] = "#47daff";
+                m["雲雲"] = "#47daff";
+                return m; 
+            }, [onlineUsers, userProfiles, userName, userColor, games]);
 
-            const nameColorMap = useMemo(() => { 
-                const m = {};
-                userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
-                onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
-                m[userName] = userColor;
-                games.forEach(g => { 
-                    if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; 
-                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
-                }); 
-                m["糖糖"] = "#ffbae9";
-                m["神雲"] = "#47daff";
-                m["雲雲"] = "#47daff";
-                return m; 
-            }, [onlineUsers, userProfiles, userName, userColor, games]);
+            const allMemberIDs = useMemo(() => { 
+                const ids = new Set([userName]); 
+                games.forEach(g => { 
+                    if(g.addedBy) ids.add(g.addedBy); 
+                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); 
+                }); 
+                return Array.from(ids).filter(Boolean).sort(); 
+            }, [userName, games]);
 
-            const allMemberIDs = useMemo(() => { 
-                const ids = new Set([userName]); 
-                games.forEach(g => { 
-                    if(g.addedBy) ids.add(g.addedBy); 
-                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); 
-                }); 
-                return Array.from(ids).filter(Boolean).sort(); 
-            }, [userName, games]);
+            const handlePaste = useCallback(async (e) => {
+                if (!isModalOpen) return;
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf("image") !== -1) {
+                        const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
+                        if (lastSelectedImgZone === 'source') { 
+                            const c = await compressImage(url, 100); 
+                            setFormData(p => ({ ...p, sourceIcon: c })); 
+                            showNotify("來源圖標已貼上"); 
+                        } else { 
+                            setRawImageData(url); 
+                            const c = await compressImage(url, 1000); 
+                            setFormData(p => ({ ...p, cover: c }));
+                            showNotify("封面已縮放貼上"); 
+                        }
+                        break;
+                    }
+                }
+            }, [isModalOpen, lastSelectedImgZone, showNotify]);
 
-            const handlePaste = useCallback(async (e) => {
-                if (!isModalOpen) return;
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf("image") !== -1) {
-                        const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
-                        if (lastSelectedImgZone === 'source') { 
-                            const c = await compressImage(url, 100); 
-                            setFormData(p => ({ ...p, sourceIcon: c })); 
-                            showNotify("來源圖標已貼上"); 
-                        } else { 
-                            setRawImageData(url); 
-                            const c = await compressImage(url, 1000); 
-                            setFormData(p => ({ ...p, cover: c }));
-                            showNotify("封面已縮放貼上"); 
-                        }
-                        break;
-                    }
-                }
-            }, [isModalOpen, lastSelectedImgZone, showNotify]);
+            useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
+            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
+            
+            useEffect(() => {
+                if (!user) return;
+                setIsLoadingGames(true); setIsLoadingLogs(true);
+                
+                const fetchMyProfile = async () => {
+                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid));
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (data.name) setUserName(data.name);
+                        if (data.color) setUserColor(data.color);
+                    }
+                };
+                fetchMyProfile();
 
-            useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            
-            useEffect(() => { 
-                const init = async () => { 
-                    try { 
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        console.error("Auth error:", e);
-                    } 
-                }; 
-                init(); 
-                return onAuthStateChanged(auth, setUser); 
-            }, []);
-            
-            useEffect(() => {
-                if (!user) return;
-                setIsLoadingGames(true); setIsLoadingLogs(true);
-                
-                const fetchMyProfile = async () => {
-                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid));
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        if (data.name) setUserName(data.name);
-                        if (data.color) setUserColor(data.color);
-                    }
-                };
-                fetchMyProfile();
+                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (err) => console.error(err));
+                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
+                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                    setActivityLogs(logs.slice(0, 30)); 
+                    setIsLoadingLogs(false); 
+                }, (err) => console.error(err));
+                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
+                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
 
-                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (err) => console.error(err));
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
-                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
-                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    setActivityLogs(logs.slice(0, 30)); 
-                    setIsLoadingLogs(false); 
-                }, (err) => console.error(err));
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
-                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
+                const updP = () => { 
+                    if(auth.currentUser) {
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
+                    }
+                };
+                updP(); 
+                const inv = setInterval(updP, 120000); 
+                return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
+            }, [user, userName, userColor]);
 
-                const updP = () => { 
-                    if(auth.currentUser) {
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
-                    }
-                };
-                updP(); 
-                const inv = setInterval(updP, 120000); 
-                return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
-            }, [user, userName, userColor]);
+            const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
+            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
+            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }); setActiveTab(null); showNotify("分組已刪除"); };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
+            
+            const handleOpenAddModal = () => {
+                setEditingId(null); 
+                setRawImageData(null); 
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setIsModalOpen(true); 
+            };
 
-            const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
-            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
-            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }); setActiveTab(null); showNotify("分組已刪除"); };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
-            
-            const handleOpenAddModal = () => {
-                setEditingId(null); 
-                setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
-                setIsModalOpen(true); 
-            };
+            const handleSaveGame = async (e) => {
+                if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user) return;
+                try {
+                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
+                    let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
+                    if(formData.order === "") while(orders.includes(to)) to++;
+                    if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
+                        showNotify("編號衝突，正在智慧順延..."); let chain = [], check = to;
+                        while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
+                        chain.reverse(); await Promise.all(chain.map(item => updateDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 })));
+                    }
+                    const sv = formData.source.trim();
+                    if(sv) { 
+                        let sources = [...customSources]; 
+                        const idx = sources.findIndex(s => s.name === sv); 
+                        if(idx === -1) sources.push({ name: sv, icon: formData.sourceIcon || '' }); 
+                        else sources[idx].icon = formData.sourceIcon || ''; 
+                        await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
+                    }
+                    const { sourceIcon, ...cleanData } = formData;
+                    const finalData = { ...cleanData, name: cn, source: sv, addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
+                    if(editingId) { await updateDoc(doc(getPublicCol('games'), editingId), finalData); logActivity("修改", cn); }
+                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", cn); }
+                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
+                } catch(e) { console.error(e); showNotify("操作失敗"); }
+            };
 
-            const handleSaveGame = async (e) => {
-                if(e) e.preventDefault();
-                const cn = formData.name.trim(); 
-                if(!cn || !user || isDuplicateName) return; // 新增判斷
-                try {
-                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
-                    let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
-                    if(formData.order === "") while(orders.includes(to)) to++;
-                    if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
-                        showNotify("編號衝突，正在智慧順延..."); let chain = [], check = to;
-                        while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
-                        chain.reverse(); await Promise.all(chain.map(item => updateDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 })));
-                    }
-                    const sv = formData.source.trim();
-                    if(sv) { 
-                        let sources = [...customSources]; 
-                        const idx = sources.findIndex(s => s.name === sv); 
-                        if(idx === -1) sources.push({ name: sv, icon: formData.sourceIcon || '' }); 
-                        else sources[idx].icon = formData.sourceIcon || ''; 
-                        await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
-                    }
-                    const { sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, name: cn, source: sv, addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
-                    if(editingId) { await updateDoc(doc(getPublicCol('games'), editingId), finalData); logActivity("修改", cn); }
-                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", cn); }
-                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { console.error(e); showNotify("操作失敗"); }
-            };
+            const handleDeleteGame = async (id) => { if(!user) return; const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知"); showNotify("已刪除"); setDeleteGameTarget(null); };
+            const handleClearAllData = async () => { if(!user) return; try { for (const g of games) await deleteDoc(doc(getPublicCol('games'), g.id)); showNotify("資料已清空"); setShowClearConfirm(false); } catch(e) { showNotify("操作失敗"); } };
+            const handleExportData = () => { const blob = new Blob([JSON.stringify({ version: "11.6", games, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
+            const handleImportData = async (e) => {
+                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
+                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); showNotify("正在恢復..."); if(d.games) for(const g of d.games) await addDoc(getPublicCol('games'), g); if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; r.readAsText(f);
+            };
 
-            const handleDeleteGame = async (id) => { if(!user) return; const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知"); showNotify("已刪除"); setDeleteGameTarget(null); };
-            const handleClearAllData = async () => { if(!user) return; try { for (const g of games) await deleteDoc(doc(getPublicCol('games'), g.id)); showNotify("資料已清空"); setShowClearConfirm(false); } catch(e) { showNotify("操作失敗"); } };
-            const handleExportData = () => { const blob = new Blob([JSON.stringify({ version: "11.6", games, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
-            const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); showNotify("正在恢復..."); if(d.games) for(const g of d.games) await addDoc(getPublicCol('games'), g); if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; r.readAsText(f);
-            };
+            const handleReorderIDs = async () => {
+                if (!user || games.length === 0) return;
+                try {
+                    showNotify("正在智慧重新排列編號...");
+                    const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+                    const updates = [];
+                    
+                    sorted.forEach((g, index) => {
+                        const newOrder = index + 1;
+                        if (extractFirstNumber(g.order) !== newOrder) {
+                            updates.push(updateDoc(doc(getPublicCol('games'), g.id), { order: newOrder }));
+                        }
+                    });
 
-            const handleReorderIDs = async () => {
-                if (!user || games.length === 0) return;
-                try {
-                    showNotify("正在智慧重新排列編號...");
-                    const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                    const updates = [];
-                    
-                    sorted.forEach((g, index) => {
-                        const newOrder = index + 1;
-                        if (extractFirstNumber(g.order) !== newOrder) {
-                            updates.push(updateDoc(doc(getPublicCol('games'), g.id), { order: newOrder }));
-                        }
-                    });
+                    if (updates.length > 0) {
+                        await Promise.all(updates);
+                        logActivity("重排編號", `共修正 ${updates.length} 項`);
+                        showNotify(`排列完成！已修正 ${updates.length} 個編號斷層`);
+                    } else {
+                        showNotify("編號序列已是完整連續狀態，無需調整");
+                    }
+                } catch (e) {
+                    showNotify("重排失敗，請檢查網路連線");
+                }
+            };
 
-                    if (updates.length > 0) {
-                        await Promise.all(updates);
-                        logActivity("重排編號", `共修正 ${updates.length} 項`);
-                        showNotify(`排列完成！已修正 ${updates.length} 個編號斷層`);
-                    } else {
-                        showNotify("編號序列已是完整連續狀態，無需調整");
-                    }
-                } catch (e) {
-                    showNotify("重排失敗，請檢查網路連線");
-                }
-            };
+            const filteredGames = useMemo(() => {
+                let l = [...games]; 
+                const q = searchQuery.toLowerCase().trim(); 
+                if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
+                
+                if (memberFilter) {
+                    const { name, type } = memberFilter;
+                    l = l.filter(g => {
+                        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
+                        if (!watchers.includes(name)) return false;
+                        
+                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
+                        if (type === 'unstarted') return p === 0;
+                        if (type === 'watching') return p > 0 && p < 100;
+                        if (type === 'completed') return p >= 100;
+                        return true;
+                    });
+                }
 
-            const filteredGames = useMemo(() => {
-                let l = [...games]; 
-                const q = searchQuery.toLowerCase().trim(); 
-                if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
-                
-                if (memberFilter) {
-                    const { name, type } = memberFilter;
-                    l = l.filter(g => {
-                        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-                        if (!watchers.includes(name)) return false;
-                        
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-                        if (type === 'unstarted') return p === 0;
-                        if (type === 'watching') return p > 0 && p < 100;
-                        if (type === 'completed') return p >= 100;
-                        return true;
-                    });
-                }
+                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                else { 
+                    if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); 
+                    l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); 
+                }
+                return l;
+            }, [games, searchQuery, activeTab, memberFilter]);
 
-                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                else { 
-                    if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); 
-                    l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); 
-                }
-                return l;
-            }, [games, searchQuery, activeTab, memberFilter]);
+            const memberStats = useMemo(() => {
+                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
+                return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
+            }, [games, nameColorMap]);
 
-            const memberStats = useMemo(() => {
-                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
-                return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
-            }, [games, nameColorMap]);
+            const toggleMemberFilter = (name, type) => {
+                if (memberFilter?.name === name && memberFilter?.type === type) {
+                    setMemberFilter(null);
+                } else {
+                    setMemberFilter({ name, type });
+                    showNotify(`篩選中: ${name} 的 ${type === 'total' ? '全部' : type === 'unstarted' ? '未開始' : type === 'watching' ? '觀看中' : '已看完'}`);
+                }
+            };
 
-            const toggleMemberFilter = (name, type) => {
-                if (memberFilter?.name === name && memberFilter?.type === type) {
-                    setMemberFilter(null);
-                } else {
-                    setMemberFilter({ name, type });
-                    showNotify(`篩選中: ${name} 的 ${type === 'total' ? '全部' : type === 'unstarted' ? '未開始' : type === 'watching' ? '觀看中' : '已看完'}`);
-                }
-            };
+            const handleExecMemberColorChange = async (newColor) => {
+                if (!colorChangingMember || !user) return;
+                
+                if (colorChangingMember === userName) {
+                    setUserColor(newColor);
+                    localStorage.setItem('steam_user_color', newColor);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
+                    showNotify(`已更新本人顏色`);
+                    setColorChangingMember(null);
+                    return;
+                }
 
-            const handleExecMemberColorChange = async (newColor) => {
-                if (!colorChangingMember || !user) return;
-                
-                if (colorChangingMember === userName) {
-                    setUserColor(newColor);
-                    localStorage.setItem('steam_user_color', newColor);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
-                    showNotify(`已更新本人顏色`);
-                    setColorChangingMember(null);
-                    return;
-                }
+                const profile = userProfiles.find(p => p.name === colorChangingMember);
+                if (profile?.uid) {
+                    try {
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
+                        showNotify(`已同步更新 ${colorChangingMember} 的雲端顏色`);
+                    } catch (e) {
+                        showNotify("更新失敗，權限不足");
+                    }
+                } else {
+                    showNotify(`「${colorChangingMember}」目前僅為文字紀錄，尚未建立雲端設定檔，無法修改顏色`);
+                }
+                setColorChangingMember(null);
+            };
 
-                const profile = userProfiles.find(p => p.name === colorChangingMember);
-                if (profile?.uid) {
-                    try {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
-                        showNotify(`已同步更新 ${colorChangingMember} 的雲端顏色`);
-                    } catch (e) {
-                        showNotify("更新失敗，權限不足");
-                    }
-                } else {
-                    showNotify(`「${colorChangingMember}」目前僅為文字紀錄，尚未建立雲端設定檔，無法修改顏色`);
-                }
-                setColorChangingMember(null);
-            };
+            return (
+                <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
+                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
+                    <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
+                    
+                    <input 
+                        type="color" 
+                        ref={memberColorPickerRef} 
+                        className="hidden" 
+                        onChange={(e) => handleExecMemberColorChange(e.target.value)} 
+                    />
 
-            return (
-                <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
-                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
-                    <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
-                    
-                    <input 
-                        type="color" 
-                        ref={memberColorPickerRef} 
-                        className="hidden" 
-                        onChange={(e) => handleExecMemberColorChange(e.target.value)} 
-                    />
+                    <div className="max-w-[1800px] mx-auto">
+                        <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
+                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}</div>
+                        </header>
+                        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
+                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
+                            
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => {
+                                const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
+                                return (
+                                    <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                        <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10 text-white ring-1 ring-inset ring-white/30' : ''}`}>{m.stats.unstarted}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400 ring-1 ring-inset ring-cyan-400/50' : 'text-cyan-400'}`}>{m.stats.watching}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400 ring-1 ring-inset ring-green-400/50' : 'text-green-400'}`}>{m.stats.completed}</td>
+                                    </tr>
+                                )
+                            })}</tbody></table></div></div>
+                        </div>
 
-                    <div className="max-w-[1800px] mx-auto">
-                        <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
-                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}</div>
-                        </header>
-                        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
-                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
-                            
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => {
-                                const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
-                                return (
-                                    <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                        <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10 text-white ring-1 ring-inset ring-white/30' : ''}`}>{m.stats.unstarted}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400 ring-1 ring-inset ring-cyan-400/50' : 'text-cyan-400'}`}>{m.stats.watching}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400 ring-1 ring-inset ring-green-400/50' : 'text-green-400'}`}>{m.stats.completed}</td>
-                                    </tr>
-                                )
-                            })}</tbody></table></div></div>
-                        </div>
+                        <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
+                            <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
+                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                            
+                            {memberFilter && (
+                                <div className="px-4 py-2 flex items-center">
+                                    <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
+                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3 ml-1" />
+                                    </button>
+                                </div>
+                            )}
 
-                        <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
-                            <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
-                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                            
-                            {memberFilter && (
-                                <div className="px-4 py-2 flex items-center">
-                                    <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
-                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3 ml-1" />
-                                    </button>
-                                </div>
-                            )}
+                            <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
+                                {!isEditLocked && (
+                                    <button onClick={handleReorderIDs} className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 transition-all flex items-center gap-2">
+                                        <Icon name="list-ordered" className="w-3 h-3" /> 重排編號
+                                    </button>
+                                )}
+                                <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
+                            </div>
+                        </div>
 
-                            <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
-                                {!isEditLocked && (
-                                    <button onClick={handleReorderIDs} className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 transition-all flex items-center gap-2">
-                                        <Icon name="list-ordered" className="w-3 h-3" /> 重排編號
-                                    </button>
-                                )}
-                                <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
-                            </div>
-                        </div>
+                        <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
+                            <nav className="tab-bar">
+                                {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
+                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
+                            </nav> 
+                            <div className="component-view">
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
+                                    setEditingId(item.id); 
+                                    setRawImageData(item.cover); 
+                                    const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
+                                    const sObj = customSources.find(s => s.name === item.source);
+                                    setFormData({ 
+                                        ...item, 
+                                        sourceIcon: sObj ? sObj.icon : '',
+                                        year: item.year || '',
+                                        totalEpisodes: ensureP(item.totalEpisodes), 
+                                        watchedProgress: ensureP(item.watchedProgress), 
+                                        updatedEpisodes: ensureP(item.updatedEpisodes), 
+                                        paidProgress: ensureP(item.paidProgress),
+                                        notes: item.notes || '',
+                                        manualUpdatedAt: item.manualUpdatedAt || '', 
+                                        watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
+                                    }); 
+                                    setIsModalOpen(true); 
+                                }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
+                            </div> 
+                        </article>
+                    </div>
 
-                        <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
-                            <nav className="tab-bar">
-                                {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
-                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
-                            </nav> 
-                            <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
-                                    setEditingId(item.id); 
-                                    setRawImageData(item.cover); 
-                                    const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
-                                    const sObj = customSources.find(s => s.name === item.source);
-                                    setFormData({ 
-                                        ...item, 
-                                        sourceIcon: sObj ? sObj.icon : '',
-                                        year: item.year || '',
-                                        totalEpisodes: ensureP(item.totalEpisodes), 
-                                        watchedProgress: ensureP(item.watchedProgress), 
-                                        updatedEpisodes: ensureP(item.updatedEpisodes), 
-                                        paidProgress: ensureP(item.paidProgress),
-                                        notes: item.notes || '',
-                                        manualUpdatedAt: item.manualUpdatedAt || '', 
-                                        watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
-                                    }); 
-                                    setIsModalOpen(true); 
-                                }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
-                            </div> 
-                        </article>
-                    </div>
+                    <div 
+                        className="fab-btn" 
+                        onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} 
+                        title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}
+                    >
+                        {isEditLocked ? (
+                            <Icon key="lock-icon" name="lock" className="w-8 h-8" />
+                        ) : (
+                            <Icon key="plus-icon" name="plus" className="w-8 h-8" />
+                        )}
+                    </div>
 
-                    <div 
-                        className="fab-btn" 
-                        onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} 
-                        title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}
-                    >
-                        {isEditLocked ? (
-                            <Icon key="lock-icon" name="lock" className="w-8 h-8" />
-                        ) : (
-                            <Icon key="plus-icon" name="plus" className="w-8 h-8" />
-                        )}
-                    </div>
+                    {isAddGroupModalOpen && (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                            <div className="bg-[#0b0e14] border border-white/20 p-6 rounded shadow-2xl w-full max-w-xs text-center"><h4 className="text-sm font-black mb-4 uppercase tracking-widest">新增自定義分組</h4><input autoFocus className="modal-input-base w-full mb-4 text-sm" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddGroup()}/><div className="flex gap-2"><button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[10px] font-black rounded uppercase">取消</button><button onClick={handleAddGroup} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[10px] font-black rounded uppercase">確定新增</button></div></div>
+                        </div>
+                    )}
 
-                    {isAddGroupModalOpen && (
-                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                            <div className="bg-[#0b0e14] border border-white/20 p-6 rounded shadow-2xl w-full max-w-xs text-center"><h4 className="text-sm font-black mb-4 uppercase tracking-widest">新增自定義分組</h4><input autoFocus className="modal-input-base w-full mb-4 text-sm" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddGroup()}/><div className="flex gap-2"><button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[10px] font-black rounded uppercase">取消</button><button onClick={handleAddGroup} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[10px] font-black rounded uppercase">確定新增</button></div></div>
-                        </div>
-                    )}
+                    {isModalOpen && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-8 overflow-hidden relative shadow-2xl rounded-sm">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
+                                <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
+                                <div className="p-8">
+                                    <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
+                                    <form onSubmit={handleSaveGame} className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                                            <div className="md:col-span-4 space-y-4">
+                                                <div>
+                                                    <div 
+                                                        onClick={() => setLastSelectedImgZone('cover')}
+                                                        className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
+                                                    >
+                                                        {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
+                                                    </div>
+                                                    {formData.cover && (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setIsCropping(true)}
+                                                            className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                            <Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
+                                                <div className="flex gap-2">
+                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
+                                                </div>
+                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
+                                            </div>
+                                            <div className="md:col-span-8 space-y-5">
+                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                
+                                                <div className="flex flex-col md:flex-row gap-4">
+                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
+                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
+                                                </div>
 
-                    {isModalOpen && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-8 overflow-hidden relative shadow-2xl rounded-sm">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
-                                <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
-                                <div className="p-8">
-                                    <h3 className="text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                                            <div className="md:col-span-4 space-y-4">
-                                                <div>
-                                                    <div 
-                                                        onClick={() => setLastSelectedImgZone('cover')}
-                                                        className={`w-full aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}
-                                                    >
-                                                        {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-4 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
-                                                    </div>
-                                                    {formData.cover && (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => setIsCropping(true)}
-                                                            className="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] hover:border-white transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Icon name="scissors" className="w-3 h-3" /> 封面裁剪優化
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full max-w-[105px] text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
-                                                <div className="flex gap-2">
-                                                    <div className="flex-grow"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                                                    <div className="w-[65px]"><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
-                                                </div>
-                                                <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
-                                            </div>
-                                            <div className="md:col-span-8 space-y-5">
-                                                <div>
-                                                    <label className={`block text-[11px] font-black uppercase mb-2 ${isDuplicateName ? 'text-red-500' : 'text-[#ffbae9]/60'}`}>
-                                                        -名稱- {isDuplicateName && "(重複名稱)"}
-                                                    </label>
-                                                    <input required className={`modal-input-base w-full max-w-xl font-black text-lg ${isDuplicateName ? 'text-red-500 border-red-500' : 'text-white'}`} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
-                                                    {isDuplicateName && <div className="text-red-500 text-[10px] font-black mt-1 uppercase">此名稱已存在於系統中，請更改後再提交</div>}
-                                                </div>
-                                                
-                                                <div className="flex flex-col md:flex-row gap-4">
-                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
-                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
-                                                </div>
+                                                <div className="flex items-end gap-3"><div className="w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
+                                                
+                                                <div className="flex flex-col md:flex-row gap-4">
+                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="flex-1" />
+                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="flex-1" />
+                                                </div>
 
-                                                <div className="flex items-end gap-3"><div className="w-[105px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div></div>
-                                                
-                                                <div className="flex flex-col md:flex-row gap-4">
-                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="flex-1" />
-                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="flex-1" />
-                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="md:col-span-1 max-w-[125px]">
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
+                                                        <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
+                                                    </div>
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
+                                                        <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
+                                                    </div>
+                                                </div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
+                                                
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
+                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div className="md:col-span-1 max-w-[125px]">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
-                                                        <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
-                                                    </div>
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
-                                                        <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
-                                                    </div>
-                                                </div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
-                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="pt-6 flex gap-4">
-                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button>
-                                            <button 
-                                                type="submit" 
-                                                disabled={isDuplicateName}
-                                                className={`flex-[2] py-4 text-[12px] font-black rounded shadow-lg uppercase transition-all ${isDuplicateName ? 'bg-slate-700 text-white/20 cursor-not-allowed border border-white/10' : 'bg-[#ffbae9] text-[#3f5968] active:scale-95'}`}
-                                            >
-                                                {isDuplicateName ? '無法提交：名稱重複' : '確認提交資料'}
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {isCropping && (
+                        <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化並限制檔案大小"); }} onCancel={() => setIsCropping(false)} />
+                    )}
 
-                    {isCropping && (
-                        <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化並限制檔案大小"); }} onCancel={() => setIsCropping(false)} />
-                    )}
+                    {deleteGameTarget && (
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
+                    )}
+                    {showClearConfirm && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 leading-relaxed px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
+                    )}
+                </div>
+            );
+        }
 
-                    {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
-                    )}
-                    {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 leading-relaxed px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
-                    )}
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
