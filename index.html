@@ -87,13 +87,14 @@
 
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
+        // Firebase 設置 - 適應當前環境
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "",
             authDomain: "video-b02b3.firebaseapp.com",
             projectId: "video-b02b3",
             storageBucket: "video-b02b3.firebasestorage.app",
@@ -104,7 +105,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'video-library-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
 
         // --- Helpers ---
         const extractFirstNumber = (val) => {
@@ -278,7 +279,6 @@
                     <div className="desc">
                         <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
                         <div className="title-container">
-                            {/* 修改：加入 title 屬性以便滑鼠指住時顯示完整名稱 */}
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
                                 <span className="id-label">#{g.order || 0}</span>{g.name}
                             </div> 
@@ -366,6 +366,13 @@
             
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
             
+            // 新增：檢查名稱是否重複
+            const isDuplicateName = useMemo(() => {
+                const currentName = formData.name.trim().toLowerCase();
+                if (!currentName) return false;
+                return games.some(g => (g.name || "").trim().toLowerCase() === currentName && g.id !== editingId);
+            }, [formData.name, games, editingId]);
+
             const nameColorMap = useMemo(() => { 
                 const m = {};
                 userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
@@ -412,7 +419,22 @@
             }, [isModalOpen, lastSelectedImgZone, showNotify]);
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
+            
+            useEffect(() => { 
+                const init = async () => { 
+                    try { 
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        console.error("Auth error:", e);
+                    } 
+                }; 
+                init(); 
+                return onAuthStateChanged(auth, setUser); 
+            }, []);
             
             useEffect(() => {
                 if (!user) return;
@@ -463,7 +485,9 @@
             };
 
             const handleSaveGame = async (e) => {
-                if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user) return;
+                if(e) e.preventDefault();
+                const cn = formData.name.trim(); 
+                if(!cn || !user || isDuplicateName) return; // 新增判斷
                 try {
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
@@ -731,7 +755,13 @@
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
                                             </div>
                                             <div className="md:col-span-8 space-y-5">
-                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                <div>
+                                                    <label className={`block text-[11px] font-black uppercase mb-2 ${isDuplicateName ? 'text-red-500' : 'text-[#ffbae9]/60'}`}>
+                                                        -名稱- {isDuplicateName && "(重複名稱)"}
+                                                    </label>
+                                                    <input required className={`modal-input-base w-full max-w-xl font-black text-lg ${isDuplicateName ? 'text-red-500 border-red-500' : 'text-white'}`} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
+                                                    {isDuplicateName && <div className="text-red-500 text-[10px] font-black mt-1 uppercase">此名稱已存在於系統中，請更改後再提交</div>}
+                                                </div>
                                                 
                                                 <div className="flex flex-col md:flex-row gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
@@ -763,7 +793,16 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
+                                        <div className="pt-6 flex gap-4">
+                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button>
+                                            <button 
+                                                type="submit" 
+                                                disabled={isDuplicateName}
+                                                className={`flex-[2] py-4 text-[12px] font-black rounded shadow-lg uppercase transition-all ${isDuplicateName ? 'bg-slate-700 text-white/20 cursor-not-allowed border border-white/10' : 'bg-[#ffbae9] text-[#3f5968] active:scale-95'}`}
+                                            >
+                                                {isDuplicateName ? '無法提交：名稱重複' : '確認提交資料'}
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             </div>
