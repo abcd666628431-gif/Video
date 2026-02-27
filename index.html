@@ -40,8 +40,8 @@
         .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
-        .title-container { height: 3.5rem; margin-bottom: 0.3rem; display: flex; align-items: flex-start; padding-right: 45px; }
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
+        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
+        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
         .desc .title-link:hover { color: #ffbae9; }
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
@@ -86,21 +86,19 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        // 改動：確保符合 GitHub Pages 兼容性之標準 Firebase CDN
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // 改動：更新為新的 Firebase 配置
         const firebaseConfig = {
-            apiKey: "AIzaSyBpwEmDmcVcbgM1W5ZThT52Oi2WcCLXhKg",
-            authDomain: "viedo3-88ef5.firebaseapp.com",
-            projectId: "viedo3-88ef5",
-            storageBucket: "viedo3-88ef5.firebasestorage.app",
-            messagingSenderId: "964433468155",
-            appId: "1:964433468155:web:9d2b7a64be53dd897a2e5e"
+            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
+            authDomain: "video-b02b3.firebaseapp.com",
+            projectId: "video-b02b3",
+            storageBucket: "video-b02b3.firebasestorage.app",
+            messagingSenderId: "25339039789",
+            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
         };
         
         const app = initializeApp(firebaseConfig);
@@ -280,7 +278,11 @@
                     <div className="desc">
                         <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
                         <div className="title-container">
-                            <div className="title-link" onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}><span className="id-label">#{g.order || 0}</span>{g.name}</div> 
+                            {/* 修改：加入 title 屬性以便滑鼠指住時顯示完整名稱 */}
+                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
+                                <span className="id-label">#{g.order || 0}</span>{g.name}
+                            </div> 
+                            <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
@@ -353,7 +355,7 @@
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             
@@ -456,7 +458,7 @@
             const handleOpenAddModal = () => {
                 setEditingId(null); 
                 setRawImageData(null); 
-                setFormData({ name: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             };
 
@@ -664,6 +666,7 @@
                                         watchedProgress: ensureP(item.watchedProgress), 
                                         updatedEpisodes: ensureP(item.updatedEpisodes), 
                                         paidProgress: ensureP(item.paidProgress),
+                                        notes: item.notes || '',
                                         manualUpdatedAt: item.manualUpdatedAt || '', 
                                         watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
                                     }); 
@@ -753,6 +756,11 @@
                                                     </div>
                                                 </div>
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
+                                                
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
+                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
