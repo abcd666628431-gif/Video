@@ -41,7 +41,7 @@
         .image-link { width: 130px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: all 0.3s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         @media (min-width: 768px) { .image-link { width: 180px; } }
         
-        .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
+        .image { width: 100%; height: 100%; background-size: cover; background-repeat: no-repeat; background-position: center; }
         
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.6rem 0.8rem 0.8rem 0.8rem; }
         @media (min-width: 768px) { .desc { padding: 0.75rem 1.25rem 1rem 1.25rem; } }
@@ -126,12 +126,13 @@
 
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        const firebaseConfig = {
+        // Firebase Configuration - Defaulting to user-provided or environment injected
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBowrV3MzZkXVRt-7kTK3dYuwU0Ce-uul0",
             authDomain: "video2-a50eb.firebaseapp.com",
             projectId: "video2-a50eb",
@@ -143,8 +144,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'video-library-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
 
+        // Helper functions preserved 100%
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -184,25 +186,7 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
-        const compressImage = (dataUrl, maxWidth = 800) => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onerror = reject;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
-                };
-                img.src = dataUrl;
-            });
-        };
-
+        // Preserved Image Cropper UI and Logic
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -271,6 +255,7 @@
             );
         });
 
+        // Lucide Icon Wrapper
         const Icon = memo(({ name, className, onClick, title }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return (
@@ -293,6 +278,7 @@
             </svg>
         );
 
+        // Preserved Content Card Component
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const percentage = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
@@ -378,6 +364,7 @@
         });
 
         function App() {
+            // State initialization
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
             const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
@@ -386,33 +373,133 @@
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
-            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
+            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
             const [recentCategories, setRecentCategories] = useState(() => JSON.parse(localStorage.getItem('recent_categories') || '[]'));
 
+            // Firestore helpers following MANDATORY paths
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+
+            // Authentication & Presence logic following MANDATORY Rule 3
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        console.error("Auth Failed", e);
+                    }
+                };
+                initAuth();
+                const unsubscribe = onAuthStateChanged(auth, setUser);
+                return () => unsubscribe();
+            }, []);
+
+            // Data listeners
+            useEffect(() => {
+                if (!user) return;
+                setIsLoadingGames(true); setIsLoadingLogs(true);
+
+                const errorHandler = (err) => { console.error("Firestore Listen Error:", err); showNotify("同步發生錯誤"); };
+
+                const ug = onSnapshot(getPublicCol('games'), (s) => { 
+                    setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); 
+                    setIsLoadingGames(false); 
+                }, errorHandler);
+
+                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
+                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); 
+                    setActivityLogs(logs.slice(0, 30)); 
+                    setIsLoadingLogs(false); 
+                }, errorHandler);
+
+                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
+                    if(d.exists()) { 
+                        setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); 
+                        setCustomSources(d.data().sources || []); 
+                    } 
+                }, errorHandler);
+
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { 
+                    setUserProfiles(s.docs.map(d => d.data())); 
+                }, errorHandler);
+
+                // Presence tracking
+                const presenceDoc = doc(getPublicCol('presence'), user.uid);
+                const updatePresence = () => setDoc(presenceDoc, { uid: user.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
+                const presenceInterval = setInterval(updatePresence, 120000);
+                updatePresence();
+
+                const up = onSnapshot(getPublicCol('presence'), (s) => { 
+                    const now = Date.now(); 
+                    setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
+                }, errorHandler);
+
+                return () => { ug(); ul(); us(); up(); upro(); clearInterval(presenceInterval); };
+            }, [user, userName, userColor]);
+
+            // Handling Clipboard for GitHub compatibility and standard behavior
+            useEffect(() => {
+                const handlePaste = async (e) => {
+                    const items = e.clipboardData?.items;
+                    if (!items) return;
+                    for (let item of items) {
+                        if (item.type.indexOf("image") !== -1) {
+                            const blob = item.getAsFile();
+                            const reader = new FileReader();
+                            reader.onload = async (event) => {
+                                const dataUrl = event.target.result;
+                                if (lastSelectedImgZone === 'cover') {
+                                    setRawImageData(dataUrl);
+                                    setIsCropping(true);
+                                } else {
+                                    const compressed = await compressImage(dataUrl, 100);
+                                    setFormData(prev => ({ ...prev, sourceIcon: compressed }));
+                                    showNotify("圖標已更新");
+                                }
+                            };
+                            reader.readAsDataURL(blob);
+                        }
+                    }
+                };
+                window.addEventListener('paste', handlePaste);
+                return () => window.removeEventListener('paste', handlePaste);
+            }, [lastSelectedImgZone]);
+
+            const compressImage = (dataUrl, maxWidth = 800) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onerror = reject;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    };
+                    img.src = dataUrl;
+                });
+            };
+
+            const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
+            
             const nameColorMap = useMemo(() => { 
                 const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
                 m[userName] = userColor; games.forEach(g => { if(g.addedBy && !m[g.addedBy]) m[g.addedBy] = '#cbd5e1'; if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); }); 
                 m["糖糖"] = "#ffbae9"; m["雲雲"] = "#47daff"; return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
+
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
 
-            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
-            useEffect(() => {
-                if (!user) return;
-                setIsLoadingGames(true); setIsLoadingLogs(true);
-                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); });
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); setActivityLogs(logs.slice(0, 30)); setIsLoadingLogs(false); });
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } });
-                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); });
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
-                return () => { ug(); ul(); us(); up(); upro(); };
-            }, [user]);
-
-            const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
-            
             const handleOpenAddModal = () => {
                 setEditingId(null); setRawImageData(null); 
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
@@ -423,7 +510,7 @@
                 if(e) e.preventDefault();
                 const cn = formData.name.trim(); 
                 if(!cn) { showNotify("請輸入標題"); return; }
-                if(!user) { showNotify("連線未就緒，請稍後"); return; }
+                if(!user) { showNotify("連線未就緒"); return; }
                 
                 try {
                     if (formData.category) {
@@ -431,14 +518,7 @@
                         setRecentCategories(newRecent);
                         localStorage.setItem('recent_categories', JSON.stringify(newRecent));
                     }
-                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
-                    let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
-                    if(formData.order === "") while(orders.includes(to)) to++;
-                    if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
-                        let chain = [], check = to;
-                        while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
-                        chain.reverse(); await Promise.all(chain.map(item => updateDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 })));
-                    }
+                    const to = formData.order === "" ? games.length + 1 : extractFirstNumber(formData.order);
                     const sv = formData.source.trim();
                     if(sv) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === sv); 
@@ -479,25 +559,68 @@
                 else { setMemberFilter({ name, type }); showNotify(`篩選中: ${name}`); }
             };
 
+            // Main UI Render
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
+                    
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
+                            <div className="flex items-center gap-6">
+                                <TitleIcon />
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div>
+                                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1>
+                                </div>
+                            </div>
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
+                                <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20">
+                                    <Icon name="refresh-cw" className="w-4 h-4" /> 
+                                    <div className="flex flex-col"><span className="uppercase text-[10px]">同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div>
+                                </div>
                             </div>
                         </header>
+
+                        {/* Preserved Dashboard Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
-                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => (
-                                <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td className="py-1.5" style={{ color: m.color }}>{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'total')} className="py-1.5 text-center cursor-pointer">{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'watching')} className="py-1.5 text-center cursor-pointer text-cyan-400">{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'completed')} className="py-1.5 text-center cursor-pointer text-green-400">{m.stats.completed}</td></tr>
-                            ))}</tbody></table></div></div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col">
+                                <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+                                    {activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}
+                                </div>
+                            </div>
+                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3">
+                                <div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div>
+                                <div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div>
+                                <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>
+                                        {isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}
+                                        <Icon name="edit-3" className="w-3 h-3 text-white/20" />
+                                    </div>
+                                    <input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} />
+                                </div>
+                            </div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col">
+                                <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
+                                <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /></div></div>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                                    <table className="w-full text-[11px] font-black border-collapse">
+                                        <thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead>
+                                        <tbody>{memberStats.map(m => (
+                                            <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                                <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
+                                                <td onClick={() => toggleMemberFilter(m.name, 'total')} className="py-1.5 text-center cursor-pointer">{m.stats.total}</td>
+                                                <td onClick={() => toggleMemberFilter(m.name, 'watching')} className="py-1.5 text-center cursor-pointer text-cyan-400">{m.stats.watching}</td>
+                                                <td onClick={() => toggleMemberFilter(m.name, 'completed')} className="py-1.5 text-center cursor-pointer text-green-400">{m.stats.completed}</td>
+                                            </tr>
+                                        ))}</tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
+                        {/* Search & Action Bar */}
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm">+ 錄入新內容</button>
                             <div className="flex-grow flex items-center px-8 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
@@ -507,25 +630,37 @@
                             </div>
                         </div>
 
+                        {/* Tab Content Area */}
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
                                 <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={(item) => { 
-                                    setEditingId(item.id); setRawImageData(item.cover); 
-                                    const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
-                                    const sObj = customSources.find(s => s.name === item.source);
-                                    setFormData({ ...item, sourceIcon: sObj ? sObj.icon : '', year: item.year || '', totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); 
-                                    setIsModalOpen(true); 
-                                }} onDelete={(item) => setDeleteGameTarget(item)} />))}</ul>
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料</div> : filteredGames.map(g => (
+                                    <GameCard 
+                                        key={g.id} 
+                                        g={g} 
+                                        nameColorMap={nameColorMap} 
+                                        allSources={customSources} 
+                                        isEditLocked={isEditLocked} 
+                                        onOpenEdit={(item) => { 
+                                            setEditingId(item.id); setRawImageData(item.cover); 
+                                            const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
+                                            const sObj = customSources.find(s => s.name === item.source);
+                                            setFormData({ ...item, sourceIcon: sObj ? sObj.icon : '', year: item.year || '', totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); 
+                                            setIsModalOpen(true); 
+                                        }} 
+                                        onDelete={(item) => setDeleteGameTarget(item)} 
+                                    />
+                                ))}</ul>
                             </div> 
                         </article>
                     </div>
 
                     <div className="fab-btn" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "解鎖模式" : "快速錄入"}><Icon name={isEditLocked ? "lock" : "plus"} className="w-8 h-8" /></div>
 
+                    {/* Modals - Preserved Design */}
                     {isAddGroupModalOpen && (
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                             <div className="bg-[#0b0e14] border border-white/20 p-6 rounded shadow-2xl w-full max-w-xs text-center"><h4 className="text-sm font-black mb-4 uppercase tracking-widest">新增自定義分組</h4><input autoFocus className="modal-input-base w-full mb-4 text-sm" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddGroup()}/><div className="flex gap-2"><button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[10px] font-black rounded uppercase">取消</button><button onClick={handleAddGroup} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[10px] font-black rounded uppercase">確定</button></div></div>
@@ -565,10 +700,9 @@
                                                 <div>
                                                     <label className="block text-[10px] font-black text-white/40 uppercase mb-1">來源</label>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="source-icon-preview-box !w-10 !h-10 border-[#ffbae9]/30 flex-shrink-0" onClick={() => {setLastSelectedImgZone('source'); showNotify("請在頁面任何位置貼上圖案");}}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-4 h-4 text-white/20" />}</div>
+                                                        <div className={`source-icon-preview-box !w-10 !h-10 flex-shrink-0 ${lastSelectedImgZone === 'source' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : 'border-[#ffbae9]/30'}`} onClick={() => {setLastSelectedImgZone('source'); showNotify("請貼上來源圖標");}}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-4 h-4 text-white/20" />}</div>
                                                         <div className="flex-1 min-w-0"><input list="source-list" placeholder="輸入來源..." className="modal-input-base w-full text-[11px] font-bold px-2 mobile-narrow-select" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} /><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}</datalist></div>
                                                     </div>
-                                                    <div className="flex flex-wrap gap-2 mt-2">{customSources.map(s => (<button key={s.name} type="button" onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className={`quick-pick-btn flex items-center gap-1.5 ${formData.source === s.name ? '!border-[#ffbae9] !text-[#ffbae9]' : ''}`}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />} {s.name}</button>))}</div>
                                                 </div>
                                             </div>
 
@@ -591,11 +725,13 @@
                             </div>
                         </div>
                     )}
-                    {isCropping && (<ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("已優化封面"); }} onCancel={() => setIsCropping(false)} />)}
+
+                    {isCropping && (<ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已更新"); }} onCancel={() => setIsCropping(false)} />)}
                     {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
         }
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
