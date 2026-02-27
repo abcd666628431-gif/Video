@@ -81,7 +81,7 @@
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
@@ -442,9 +442,9 @@
             }, [user, userName, userColor]);
 
             const logActivity = async (action, gameName) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, timestamp: serverTimestamp() }); } catch(e) {} };
-            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
-            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }); setActiveTab(null); showNotify("分組已刪除"); };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await updateDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
+            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
+            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
             
             const handleOpenAddModal = () => {
                 setEditingId(null); 
@@ -462,7 +462,7 @@
                     if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
                         showNotify("編號衝突，正在智慧順延..."); let chain = [], check = to;
                         while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
-                        chain.reverse(); await Promise.all(chain.map(item => updateDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 })));
+                        chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
                     const sv = formData.source.trim();
                     if(sv) { 
@@ -474,18 +474,60 @@
                     }
                     const { sourceIcon, ...cleanData } = formData;
                     const finalData = { ...cleanData, name: cn, source: sv, addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
-                    if(editingId) { await updateDoc(doc(getPublicCol('games'), editingId), finalData); logActivity("修改", cn); }
+                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", cn); }
                     else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", cn); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch(e) { console.error(e); showNotify("操作失敗"); }
             };
 
             const handleDeleteGame = async (id) => { if(!user) return; const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知"); showNotify("已刪除"); setDeleteGameTarget(null); };
-            const handleClearAllData = async () => { if(!user) return; try { for (const g of games) await deleteDoc(doc(getPublicCol('games'), g.id)); showNotify("資料已清空"); setShowClearConfirm(false); } catch(e) { showNotify("操作失敗"); } };
+
+            // 修復：點擊清空後關閉視窗，並執行深度全庫清除
+            const handleClearAllData = async () => { 
+                if(!user) return; 
+                setShowClearConfirm(false); // 修復 1：立即關閉視窗
+                try { 
+                    showNotify("正在啟動深度清空程序...");
+                    // 修復 2：直接從 collection 獲取所有文檔，確保徹底清除殘留數據
+                    const querySnapshot = await getDocs(getPublicCol('games'));
+                    const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(doc(getPublicCol('games'), docSnap.id)));
+                    await Promise.all(deletePromises);
+                    
+                    showNotify("數據已從雲端彻底抹除"); 
+                    logActivity("清空全庫", "全部內容");
+                } catch(e) { 
+                    console.error(e);
+                    showNotify("清空程序異常，請檢查權限"); 
+                } 
+            };
+
             const handleExportData = () => { const blob = new Blob([JSON.stringify({ version: "11.6", games, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
+            
             const handleImportData = async (e) => {
                 const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); showNotify("正在恢復..."); if(d.games) for(const g of d.games) await addDoc(getPublicCol('games'), g); if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; r.readAsText(f);
+                r.onload = async (ev) => { 
+                    try { 
+                        const d = JSON.parse(ev.target.result); 
+                        showNotify("正在啟動 ID 修復導入..."); 
+                        if(d.games) {
+                            for(const g of d.games) {
+                                const { id, ...gameData } = g;
+                                const targetDoc = id ? doc(getPublicCol('games'), id) : doc(getPublicCol('games'));
+                                await setDoc(targetDoc, { 
+                                    ...gameData, 
+                                    updatedAt: serverTimestamp(),
+                                    createdAt: gameData.createdAt || serverTimestamp() 
+                                }, { merge: true });
+                            }
+                        }
+                        if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); 
+                        showNotify("導入成功，已自動校準 ID 映射"); 
+                    } catch(e) { 
+                        showNotify("導入失敗，請確認檔案格式"); 
+                        console.error(e);
+                    } 
+                }; 
+                r.readAsText(f);
             };
 
             const handleReorderIDs = async () => {
@@ -498,7 +540,7 @@
                     sorted.forEach((g, index) => {
                         const newOrder = index + 1;
                         if (extractFirstNumber(g.order) !== newOrder) {
-                            updates.push(updateDoc(doc(getPublicCol('games'), g.id), { order: newOrder }));
+                            updates.push(setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }));
                         }
                     });
 
@@ -702,7 +744,7 @@
                                                 <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label><div className="source-input-group max-w-[175px]"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1 flex gap-1 items-center"><input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { const v=e.target.value; const ex=customSources.find(s=>s.name===v); setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); }} />{customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}</div><datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist></div></div>
                                             </div>
                                             <div className="md:col-span-8 space-y-5">
-                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-w-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                <div><label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label><input required className="modal-input-base w-full max-xl font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
                                                 <div className="flex flex-col md:flex-row gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="flex-1" />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="flex-1" />
