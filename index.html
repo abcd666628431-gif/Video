@@ -40,8 +40,8 @@
         .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
-        .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
+        .title-container { height: 3.5rem; margin-bottom: 0.3rem; display: flex; align-items: flex-start; padding-right: 45px; }
+        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
         .desc .title-link:hover { color: #ffbae9; }
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
@@ -278,11 +278,7 @@
                     <div className="desc">
                         <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
                         <div className="title-container">
-                            {/* 修改：加入 title 屬性以便滑鼠指住時顯示完整名稱 */}
-                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                <span className="id-label">#{g.order || 0}</span>{g.name}
-                            </div> 
-                            <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
+                            <div className="title-link" onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}><span className="id-label">#{g.order || 0}</span>{g.name}</div> 
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
@@ -355,7 +351,7 @@
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [formData, setFormData] = useState({ name: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             
@@ -376,8 +372,8 @@
                     if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => { if(!m[n]) m[n] = '#cbd5e1'; }); 
                 }); 
                 m["糖糖"] = "#ffbae9";
-                m["神雲"] = "#47daff";
-                m["雲雲"] = "#47daff";
+                m["神雲"] = "#47daff"; // rgb(71, 218, 255)
+                m["雲雲"] = "#47daff"; // rgb(71, 218, 255)
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor, games]);
 
@@ -458,7 +454,7 @@
             const handleOpenAddModal = () => {
                 setEditingId(null); 
                 setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setFormData({ name: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             };
 
@@ -611,11 +607,14 @@
                             <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => <div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] }}>{l.userName}</span> {l.action} <span className="font-black">"{l.gameName}"</span></div>)}</div></div>
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { const v=e.target.value.trim()||userName; setUserName(v); localStorage.setItem('steam_user_name', v); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
                             
+                            {/* 修改：成員統計區移除透明度，移除提示文字 */}
                             <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總數</th><th className="pb-1 text-center">未開始</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead><tbody>{memberStats.map(m => {
                                 const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
                                 return (
                                     <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                        {/* 修改：移除 pointer 與 hover 改色提示效果 */}
                                         <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
+                                        {/* 修改：移除了數字的不透明度，確保文字清晰 */}
                                         <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10 text-white ring-1 ring-inset ring-white/30' : ''}`}>{m.stats.unstarted}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400 ring-1 ring-inset ring-cyan-400/50' : 'text-cyan-400'}`}>{m.stats.watching}</td>
@@ -666,7 +665,6 @@
                                         watchedProgress: ensureP(item.watchedProgress), 
                                         updatedEpisodes: ensureP(item.updatedEpisodes), 
                                         paidProgress: ensureP(item.paidProgress),
-                                        notes: item.notes || '',
                                         manualUpdatedAt: item.manualUpdatedAt || '', 
                                         watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
                                     }); 
@@ -756,11 +754,6 @@
                                                     </div>
                                                 </div>
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-2 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; const nList = list.includes(name) ? list.filter(n => n !== name) : [...list, name]; setFormData({...formData, watchingBy: nList}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
-                                                
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
-                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
-                                                </div>
                                             </div>
                                         </div>
                                         <div className="pt-6 flex gap-4"><button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="flex-1 py-4 bg-white/5 text-[12px] font-black rounded uppercase border border-white/5">取消修改</button><button type="submit" className="flex-[2] py-4 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded shadow-lg uppercase transition-all">確認提交資料</button></div>
