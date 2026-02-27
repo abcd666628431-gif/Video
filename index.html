@@ -415,8 +415,10 @@
                 return () => { ug(); ul(); us(); up(); upro(); clearInterval(presenceInterval); };
             }, [user, userName, userColor]);
 
+            // 修改：貼上圖片邏輯，僅顯示不自動進入編輯器
             useEffect(() => {
                 const handlePaste = async (e) => {
+                    if (!isModalOpen) return; 
                     const items = e.clipboardData?.items;
                     if (!items) return;
                     for (let item of items) {
@@ -425,8 +427,15 @@
                             const reader = new FileReader();
                             reader.onload = async (event) => {
                                 const dataUrl = event.target.result;
-                                if (lastSelectedImgZone === 'cover') { setRawImageData(dataUrl); setIsCropping(true); } 
-                                else { const compressed = await compressImage(dataUrl, 100); setFormData(prev => ({ ...prev, sourceIcon: compressed })); showNotify("圖標已更新"); }
+                                if (lastSelectedImgZone === 'cover') { 
+                                    setRawImageData(dataUrl); // 存入原始大圖備用
+                                    setFormData(prev => ({ ...prev, cover: dataUrl })); // 直接更新預覽圖
+                                    showNotify("封面已貼上，如需裁剪請按鍵進入");
+                                } else { 
+                                    const compressed = await compressImage(dataUrl, 100); 
+                                    setFormData(prev => ({ ...prev, sourceIcon: compressed })); 
+                                    showNotify("圖標已更新"); 
+                                }
                             };
                             reader.readAsDataURL(blob);
                         }
@@ -434,7 +443,7 @@
                 };
                 window.addEventListener('paste', handlePaste);
                 return () => window.removeEventListener('paste', handlePaste);
-            }, [lastSelectedImgZone]);
+            }, [lastSelectedImgZone, isModalOpen]);
 
             const compressImage = (dataUrl, maxWidth = 800) => {
                 return new Promise((resolve, reject) => {
@@ -503,7 +512,6 @@
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
 
-                    // 排除 Firestore 禁止欄位
                     const cleanData = {};
                     const allowedKeys = ['name', 'notes', 'addedBy', 'year', 'order', 'url', 'cover', 'totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress', 'airingStatus', 'source', 'category', 'manualUpdatedAt', 'watchingBy', 'updateDay', 'updateTime'];
                     allowedKeys.forEach(k => { if (formData[k] !== undefined) cleanData[k] = formData[k]; });
@@ -511,7 +519,6 @@
                     const finalData = { ...cleanData, name: cn, source: sv, addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
 
                     if(editingId) { 
-                        // 使用 setDoc with merge 替代 updateDoc 以增加容錯率
                         await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
                         logActivity("修改", cn); 
                     } else { 
@@ -592,7 +599,6 @@
                                 <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest">
                                     <div className="flex items-center gap-3">
                                         <span>成員統計</span>
-                                        {/* 還原導入與導出鍵 */}
                                         <div className="flex items-center gap-2">
                                             <Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} title="導入備份" />
                                             <Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} title="導出備份" />
@@ -653,7 +659,9 @@
                                                 <div onClick={() => setLastSelectedImgZone('cover')} className={`w-[90px] md:w-full mx-auto md:mx-0 aspect-[3/4.2] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                     {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[9px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase">封面貼上</div>}
                                                 </div>
-                                                {formData.cover && (<button type="button" onClick={() => setIsCropping(true)} className="w-[90px] md:w-full mx-auto block py-1.5 md:py-2 bg-white/5 border border-white/10 rounded text-[9px] md:text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] transition-all">裁剪封面</button>)}
+                                                {/* 手動按鍵進入編輯模式 */}
+                                                {formData.cover && (<button type="button" onClick={() => { setRawImageData(rawImageData || formData.cover); setIsCropping(true); }} className="w-[90px] md:w-full mx-auto block py-1.5 md:py-2 bg-white/5 border border-white/10 rounded text-[9px] md:text-[10px] font-black uppercase text-white/60 hover:bg-[#ffbae9] transition-all">裁剪封面</button>)}
+                                                
                                                 <div className="w-fit"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-12 md:w-16 text-center font-black p-1 text-[11px] mobile-narrow-box" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
                                                 <div className="flex flex-row md:flex-row gap-3 items-end">
                                                     <div className="w-fit"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">狀態</label><select className="modal-input-base w-24 md:w-28 text-[11px] font-black px-2 mobile-narrow-select" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
@@ -700,7 +708,7 @@
                         </div>
                     )}
 
-                    {isCropping && (<ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已更新"); }} onCancel={() => setIsCropping(false)} />)}
+                    {isCropping && (<ImageCropperModal imageSrc={rawImageData} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); setRawImageData(null); showNotify("封面已裁剪"); }} onCancel={() => { setIsCropping(false); setRawImageData(null); }} />)}
                     {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
