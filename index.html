@@ -80,10 +80,22 @@
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
         .plus-toggle-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #ffbae9; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: rgba(255,186,233,0.1); border-color: #ffbae9; }
+        
+        /* 修復螢幕閃爍/藍屏提示樣式 */
+        #error-boundary { position: fixed; inset: 0; background: #3f5968; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 20px; text-align: center; }
+        #error-boundary h2 { font-size: 2rem; font-weight: 900; margin-bottom: 1rem; color: #ffbae9; }
+        #error-boundary p { opacity: 0.8; max-width: 500px; }
+        #error-boundary button { margin-top: 2rem; padding: 10px 30px; background: #fff; color: #3f5968; font-weight: 900; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <!-- 預設載入狀態，防止藍屏 -->
+        <div id="loading-fallback" style="height: 100vh; display: flex; align-items: center; justify-content: center; font-weight: 900; color: rgba(255,255,255,0.2); letter-spacing: 0.2em; text-transform: uppercase;">
+            Initializing System...
+        </div>
+    </div>
+    
     <script type="text/babel" data-type="module">
         // Firebase imports from standard CDN
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
@@ -92,11 +104,28 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+        // 安全地解析 Firebase 配置 (修復藍屏關鍵點)
+        let db, auth, appId;
+        try {
+            const configRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+            if (!configRaw) throw new Error("Firebase Configuration Missing");
+            
+            const firebaseConfig = JSON.parse(configRaw);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+        } catch (err) {
+            console.error("Initialization Failed:", err);
+            document.getElementById('root').innerHTML = `
+                <div id="error-boundary">
+                    <h2>系統初始化失敗</h2>
+                    <p>這通常是由於環境配置變數 (__firebase_config) 遺失或格式錯誤導致的。<br/>請確保在正確的環境中執行此應用程式。</p>
+                    <p style="font-size: 12px; font-family: monospace; margin-top: 20px; color: rgba(255,255,255,0.4)">Error: ${err.message}</p>
+                    <button onclick="location.reload()">重新整理</button>
+                </div>
+            `;
+        }
 
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
@@ -326,6 +355,9 @@
         });
 
         function App() {
+            // 如果 Firebase 沒連上，React 元件內部也需要做保護
+            if (!db) return null;
+
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
             const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]);
@@ -384,32 +416,34 @@
             
             useEffect(() => {
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) { console.error("Auth failed:", e); }
                 };
                 initAuth();
                 return onAuthStateChanged(auth, setUser);
             }, []);
             
             useEffect(() => {
-                if (!user) return;
-                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+                if (!user || !db) return;
+                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => console.error(e));
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(logs.slice(0, 30)); 
-                });
+                }, (e) => console.error(e));
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } 
-                });
+                }, (e) => console.error(e));
                 const up = onSnapshot(getPublicCol('presence'), (s) => { 
                     const now = Date.now(); 
                     setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
-                });
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())));
+                }, (e) => console.error(e));
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())), (e) => console.error(e));
 
                 const updP = () => { 
                     if(auth.currentUser) {
