@@ -338,7 +338,6 @@
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
 
-            // 用於控制「更新星期」與「更新時間」是否顯示輸入框的內部狀態
             const [showUpdateDayInput, setShowUpdateDayInput] = useState(false);
             const [showUpdateTimeInput, setShowUpdateTimeInput] = useState(false);
 
@@ -350,7 +349,7 @@
                 userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
                 onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
                 m[userName] = userColor;
-                m["糖糖"] = "#ffbae9"; m["雲雲"] = "#47daff"; m["雲雲"] = "#47daff";
+                m["糖糖"] = "#ffbae9"; m["雲雲"] = "#47daff";
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor]);
 
@@ -608,17 +607,14 @@
                                     <h3 className="text-xl md:text-2xl font-black italic mb-4 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
                                     <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
-                                            {/* 左側：預覽圖、編號、狀態、年份、分類、來源列表 */}
                                             <div className="md:col-span-4 flex flex-col gap-4">
                                                 <div className="flex flex-col items-center">
-                                                    {/* 封面預覽比例再縮小：改為 w-20 md:w-24 */}
                                                     <div onClick={() => setLastSelectedImgZone('cover')} className={`w-20 md:w-24 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                         {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[8px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">貼上封面</div>}
                                                     </div>
                                                     {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="w-20 md:w-24 mt-2 py-1 bg-white/5 border border-white/10 rounded text-[8px] font-black uppercase text-white/40 hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all flex items-center justify-center gap-1"><Icon name="scissors" className="w-2.5 h-2.5" /> 裁剪</button>}
                                                 </div>
                                                 
-                                                {/* UI 位置還原：編號、狀態、年份、分類 回到左側 */}
                                                 <div className="flex flex-col gap-4">
                                                     <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
                                                     <div className="grid grid-cols-2 gap-2">
@@ -631,7 +627,6 @@
                                                         <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select>
                                                     </div>
                                                     
-                                                    {/* 來源列表 */}
                                                     <div>
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定與快速選擇</label>
                                                         <div className="flex flex-col gap-2">
@@ -657,7 +652,6 @@
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
                                             </div>
 
-                                            {/* 右側：名稱、進度、更新交互、最後更新/連結、誰在看、備註 */}
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
                                                 <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><input required className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
                                                 
@@ -666,7 +660,6 @@
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="w-full" />
                                                 </div>
 
-                                                {/* 更新星期與更新時間：改為 + 號展開交互 */}
                                                 <div className="flex flex-col md:flex-row gap-6">
                                                     <div className="flex-1">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
@@ -698,7 +691,6 @@
                                                     <div className="col-span-1 md:col-span-2"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
                                                 </div>
 
-                                                {/* 誰在看：框框收窄 */}
                                                 <div>
                                                     <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
                                                     <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px]">
