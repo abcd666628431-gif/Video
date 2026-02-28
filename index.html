@@ -66,7 +66,7 @@
         .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
-        .progress-input-row { display: grid; grid-template-columns: 2fr 1.2fr 2fr 1.2fr; gap: 4px; align-items: center; }
+        .progress-input-row { display: grid; gap: 4px; align-items: center; }
         .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
         .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
@@ -80,6 +80,10 @@
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
         .plus-toggle-btn { width: 32px; height: 32px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: #ffbae9; color: #3f5968; }
+        /* 新增：自定義下拉選單樣式 */
+        .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 60px; max-height: 160px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .custom-unit-dropdown div { padding: 6px 12px; font-size: 11px; font-weight: 900; cursor: pointer; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .custom-unit-dropdown div:hover { background: #ffbae9; color: #3f5968; }
     </style>
 </head>
 <body>
@@ -304,25 +308,73 @@
             );
         });
 
-        const ProgressInputField = memo(({ label, value, onChange, labelClass, containerClass }) => {
+        const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, containerClass }) => {
             const [isExpanded, setIsExpanded] = useState(!!value.v2);
+            const [activeDropdown, setActiveDropdown] = useState(null); // 'u1' or 'u2'
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
+            
+            // 修復：計算單位輸入框寬度的邏輯，確保打第2個字就要延伸
+            const getUnitWidth = (val) => {
+                const len = val ? val.toString().length : 0;
+                // 加強係數，確保第2字開始明顯增長
+                return Math.max(32, len * 13 + 12) + 'px';
+            };
+
+            const dropdownRef = useRef(null);
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setActiveDropdown(null);
+                };
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, []);
             
             return (
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
-                    <div className="progress-input-row">
+                    <div className="progress-input-row" style={{ gridTemplateColumns: isExpanded ? '1fr auto 1fr auto' : '1fr auto 1fr' }}>
                         <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
-                        <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u1} onChange={e=>handleChange('u1', e.target.value)} />
+                        
+                        <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
+                            <input 
+                                className="modal-input-base font-black text-[10px] p-1 text-center" 
+                                style={{ width: getUnitWidth(value.u1) }}
+                                value={value.u1} 
+                                onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }}
+                                onChange={e=>handleChange('u1', e.target.value)} 
+                            />
+                            {activeDropdown === 'u1' && (
+                                <div className="custom-unit-dropdown custom-scrollbar">
+                                    {unitSuggestions.map(u => (
+                                        <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         
                         {isExpanded ? (
                             <>
                                 <input type="number" className="modal-input-base w-full font-black text-sm p-1.5" value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
-                                <input list="unit-list" className="modal-input-base w-full font-black text-[10px] p-1" value={value.u2} onChange={e=>handleChange('u2', e.target.value)} />
+                                <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
+                                    <input 
+                                        className="modal-input-base font-black text-[10px] p-1 text-center" 
+                                        style={{ width: getUnitWidth(value.u2) }}
+                                        value={value.u2} 
+                                        onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }}
+                                        onChange={e=>handleChange('u2', e.target.value)} 
+                                    />
+                                    {activeDropdown === 'u2' && (
+                                        <div className="custom-unit-dropdown custom-scrollbar">
+                                            {unitSuggestions.map(u => (
+                                                <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </>
                         ) : (
-                            <div className="col-span-2 flex justify-center">
-                                <div className="plus-toggle-btn w-full !h-[40px]" onClick={() => setIsExpanded(true)}>
+                            <div className="flex justify-center">
+                                <div className="plus-toggle-btn w-[40px] !h-[40px]" onClick={() => setIsExpanded(true)}>
                                     <Icon name="plus" className="w-4 h-4" />
                                 </div>
                             </div>
@@ -374,7 +426,24 @@
             const [colorChangingMember, setColorChangingMember] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-            const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
+            
+            // 單位自動建議邏輯：收集庫中所有使用過的單位（修復為獲取完整列表）
+            const unitSuggestions = useMemo(() => { 
+                const r = new Set(['集', '話', '章', '季', '卷', '冊']); 
+                games.forEach(g => { 
+                    ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
+                        const p = g[k]; 
+                        if (p && typeof p === 'object') {
+                            if (p.u1 && typeof p.u1 === 'string' && p.u1.trim()) r.add(p.u1.trim()); 
+                            if (p.u2 && typeof p.u2 === 'string' && p.u2.trim()) r.add(p.u2.trim()); 
+                        } else if (p && typeof p === 'string') {
+                            const match = p.match(/[^\d.]+/g);
+                            if (match) match.forEach(m => r.add(m.trim()));
+                        }
+                    }); 
+                }); 
+                return Array.from(r).sort(); 
+            }, [games]);
             
             const nameColorMap = useMemo(() => { 
                 const m = {};
@@ -556,9 +625,7 @@
             
             const handleDeleteGame = async (id) => { 
                 if(!user) return;
-                // 立即關閉選框
                 setDeleteGameTarget(null);
-                
                 try {
                     const g = games.find(x => x.id === id); 
                     const order = g?.order;
@@ -567,7 +634,6 @@
                     showNotify("已刪除"); 
                 } catch (e) {
                     showNotify("刪除失敗");
-                    console.error(e);
                 }
             };
 
@@ -676,7 +742,7 @@
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
-                    <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
+                    
                     <input type="color" ref={memberColorPickerRef} className="hidden" onChange={(e) => handleExecMemberColorChange(e.target.value)} />
 
                     <div className="max-w-[1800px] mx-auto">
@@ -823,7 +889,7 @@
                                                                     {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                                 </div>
                                                                 <div className="flex-1 flex gap-1 items-center">
-                                                                    <input list="source-list" placeholder="輸入來源..." className="modal-input-base w-auto max-w-[150px] text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
+                                                                    <input placeholder="輸入來源..." className="modal-input-base w-auto max-w-[150px] text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
                                                                         const v=e.target.value; const ex=customSources.find(s=>s.name===v); 
                                                                         setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); 
                                                                     }} />
@@ -838,7 +904,6 @@
                                                                 ))}
                                                             </div>
                                                         </div>
-                                                        <datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist>
                                                     </div>
                                                 </div>
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
@@ -852,8 +917,8 @@
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="!max-w-full" />
-                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="!max-w-full" />
+                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="!max-w-full" />
+                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="!max-w-full" />
                                                 </div>
 
                                                 <div className="flex flex-row gap-6 items-end">
@@ -882,8 +947,8 @@
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="!max-w-full" />
-                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="!max-w-full" />
+                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="!max-w-full" />
+                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="!max-w-full" />
                                                 </div>
 
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
