@@ -74,9 +74,11 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
         .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
         .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
+
+        /* 新增：快速填入標籤樣式 */
         .quick-fill-btn { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .quick-fill-btn:hover { background: #ffbae9; color: #3f5968; border-color: #fff; }
-        .source-fill-tag { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
+        .source-fill-tag { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
     </style>
 </head>
@@ -84,27 +86,24 @@
     <div id="root"></div>
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // Use system-provided config if available, fallback for local testing
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "",
-                authDomain: "video-b02b3.firebaseapp.com",
-                projectId: "video-b02b3",
-                storageBucket: "video-b02b3.firebasestorage.app",
-                messagingSenderId: "25339039789",
-                appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
+            authDomain: "video-b02b3.firebaseapp.com",
+            projectId: "video-b02b3",
+            storageBucket: "video-b02b3.firebasestorage.app",
+            messagingSenderId: "25339039789",
+            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
+        };
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+        const appId = 'video-library-v1';
 
         // --- Helpers ---
         const extractFirstNumber = (val) => {
@@ -165,7 +164,6 @@
             });
         };
 
-        // --- Components ---
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -381,6 +379,7 @@
                 return games.some(g => g.name.trim() === currentName && g.id !== editingId);
             }, [formData.name, games, editingId]);
 
+            // --- 新增：快速填入數據計算 ---
             const recentStatuses = useMemo(() => {
                 const seen = new Set();
                 const result = [];
@@ -395,6 +394,7 @@
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
 
+            // 新增：最近使用的前 3 個分類
             const recentCategories = useMemo(() => {
                 const seen = new Set();
                 const result = [];
@@ -431,23 +431,7 @@
             }, [isModalOpen, lastSelectedImgZone, showNotify]);
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            
-            useEffect(() => { 
-                const initAuth = async () => { 
-                    try { 
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        console.error("Auth error", e);
-                        await signInAnonymously(auth);
-                    } 
-                }; 
-                initAuth(); 
-                return onAuthStateChanged(auth, setUser); 
-            }, []);
+            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
             
             useEffect(() => {
                 if (!user) return;
@@ -755,6 +739,7 @@
                                     <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
                                             <div className="md:col-span-4 space-y-4">
+                                                {/* 優化：縮減手機版圖片框大小 */}
                                                 <div className="flex flex-col items-center">
                                                     <div onClick={() => setLastSelectedImgZone('cover')} className={`w-32 md:w-full aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                         {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[9px] md:text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
@@ -766,10 +751,11 @@
                                                 
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
                                                 
-                                                <div className="flex flex-col gap-4">
-                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                <div className="flex md:flex-col gap-4">
+                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-[60px] md:w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
                                                     
-                                                    <div className="grid grid-cols-2 gap-2">
+                                                    {/* 電腦版將狀態與年份並排排在編號下一行 */}
+                                                    <div className="hidden md:grid grid-cols-2 gap-2">
                                                         <div>
                                                             <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
                                                             <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
@@ -787,39 +773,60 @@
                                                         </div>
                                                     </div>
 
-                                                    <div>
+                                                    <div className="flex-1 md:w-full">
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
                                                         <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
                                                             <option value="">- 分類 -</option>
                                                             {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                         </select>
+                                                        {/* 優化：分類最近使用的 3 個選項點擊填入 */}
                                                         <div className="flex flex-wrap gap-1.5 mt-2">
                                                             {recentCategories.map(c => (
                                                                 <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className="quick-fill-btn">{c}</button>
                                                             ))}
                                                         </div>
                                                     </div>
-
+                                                </div>
+                                                
+                                                {/* 手機版排版邏輯 */}
+                                                <div className="md:hidden grid grid-cols-2 gap-2 items-start">
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label>
-                                                        <div className="source-input-group flex-col gap-2">
-                                                            <div className="flex w-full gap-2 items-center">
-                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>
-                                                                    {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
-                                                                </div>
-                                                                <div className="flex-1 flex gap-1 items-center">
-                                                                    <input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
-                                                                        const v=e.target.value; const ex=customSources.find(s=>s.name===v); 
-                                                                        setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); 
-                                                                    }} />
-                                                                    {customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}
-                                                                </div>
+                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
+                                                        <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
+                                                            <option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option>
+                                                        </select>
+                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                            {recentStatuses.map(s => (
+                                                                <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className="quick-fill-btn">{s}</button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label>
+                                                        <input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label>
+                                                    <div className="source-input-group">
+                                                        <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>
+                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
+                                                        </div>
+                                                        <div className="flex-1 flex flex-col gap-1">
+                                                            <div className="flex gap-1 items-center">
+                                                                <input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
+                                                                    const v=e.target.value; const ex=customSources.find(s=>s.name===v); 
+                                                                    setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); 
+                                                                }} />
+                                                                {customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}
                                                             </div>
-                                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full mt-1">
+                                                            {/* 優化：顯示所有來源選項（圖標+名稱）點擊填入 */}
+                                                            <div className="flex flex-wrap gap-2 mt-1 max-h-[100px] overflow-y-auto custom-scrollbar p-1">
                                                                 {customSources.map(s => (
                                                                     <div key={s.name} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className="source-fill-tag">
-                                                                        {s.icon && <img src={s.icon} className="w-4 h-4 object-contain flex-shrink-0" />}
-                                                                        <span className="truncate">{s.name}</span>
+                                                                        {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
+                                                                        <span>{s.name}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
