@@ -74,38 +74,30 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
         .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
         .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
-
-        /* 新增：快速填入標籤樣式 */
         .quick-fill-btn { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .quick-fill-btn:hover { background: #ffbae9; color: #3f5968; border-color: #fff; }
-        .source-fill-tag { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
+        .source-fill-tag { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
+        .plus-toggle-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #ffbae9; cursor: pointer; transition: all 0.2s; }
+        .plus-toggle-btn:hover { background: rgba(255,186,233,0.1); border-color: #ffbae9; }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel" data-type="module">
+        // Firebase imports from standard CDN
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
-            authDomain: "video-b02b3.firebaseapp.com",
-            projectId: "video-b02b3",
-            storageBucket: "video-b02b3.firebasestorage.app",
-            messagingSenderId: "25339039789",
-            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
-        };
-        
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'video-library-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
 
-        // --- Helpers ---
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -132,7 +124,6 @@
 
         const formatDate = (ts, dateOnly = false) => { 
             if (!ts) return ""; 
-            if (typeof ts === 'string') return ts;
             let date;
             try {
                 if (ts?.toDate) date = ts.toDate();
@@ -155,8 +146,6 @@
                     if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', 0.7)); 
                 };
@@ -194,8 +183,6 @@
                 const img = imgRef.current, holeSize = { w: 300, h: 400 };
                 const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
                 const resRatio = canvas.width / holeSize.w;
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
                 const displayRatio = img.offsetWidth / img.naturalWidth;
                 const drawW = img.naturalWidth * displayRatio * scale;
                 const drawH = img.naturalHeight * displayRatio * scale;
@@ -339,9 +326,9 @@
         });
 
         function App() {
-            const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null), memberColorPickerRef = useRef(null);
+            const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
-            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
+            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]);
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
@@ -350,7 +337,10 @@
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
-            const [colorChangingMember, setColorChangingMember] = useState(null);
+
+            // 用於控制「更新星期」與「更新時間」是否顯示輸入框的內部狀態
+            const [showUpdateDayInput, setShowUpdateDayInput] = useState(false);
+            const [showUpdateTimeInput, setShowUpdateTimeInput] = useState(false);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
@@ -360,54 +350,17 @@
                 userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
                 onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
                 m[userName] = userColor;
-                m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff";
+                m["糖糖"] = "#ffbae9"; m["雲雲"] = "#47daff"; m["雲雲"] = "#47daff";
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor]);
 
-            const allMemberIDs = useMemo(() => { 
-                const ids = new Set([userName]); 
-                games.forEach(g => { 
-                    if(g.addedBy) ids.add(g.addedBy); 
-                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); 
-                }); 
-                return Array.from(ids).filter(Boolean).sort(); 
-            }, [userName, games]);
+            const allMemberIDs = useMemo(() => ['雲雲', '糖糖'], []);
 
             const isNameDuplicate = useMemo(() => {
                 const currentName = formData.name.trim();
                 if (!currentName) return false;
                 return games.some(g => g.name.trim() === currentName && g.id !== editingId);
             }, [formData.name, games, editingId]);
-
-            // --- 新增：快速填入數據計算 ---
-            const recentStatuses = useMemo(() => {
-                const seen = new Set();
-                const result = [];
-                const sortedGames = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-                for(const g of sortedGames) {
-                    if(g.airingStatus && !seen.has(g.airingStatus)) {
-                        seen.add(g.airingStatus);
-                        result.push(g.airingStatus);
-                    }
-                    if(result.length >= 3) break;
-                }
-                return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
-            }, [games]);
-
-            // 新增：最近使用的前 3 個分類
-            const recentCategories = useMemo(() => {
-                const seen = new Set();
-                const result = [];
-                const sortedGames = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-                for(const g of sortedGames) {
-                    if(g.category && !seen.has(g.category)) {
-                        seen.add(g.category);
-                        result.push(g.category);
-                    }
-                    if(result.length >= 3) break;
-                }
-                return result;
-            }, [games]);
 
             const handlePaste = useCallback(async (e) => {
                 if (!isModalOpen) return;
@@ -418,43 +371,47 @@
                         if (lastSelectedImgZone === 'source') { 
                             const c = await compressImage(url, 100); 
                             setFormData(p => ({ ...p, sourceIcon: c })); 
-                            showNotify("來源圖標已貼上"); 
                         } else { 
                             setRawImageData(url); 
                             const c = await compressImage(url, 1000); 
                             setFormData(p => ({ ...p, cover: c }));
-                            showNotify("封面已縮放貼上"); 
                         }
                         break;
                     }
                 }
-            }, [isModalOpen, lastSelectedImgZone, showNotify]);
+            }, [isModalOpen, lastSelectedImgZone]);
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
+            
+            useEffect(() => {
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
+                return onAuthStateChanged(auth, setUser);
+            }, []);
             
             useEffect(() => {
                 if (!user) return;
-                setIsLoadingGames(true); setIsLoadingLogs(true);
-                const fetchMyProfile = async () => {
-                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid));
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        if (data.name) setUserName(data.name);
-                        if (data.color) setUserColor(data.color);
-                    }
-                };
-                fetchMyProfile();
-                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (err) => console.error(err));
+                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))));
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(logs.slice(0, 30)); 
-                    setIsLoadingLogs(false); 
-                }, (err) => console.error(err));
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
-                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
+                });
+                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
+                    if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } 
+                });
+                const up = onSnapshot(getPublicCol('presence'), (s) => { 
+                    const now = Date.now(); 
+                    setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
+                });
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())));
+
                 const updP = () => { 
                     if(auth.currentUser) {
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
@@ -471,7 +428,7 @@
                     const tid = setTimeout(() => window.lucide.createIcons(), 32);
                     return () => clearTimeout(tid);
                 }
-            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery]);
+            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showUpdateDayInput, showUpdateTimeInput]);
 
             const logActivity = useCallback(async (action, gameName, gameOrder) => { 
                 if(!user) return; 
@@ -488,12 +445,14 @@
             
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
+                setShowUpdateDayInput(false); setShowUpdateTimeInput(false);
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             }, [userName, games.length]);
 
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
+                setShowUpdateDayInput(!!item.updateDay); setShowUpdateTimeInput(!!item.updateTime);
                 const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
                 const sObj = customSources.find(s => s.name === item.source);
                 setFormData({ 
@@ -509,14 +468,7 @@
             const handleSaveGame = async (e) => {
                 if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user || isNameDuplicate) return;
                 try {
-                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
-                    if(formData.order === "") while(orders.includes(to)) to++;
-                    if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
-                        showNotify("編號衝突，正在智慧順延..."); let chain = [], check = to;
-                        while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
-                        chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
-                    }
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
                         if(idx === -1) sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
@@ -533,64 +485,15 @@
                         logActivity("錄入", cn, to);
                     }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { console.error(e); showNotify("操作失敗"); }
+                } catch(e) { console.error(e); }
             };
 
             const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
             const handleDeleteGame = async (id) => { 
                 if(!user) return; const g = games.find(x => x.id === id); 
-                const order = g?.order;
                 await deleteDoc(doc(getPublicCol('games'), id)); 
-                logActivity("刪除", g?.name || "未知", order);
+                logActivity("刪除", g?.name || "未知", g?.order);
                 showNotify("已刪除"); setDeleteGameTarget(null); 
-            };
-
-            const handleClearAllData = async () => { 
-                if(!user) return; setShowClearConfirm(false); 
-                try { 
-                    showNotify("正在啟動深度清空程序...");
-                    const querySnapshot = await getDocs(getPublicCol('games'));
-                    const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(doc(getPublicCol('games'), docSnap.id)));
-                    await Promise.all(deletePromises);
-                    showNotify("數據已徹底抹除"); logActivity("清空全庫", "全部內容", "ALL");
-                } catch(e) { console.error(e); showNotify("清空程序異常"); } 
-            };
-
-            const handleExportData = () => { const blob = new Blob([JSON.stringify({ version: "11.6", games, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
-            
-            const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { 
-                    try { 
-                        const d = JSON.parse(ev.target.result); showNotify("正在修復導入..."); 
-                        if(d.games) {
-                            for(const g of d.games) {
-                                const { id, ...gameData } = g;
-                                const targetDoc = id ? doc(getPublicCol('games'), id) : doc(getPublicCol('games'));
-                                await setDoc(targetDoc, { ...gameData, updatedAt: serverTimestamp(), createdAt: gameData.createdAt || serverTimestamp() }, { merge: true });
-                            }
-                        }
-                        if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); 
-                        showNotify("導入成功"); 
-                    } catch(e) { showNotify("導入失敗"); } 
-                }; 
-                r.readAsText(f);
-            };
-
-            const handleReorderIDs = async () => {
-                if (!user || games.length === 0) return;
-                try {
-                    showNotify("正在強制校正編號系統...");
-                    const sorted = [...games].sort((a, b) => {
-                        const oa = extractFirstNumber(a.order), ob = extractFirstNumber(b.order);
-                        if (oa !== ob) return oa - ob;
-                        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
-                    });
-                    const updates = sorted.map((g, index) => setDoc(doc(getPublicCol('games'), g.id), { order: index + 1 }, { merge: true }));
-                    await Promise.all(updates);
-                    logActivity("全局校正編號", `總數 ${updates.length} 項已對齊`, "REFIX");
-                    showNotify(`校正完成！最大編號已對齊至 #${updates.length}`);
-                } catch (e) { showNotify("校正失敗"); }
             };
 
             const filteredGames = useMemo(() => {
@@ -625,39 +528,17 @@
                 setMemberFilter(prev => (prev?.name === name && prev?.type === type) ? null : { name, type });
             }, []);
 
-            const handleExecMemberColorChange = async (newColor) => {
-                if (!colorChangingMember || !user) return;
-                if (colorChangingMember === userName) {
-                    setUserColor(newColor);
-                    localStorage.setItem('steam_user_color', newColor);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), { color: newColor, name: userName }, { merge: true });
-                    showNotify(`已更新本人顏色`);
-                    setColorChangingMember(null);
-                    return;
-                }
-                const profile = userProfiles.find(p => p.name === colorChangingMember);
-                if (profile?.uid) {
-                    try {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
-                        showNotify(`已更新雲端顏色`);
-                    } catch (e) { showNotify("更新失敗"); }
-                } else {
-                    showNotify(`暫無法修改此成員顏色`);
-                }
-                setColorChangingMember(null);
-            };
-
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
-                    <input type="color" ref={memberColorPickerRef} className="hidden" onChange={(e) => handleExecMemberColorChange(e.target.value)} />
 
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
-                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}</div>
+                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div></div>
                         </header>
+                        
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
                             <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
                                 {activityLogs.map(l => (
@@ -665,21 +546,18 @@
                                         <span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
                                         <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
                                         <span className="mx-1">{l.action}</span> 
-                                        <span className="font-black">
-                                            {l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}
-                                            "{l.gameName}"
-                                        </span>
+                                        <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}"{l.gameName}"</span>
                                     </div>
                                 ))}
                             </div></div>
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
                             
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總計</th><th className="pb-1 text-center">未開</th><th className="pb-1 text-center text-cyan-400">看中</th><th className="pb-1 text-center text-green-400">看完</th></tr></thead><tbody>{memberStats.map(m => {
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span></div><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總計</th><th className="pb-1 text-center">未開</th><th className="pb-1 text-center text-cyan-400">看中</th><th className="pb-1 text-center text-green-400">看完</th></tr></thead><tbody>{memberStats.map(m => {
                                 const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
                                 return (
                                     <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
-                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9]' : ''}`}>{m.stats.total}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20' : 'text-cyan-400'}`}>{m.stats.watching}</td>
                                         <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20' : 'text-green-400'}`}>{m.stats.completed}</td>
@@ -693,15 +571,7 @@
                                 <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>
                             )}
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                            {memberFilter && (
-                                <div className="px-4 py-2 flex items-center">
-                                    <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
-                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3 ml-1" />
-                                    </button>
-                                </div>
-                            )}
                             <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
-                                {!isEditLocked && <button onClick={handleReorderIDs} title="校正編號" className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 flex items-center gap-2 transition-all"><Icon name="list-ordered" className="w-3 h-3" /> 校正編號</button>}
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
                             </div>
                         </div>
@@ -712,7 +582,7 @@
                                 <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (
+                                <ul>{filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料</div> : filteredGames.map(g => (
                                     <GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={handleDeleteTarget} />
                                 ))}</ul>
                             </div> 
@@ -720,7 +590,7 @@
                     </div>
 
                     <div className="fab-btn" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}>
-                        {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-8 h-8" /> : <Icon key="plus-icon" name="plus" className="w-8 h-8" />}
+                        {isEditLocked ? <Icon name="lock" className="w-8 h-8" /> : <Icon name="plus" className="w-8 h-8" />}
                     </div>
 
                     {isAddGroupModalOpen && (
@@ -738,95 +608,45 @@
                                     <h3 className="text-xl md:text-2xl font-black italic mb-4 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
                                     <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
-                                            <div className="md:col-span-4 space-y-4">
-                                                {/* 優化：縮減手機版圖片框大小 */}
+                                            {/* 左側：預覽圖、編號、狀態、年份、分類、來源列表 */}
+                                            <div className="md:col-span-4 flex flex-col gap-4">
                                                 <div className="flex flex-col items-center">
-                                                    <div onClick={() => setLastSelectedImgZone('cover')} className={`w-32 md:w-full aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                        {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[9px] md:text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">僅支援<br/>CTRL+V 貼上</div>}
+                                                    {/* 封面預覽比例再縮小：改為 w-20 md:w-24 */}
+                                                    <div onClick={() => setLastSelectedImgZone('cover')} className={`w-20 md:w-24 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                        {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[8px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">貼上封面</div>}
                                                     </div>
-                                                    {formData.cover && (
-                                                        <button type="button" onClick={() => setIsCropping(true)} className="w-32 md:w-full mt-2 py-1.5 bg-white/5 border border-white/10 rounded text-[9px] font-black uppercase text-white/60 hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all flex items-center justify-center gap-2"><Icon name="scissors" className="w-3 h-3" /> 封面裁剪</button>
-                                                    )}
+                                                    {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="w-20 md:w-24 mt-2 py-1 bg-white/5 border border-white/10 rounded text-[8px] font-black uppercase text-white/40 hover:bg-[#ffbae9] hover:text-[#3f5968] transition-all flex items-center justify-center gap-1"><Icon name="scissors" className="w-2.5 h-2.5" /> 裁剪</button>}
                                                 </div>
                                                 
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
-                                                
-                                                <div className="flex md:flex-col gap-4">
-                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-[60px] md:w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                {/* UI 位置還原：編號、狀態、年份、分類 回到左側 */}
+                                                <div className="flex flex-col gap-4">
+                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label><input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
+                                                            <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select>
+                                                        </div>
+                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
+                                                    </div>
+                                                    <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
+                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value="">- 分類 -</option>{customCategories.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                                                    </div>
                                                     
-                                                    {/* 電腦版將狀態與年份並排排在編號下一行 */}
-                                                    <div className="hidden md:grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
-                                                            <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
-                                                                <option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option>
-                                                            </select>
-                                                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                {recentStatuses.map(s => (
-                                                                    <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className="quick-fill-btn">{s}</button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label>
-                                                            <input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex-1 md:w-full">
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
-                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
-                                                            <option value="">- 分類 -</option>
-                                                            {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                                                        </select>
-                                                        {/* 優化：分類最近使用的 3 個選項點擊填入 */}
-                                                        <div className="flex flex-wrap gap-1.5 mt-2">
-                                                            {recentCategories.map(c => (
-                                                                <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className="quick-fill-btn">{c}</button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* 手機版排版邏輯 */}
-                                                <div className="md:hidden grid grid-cols-2 gap-2 items-start">
+                                                    {/* 來源列表 */}
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
-                                                        <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
-                                                            <option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option>
-                                                        </select>
-                                                        <div className="flex flex-wrap gap-1 mt-1.5">
-                                                            {recentStatuses.map(s => (
-                                                                <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className="quick-fill-btn">{s}</button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label>
-                                                        <input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} />
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">來源</label>
-                                                    <div className="source-input-group">
-                                                        <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>
-                                                            {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
-                                                        </div>
-                                                        <div className="flex-1 flex flex-col gap-1">
-                                                            <div className="flex gap-1 items-center">
-                                                                <input list="source-list" className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
-                                                                    const v=e.target.value; const ex=customSources.find(s=>s.name===v); 
-                                                                    setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); 
-                                                                }} />
-                                                                {customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3 h-3" /></button>}
+                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定與快速選擇</label>
+                                                        <div className="flex flex-col gap-2">
+                                                            <div className="flex w-full gap-2 items-center">
+                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
+                                                                <div className="flex-1 flex gap-1 items-center">
+                                                                    <input list="source-list" placeholder="輸入來源..." className="modal-input-base w-full text-[11px] font-bold px-1.5" value={formData.source} onChange={e => setFormData({...formData, source: e.target.value})} />
+                                                                    {customSources.some(s=>s.name===formData.source) && <button type="button" onClick={()=>handleDeleteSource(formData.source)} className="p-1 text-red-400/60 hover:text-red-400"><Icon name="trash-2" className="w-3 h-3" /></button>}
+                                                                </div>
                                                             </div>
-                                                            {/* 優化：顯示所有來源選項（圖標+名稱）點擊填入 */}
-                                                            <div className="flex flex-wrap gap-2 mt-1 max-h-[100px] overflow-y-auto custom-scrollbar p-1">
+                                                            <div className="grid grid-cols-2 gap-1.5 w-full mt-1">
                                                                 {customSources.map(s => (
-                                                                    <div key={s.name} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className="source-fill-tag">
-                                                                        {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
-                                                                        <span>{s.name}</span>
+                                                                    <div key={s.name} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className="source-fill-tag !p-1.5 !gap-1.5">
+                                                                        {s.icon && <img src={s.icon} className="w-3.5 h-3.5 object-contain" />}
+                                                                        <span className="truncate text-[9px]">{s.name}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -834,37 +654,71 @@
                                                         <datalist id="source-list">{customSources.map(s => <option key={s.name} value={s.name} />)}</datalist>
                                                     </div>
                                                 </div>
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
                                             </div>
 
-                                            <div className="md:col-span-8 space-y-4 md:space-y-5">
-                                                <div>
-                                                    <label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label>
-                                                    <input required className={`modal-input-base w-full font-black text-white text-lg ${isNameDuplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
-                                                    {isNameDuplicate && <p className="text-red-500 text-[10px] font-black mt-2 animate-pulse flex items-center gap-1"><Icon name="alert-circle" className="w-3 h-3" /> !! 名稱重複，不可提交 !!</p>}
-                                                </div>
+                                            {/* 右側：名稱、進度、更新交互、最後更新/連結、誰在看、備註 */}
+                                            <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
+                                                <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><input required className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} /></div>
+                                                
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="w-full" />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="w-full" />
                                                 </div>
-                                                <div className="flex flex-col md:flex-row md:items-end gap-3">
-                                                    <div className="w-full md:w-[120px]"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select></div>
-                                                    <div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label><TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} /></div>
+
+                                                {/* 更新星期與更新時間：改為 + 號展開交互 */}
+                                                <div className="flex flex-col md:flex-row gap-6">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
+                                                        {showUpdateDayInput ? (
+                                                            <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
+                                                                <option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
+                                                            </select>
+                                                        ) : (
+                                                            <div className="plus-toggle-btn" onClick={() => setShowUpdateDayInput(true)}><Icon name="plus" className="w-4 h-4" /></div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
+                                                        {showUpdateTimeInput ? (
+                                                            <TimeSelector value={formData.updateTime} onChange={(nt) => setFormData({...formData, updateTime: nt})} />
+                                                        ) : (
+                                                            <div className="plus-toggle-btn" onClick={() => setShowUpdateTimeInput(true)}><Icon name="plus" className="w-4 h-4" /></div>
+                                                        )}
+                                                    </div>
                                                 </div>
+
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="w-full" />
                                                     <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="w-full" />
                                                 </div>
+                                                
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
                                                     <div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /></div>
                                                     <div className="col-span-1 md:col-span-2"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
                                                 </div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="flex flex-wrap gap-1.5 p-2 bg-black/30 border border-white/5 rounded min-h-[40px]">{allMemberIDs.map(name => (<div key={name} onClick={() => { const list = [...(formData.watchingBy || [])]; setFormData({...formData, watchingBy: list.includes(name) ? list.filter(n => n !== name) : [...list, name]}); }} className={`watcher-tag ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>))}</div></div>
+
+                                                {/* 誰在看：框框收窄 */}
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
+                                                    <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px]">
+                                                        {allMemberIDs.map(name => (
+                                                            <div key={name} onClick={() => { 
+                                                                const list = [...(formData.watchingBy || [])]; 
+                                                                setFormData({...formData, watchingBy: list.includes(name) ? list.filter(n => n !== name) : [...list, name]}); 
+                                                            }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>
+                                                                {name}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
                                             </div>
                                         </div>
                                         <div className="pt-4 md:pt-6 flex flex-col md:flex-row gap-2 md:gap-4">
-                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase border border-white/5 transition-all hover:bg-white/10">取消修改</button>
-                                            <button type="submit" disabled={isNameDuplicate} className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] md:text-[12px] ${isNameDuplicate ? 'bg-gray-700 text-white/20 cursor-not-allowed opacity-50' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>確認提交資料</button>
+                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button>
+                                            <button type="submit" disabled={isNameDuplicate} className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] md:text-[12px] ${isNameDuplicate ? 'bg-gray-700 text-white/20 cursor-not-allowed' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>確認提交資料</button>
                                         </div>
                                     </form>
                                 </div>
@@ -875,9 +729,6 @@
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
                         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
-                    )}
-                    {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 leading-relaxed px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
                     )}
                 </div>
             );
