@@ -80,65 +80,40 @@
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
         .plus-toggle-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #ffbae9; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: rgba(255,186,233,0.1); border-color: #ffbae9; }
-        
-        /* 修復螢幕閃爍/藍屏提示樣式 */
-        #error-boundary { position: fixed; inset: 0; background: #3f5968; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 20px; text-align: center; }
-        #error-boundary h2 { font-size: 2rem; font-weight: 900; margin-bottom: 1rem; color: #ffbae9; }
-        #error-boundary p { opacity: 0.8; max-width: 500px; color: #fff; }
-        #error-boundary button { margin-top: 2rem; padding: 10px 30px; background: #fff; color: #3f5968; font-weight: 900; border-radius: 4px; cursor: pointer; border: none; }
         #loading-fallback { height: 100vh; background: #3f5968; display: flex; align-items: center; justify-content: center; font-weight: 900; color: rgba(255,255,255,0.2); letter-spacing: 0.2em; text-transform: uppercase; }
+        .mode-indicator { position: fixed; bottom: 10px; left: 10px; font-size: 9px; font-weight: 900; opacity: 0.3; text-transform: uppercase; pointer-events: none; z-index: 1000; }
     </style>
 </head>
 <body>
     <div id="root">
-        <div id="loading-fallback">
-            Initializing System...
-        </div>
+        <div id="loading-fallback">Initializing System...</div>
     </div>
     
     <script type="text/babel" data-type="module">
-        // Firebase imports from standard CDN
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // 全域錯誤監控，防止靜默失敗
-        window.addEventListener('error', (event) => {
-            console.error('Captured Global Error:', event.error);
-            const root = document.getElementById('root');
-            if (root && root.innerHTML.includes('Initializing')) {
-                root.innerHTML = `
-                    <div id="error-boundary">
-                        <h2>系統發生崩潰</h2>
-                        <p>載入腳本或執行渲染時發生不可預期的錯誤。</p>
-                        <p style="font-size: 11px; font-family: monospace; margin-top: 10px; color: rgba(255,255,255,0.4)">${event.error?.message || 'Unknown Error'}</p>
-                        <button onclick="location.reload()">重新整理頁面</button>
-                    </div>
-                `;
-            }
-        });
-
-        // 核心資料庫與認證物件初始化
-        let db, auth, appId;
-        let isConfigReady = false;
+        // 安全地偵測環境與初始化 Firebase
+        let db = null, auth = null, appId = 'video-library-v1';
+        let isFirebaseAvailable = false;
 
         try {
-            const configRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-            if (!configRaw) throw new Error("環境變數 __firebase_config 遺失");
-            
-            const firebaseConfig = JSON.parse(configRaw);
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
-            isConfigReady = true;
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+                isFirebaseAvailable = true;
+            }
         } catch (err) {
-            console.error("Initialization Failed:", err);
-            // 稍後在 App 渲染時顯示詳細錯誤
+            console.warn("Firebase config missing or invalid. Falling back to In-Memory Mode.");
         }
 
+        // 輔助函式
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -194,6 +169,7 @@
             });
         };
 
+        // 元件定義
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -367,33 +343,42 @@
         });
 
         function App() {
-            // 如果連線失敗，直接在頁面中央顯示詳細的錯誤畫面，而不是空白
-            if (!isConfigReady) {
-                return (
-                    <div id="error-boundary">
-                        <h2>系統初始化失敗</h2>
-                        <p>環境配置 (__firebase_config) 無法被正確解析。<br/>請確認是否正確傳入了資料庫金鑰，或者您目前的執行環境是否支援這些變數。</p>
-                        <button onClick={() => location.reload()}>重新嘗試</button>
-                    </div>
-                );
-            }
+            // 資料狀態
+            const [user, setUser] = useState(isFirebaseAvailable ? null : { uid: 'guest', name: '訪客' });
+            const [games, setGames] = useState([]);
+            const [activityLogs, setActivityLogs] = useState([]);
+            const [customCategories, setCustomCategories] = useState(["最新入庫", "編號排序"]);
+            const [customSources, setCustomSources] = useState([]);
+            const [onlineUsers, setOnlineUsers] = useState([]);
+            const [userProfiles, setUserProfiles] = useState([]);
 
-            const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
-            const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
-            const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]);
-            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
-            const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
-            const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
-            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
-            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
-            const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
+            // UI 狀態
+            const fileInputRef = useRef(null);
+            const [notification, setNotification] = useState(null);
+            const showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
+            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000));
+            const [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9');
+            const [isEditingName, setIsEditingName] = useState(false);
+            const [activeTab, setActiveTab] = useState(null);
+            const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false);
+            const [newGroupName, setNewGroupName] = useState('');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [isEditLocked, setIsEditLocked] = useState(true);
+            const [deleteGameTarget, setDeleteGameTarget] = useState(null);
+            const [isCropping, setIsCropping] = useState(false);
+            const [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
-
             const [showUpdateDayInput, setShowUpdateDayInput] = useState(false);
             const [showUpdateTimeInput, setShowUpdateTimeInput] = useState(false);
+            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover');
 
-            const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+
+            // 輔助
+            const getPublicCol = (col) => isFirebaseAvailable ? collection(db, 'artifacts', appId, 'public', 'data', col) : null;
             const unitSuggestions = useMemo(() => { const r = new Set(['集', '話', '章', '季', '卷', '冊']); games.forEach(g => { ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) r.add(p.u1); if (p?.u2) r.add(p.u2); }); }); return Array.from(r).sort(); }, [games]);
             
             const nameColorMap = useMemo(() => { 
@@ -413,6 +398,65 @@
                 return games.some(g => g.name.trim() === currentName && g.id !== editingId);
             }, [formData.name, games, editingId]);
 
+            // 初始化與同步
+            useEffect(() => {
+                if (!isFirebaseAvailable) return;
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) { console.warn("Auth failed:", e); }
+                };
+                initAuth();
+                return onAuthStateChanged(auth, setUser);
+            }, []);
+
+            useEffect(() => {
+                if (!user || !isFirebaseAvailable) return;
+                
+                const errorLog = (e) => console.warn("Sync error:", e);
+
+                const unsubGames = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))), errorLog);
+                const unsubLogs = onSnapshot(getPublicCol('activity_logs'), (s) => { 
+                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                    setActivityLogs(logs.slice(0, 30)); 
+                }, errorLog);
+                const unsubSettings = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
+                    if(d.exists()) { 
+                        setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); 
+                        setCustomSources(d.data().sources || []); 
+                    } 
+                }, errorLog);
+                const unsubPres = onSnapshot(getPublicCol('presence'), (s) => { 
+                    const now = Date.now(); 
+                    setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
+                }, errorLog);
+                const unsubPro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())), errorLog);
+
+                const updP = () => { 
+                    if(auth.currentUser) {
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
+                    }
+                };
+                updP(); 
+                const inv = setInterval(updP, 120000); 
+                return () => { unsubGames(); unsubLogs(); unsubSettings(); unsubPres(); unsubPro(); clearInterval(inv); };
+            }, [user, userName, userColor]);
+
+            // 靜態資源處理 (Lucide)
+            useEffect(() => {
+                if (window.lucide) {
+                    const tid = setTimeout(() => window.lucide.createIcons(), 32);
+                    return () => clearTimeout(tid);
+                }
+            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showUpdateDayInput, showUpdateTimeInput]);
+
+            // 交互處理
             const handlePaste = useCallback(async (e) => {
                 if (!isModalOpen) return;
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
@@ -433,119 +477,72 @@
             }, [isModalOpen, lastSelectedImgZone]);
 
             useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
-            
-            useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) { 
-                        console.error("Auth Error:", e);
-                        showNotify("資料庫認證失敗，部分功能可能無法使用");
-                    }
-                };
-                initAuth();
-                return onAuthStateChanged(auth, setUser);
-            }, []);
-            
-            useEffect(() => {
-                if (!user || !db) return;
-                
-                const errorLog = (e) => {
-                    console.error("Snapshot Error:", e);
-                    if (e.code === 'permission-denied') {
-                        showNotify("存取權限被拒絕，請檢查資料庫路徑");
-                    }
-                };
-
-                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))), errorLog);
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
-                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
-                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    setActivityLogs(logs.slice(0, 30)); 
-                }, errorLog);
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
-                    if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } 
-                }, errorLog);
-                const up = onSnapshot(getPublicCol('presence'), (s) => { 
-                    const now = Date.now(); 
-                    setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
-                }, errorLog);
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())), errorLog);
-
-                const updP = () => { 
-                    if(auth.currentUser) {
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
-                    }
-                };
-                updP(); 
-                const inv = setInterval(updP, 120000); 
-                return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
-            }, [user, userName, userColor]);
-
-            useEffect(() => {
-                if (window.lucide) {
-                    const tid = setTimeout(() => window.lucide.createIcons(), 32);
-                    return () => clearTimeout(tid);
-                }
-            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showUpdateDayInput, showUpdateTimeInput]);
 
             const logActivity = useCallback(async (action, gameName, gameOrder) => { 
-                if(!user) return; 
-                try { 
-                    await addDoc(getPublicCol('activity_logs'), { 
-                        userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() 
-                    }); 
-                } catch(e) {} 
+                if(!user || !isFirebaseAvailable) {
+                    setActivityLogs(prev => [{ id: Date.now(), userName, action, gameName, gameOrder, timestamp: { seconds: Date.now()/1000 } }, ...prev].slice(0, 30));
+                    return;
+                }
+                try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) {} 
             }, [user, userName]);
 
-            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
-            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
-            
+            const handleAddGroup = async () => { 
+                const n = newGroupName.trim(); if(!n || customCategories.includes(n)) return; 
+                if (isFirebaseAvailable) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true });
+                else setCustomCategories(prev => [...prev, n]);
+                setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); 
+            };
+
+            const handleDeleteGroup = async () => { 
+                if(!activeTab) return; 
+                if (isFirebaseAvailable) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true });
+                else setCustomCategories(prev => prev.filter(c => c !== activeTab));
+                setActiveTab(null); showNotify("分組已刪除"); 
+            };
+
+            const handleDeleteSource = async (sn) => { 
+                if(!sn) return; 
+                if (isFirebaseAvailable) await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true });
+                else setCustomSources(prev => prev.filter(s => s.name !== sn));
+                setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); 
+            };
+
             const handleOpenAddModal = useCallback(() => {
-                setEditingId(null); setRawImageData(null); 
-                setShowUpdateDayInput(false); setShowUpdateTimeInput(false);
+                setEditingId(null); setRawImageData(null); setShowUpdateDayInput(false); setShowUpdateTimeInput(false);
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setIsModalOpen(true); 
             }, [userName, games.length]);
 
             const handleOpenEdit = useCallback((item) => {
-                setEditingId(item.id); setRawImageData(item.cover); 
-                setShowUpdateDayInput(!!item.updateDay); setShowUpdateTimeInput(!!item.updateTime);
+                setEditingId(item.id); setRawImageData(item.cover); setShowUpdateDayInput(!!item.updateDay); setShowUpdateTimeInput(!!item.updateTime);
                 const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
                 const sObj = customSources.find(s => s.name === item.source);
-                setFormData({ 
-                    ...item, sourceIcon: sObj ? sObj.icon : '',
-                    totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), 
-                    updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress),
-                    notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', 
-                    watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
-                }); 
+                setFormData({ ...item, sourceIcon: sObj ? sObj.icon : '', totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] }); 
                 setIsModalOpen(true); 
             }, [customSources]);
 
             const handleSaveGame = async (e) => {
-                if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || !user || isNameDuplicate) return;
+                if(e) e.preventDefault(); const cn = formData.name.trim(); if(!cn || isNameDuplicate) return;
                 try {
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
+                    let finalSources = [...customSources];
                     if(formData.source.trim()) { 
-                        let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
-                        if(idx === -1) sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
-                        else sources[idx].icon = formData.sourceIcon || ''; 
-                        await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
+                        const idx = finalSources.findIndex(s => s.name === formData.source.trim()); 
+                        if(idx === -1) finalSources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
+                        else finalSources[idx].icon = formData.sourceIcon || ''; 
+                        if (isFirebaseAvailable) await setDoc(doc(getPublicCol('settings'), 'config'), { sources: finalSources, categories: customCategories }, { merge: true }); 
+                        else setCustomSources(finalSources);
                     }
                     const { sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
+                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: isFirebaseAvailable ? serverTimestamp() : new Date().toISOString() }; 
+                    
                     if(editingId) { 
-                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
+                        if (isFirebaseAvailable) await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
+                        else setGames(prev => prev.map(g => g.id === editingId ? { ...g, ...finalData } : g));
                         logActivity("修改", cn, to);
                     } else { 
-                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
+                        if (isFirebaseAvailable) await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
+                        else setGames(prev => [...prev, { ...finalData, id: Date.now(), createdAt: { seconds: Date.now()/1000 } }]);
                         logActivity("錄入", cn, to);
                     }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
@@ -554,8 +551,9 @@
 
             const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
             const handleDeleteGame = async (id) => { 
-                if(!user) return; const g = games.find(x => x.id === id); 
-                await deleteDoc(doc(getPublicCol('games'), id)); 
+                const g = games.find(x => x.id === id); 
+                if (isFirebaseAvailable) await deleteDoc(doc(getPublicCol('games'), id)); 
+                else setGames(prev => prev.filter(x => x.id !== id));
                 logActivity("刪除", g?.name || "未知", g?.order);
                 showNotify("已刪除"); setDeleteGameTarget(null); 
             };
@@ -594,13 +592,14 @@
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
+                    {!isFirebaseAvailable && <div className="mode-indicator">Local Memory Mode (Demo)</div>}
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
                     <datalist id="unit-list">{unitSuggestions.map(u => <option key={u} value={u} />)}</datalist>
 
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
-                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div></div>
+                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">{isFirebaseAvailable ? "即時同步中" : "離線模式"}</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div></div>
                         </header>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
@@ -614,7 +613,7 @@
                                     </div>
                                 ))}
                             </div></div>
-                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
+                            <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{isFirebaseAvailable ? onlineUsers.length : 1}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{isFirebaseAvailable ? onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>) : <span style={{ color: userColor }} className="font-black">● {userName} (You)</span>}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); localStorage.setItem('steam_user_name', e.target.value.trim()); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => { setUserColor(e.target.value); localStorage.setItem('steam_user_color', e.target.value); }} /></div></div>
                             
                             <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span></div><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總計</th><th className="pb-1 text-center">未開</th><th className="pb-1 text-center text-cyan-400">看中</th><th className="pb-1 text-center text-green-400">看完</th></tr></thead><tbody>{memberStats.map(m => {
                                 const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
@@ -791,14 +790,8 @@
             );
         }
 
-        // 啟動 React，並在失敗時給予提示
-        try {
-            const root = ReactDOM.createRoot(document.getElementById('root'));
-            root.render(<App />);
-        } catch (e) {
-            console.error("Mount Error:", e);
-            document.getElementById('root').innerHTML = `<div id="error-boundary"><h2>React 啟動失敗</h2><p>${e.message}</p></div>`;
-        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
