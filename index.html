@@ -27,6 +27,7 @@
         .tab-action-btn:hover { transform: scale(1.1); z-index: 10; }
         .tab-action-btn.btn-plus:hover { background: #ffbae9; }
         .tab-action-btn.btn-minus:hover { background: #ef4444; color: #fff; }
+        .tab-action-btn.btn-edit:hover { background: #3b82f6; color: #fff; }
         .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
         .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
@@ -75,9 +76,10 @@
         .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
         .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
         .quick-fill-btn { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .quick-fill-btn:hover { background: #ffbae9; color: #3f5968; border-color: #fff; }
+        .quick-fill-btn.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .source-fill-tag { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
+        .source-fill-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .plus-toggle-btn { width: 32px; height: 32px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: #ffbae9; color: #3f5968; }
         .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 60px; max-height: 160px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -94,7 +96,6 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // Firebase 配置 (專案: video2-a50eb)
         const firebaseConfig = {
           apiKey: "AIzaSyBowrV3MzZkXVRt-7kTK3dYuwU0Ce-uul0",
           authDomain: "video2-a50eb.firebaseapp.com",
@@ -313,15 +314,12 @@
             const [activeDropdown, setActiveDropdown] = useState(null); 
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
             
-            // 修復：動態寬度邏輯
             const getDynamicWidth = (val, isNumber = false) => {
                 const str = val ? val.toString() : "";
                 const len = str.length;
                 if (isNumber) {
-                    // 數值框: 預設 4 字寬度 (54px)。當輸入超過 2 個字時 (即 len >= 3) 才開始延伸
                     return Math.max(54, len * 13 + 12) + "px";
                 }
-                // 單位框: 打第 2 個字就要延伸 (維持舊邏輯)
                 return Math.max(32, len * 13 + 12) + 'px';
             };
 
@@ -338,7 +336,6 @@
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
                     <div className="progress-input-row">
-                        {/* 第1框: 數值框 (自動延伸) */}
                         <input 
                             type="number" 
                             className="modal-input-base font-black text-sm p-1.5 text-center" 
@@ -347,7 +344,6 @@
                             onChange={e=>handleChange('v1', e.target.value)} 
                         />
                         
-                        {/* 第2框: 單位框 (自動延伸 + 完整選單) */}
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
                             <input 
                                 className="modal-input-base font-black text-[10px] p-1 text-center" 
@@ -367,7 +363,6 @@
                         
                         {isExpanded ? (
                             <>
-                                {/* 第3框: 數值框 (自動延伸) */}
                                 <input 
                                     type="number" 
                                     className="modal-input-base font-black text-sm p-1.5 text-center" 
@@ -375,7 +370,6 @@
                                     value={value.v2} 
                                     onChange={e=>handleChange('v2', e.target.value)} 
                                 />
-                                {/* 第4框: 單位框 (自動延伸 + 完整選單) */}
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
                                     <input 
                                         className="modal-input-base font-black text-[10px] p-1 text-center" 
@@ -405,10 +399,8 @@
             );
         });
 
-        // 名稱框元件：支援多行自動延伸
         const AutoResizeTextarea = ({ value, onChange, className, isError }) => {
             const textareaRef = useRef(null);
-            
             const adjustHeight = () => {
                 const textarea = textareaRef.current;
                 if (textarea) {
@@ -416,9 +408,7 @@
                     textarea.style.height = textarea.scrollHeight + "px";
                 }
             };
-
             useEffect(() => { adjustHeight(); }, [value]);
-
             return (
                 <textarea
                     ref={textareaRef}
@@ -465,8 +455,9 @@
             const [showTimeSettings, setShowTimeSettings] = useState(false);
             const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
             
-            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '章' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            // 修復：進度預設單位結構
+            const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
@@ -475,16 +466,13 @@
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             
             const unitSuggestions = useMemo(() => { 
-                const r = new Set(['集', '話', '章', '季', '卷', '冊']); 
+                const r = new Set(['集', '話', '章', '季', '卷', '冊', '分鐘']); 
                 games.forEach(g => { 
                     ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
                         const p = g[k]; 
                         if (p && typeof p === 'object') {
                             if (p.u1 && typeof p.u1 === 'string' && p.u1.trim()) r.add(p.u1.trim()); 
                             if (p.u2 && typeof p.u2 === 'string' && p.u2.trim()) r.add(p.u2.trim()); 
-                        } else if (p && typeof p === 'string') {
-                            const match = p.match(/[^\d.]+/g);
-                            if (match) match.forEach(m => r.add(m.trim()));
                         }
                     }); 
                 }); 
@@ -611,11 +599,54 @@
 
             const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
             const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
             
+            // 修復：重新實作分類重命名功能
+            const handleRenameGroup = async () => {
+                if(!user || !activeTab || activeTab === "最新入庫" || activeTab === "編號排序") return;
+                const oldName = activeTab;
+                const newName = prompt("請輸入分類的新名稱：", oldName);
+                if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+                
+                const trimmedNewName = newName.trim();
+                const updatedCategories = customCategories.map(c => c === oldName ? trimmedNewName : c);
+                
+                showNotify(`正在同步更新分類資料...`);
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updatedCategories }, { merge: true });
+                    const affectedGames = games.filter(g => g.category === oldName);
+                    await Promise.all(affectedGames.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: trimmedNewName })));
+                    setActiveTab(trimmedNewName);
+                    showNotify("分類名稱已更新");
+                } catch (e) {
+                    showNotify("更新失敗");
+                }
+            };
+
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); if(formData.source === sn) setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
+            
+            const handleRenameSource = async (sn) => {
+                if(!user || !sn) return;
+                const newName = prompt("請輸入來源的新名稱：", sn);
+                if (!newName || newName.trim() === "" || newName.trim() === sn) return;
+                
+                const trimmedNewName = newName.trim();
+                const updatedSources = customSources.map(s => s.name === sn ? { ...s, name: trimmedNewName } : s);
+                
+                showNotify(`正在同步更新來源資料...`);
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources }, { merge: true });
+                    const affectedGames = games.filter(g => g.source === sn);
+                    await Promise.all(affectedGames.map(g => updateDoc(doc(getPublicCol('games'), g.id), { source: trimmedNewName })));
+                    if (formData.source === sn) setFormData(p => ({ ...p, source: trimmedNewName }));
+                    showNotify("來源名稱已更新");
+                } catch (e) {
+                    showNotify("更新失敗");
+                }
+            };
+
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setShowTimeSettings(false);
                 setShowManualUpdateInput(false);
                 setIsModalOpen(true); 
@@ -847,7 +878,14 @@
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
-                                <div className="ml-auto flex gap-2 pr-2">{!isEditLocked && <div className="tab-action-btn btn-plus" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}{!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}</div>
+                                <div className="ml-auto flex gap-2 pr-2">
+                                    {/* 修復：分類修改按鈕 */}
+                                    {!isEditLocked && activeTab && (activeTab !== "最新入庫" && activeTab !== "編號排序") && (
+                                        <div className="tab-action-btn btn-edit" title="修改目前選中分類" onClick={handleRenameGroup}><Icon name="edit-3" className="w-4 h-4" /></div>
+                                    )}
+                                    {!isEditLocked && <div className="tab-action-btn btn-plus" title="新增分類" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}
+                                    {!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" title="刪除目前選中分類" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}
+                                </div>
                             </nav> 
                             <div className="component-view">
                                 <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (
@@ -909,7 +947,7 @@
                                                         </div>
                                                         <div className="col-span-2 flex flex-wrap gap-1 mt-1">
                                                             {recentStatuses.map(s => (
-                                                                <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className="quick-fill-btn">{s}</button>
+                                                                <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -920,9 +958,9 @@
                                                             <option value="">- 分類 -</option>
                                                             {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                         </select>
-                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                        <div className="flex flex-wrap gap-1 mt-1">
                                                             {recentCategories.map(c => (
-                                                                <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className="quick-fill-btn">{c}</button>
+                                                                <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -943,9 +981,15 @@
                                                             </div>
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
                                                                 {customSources.map(s => (
-                                                                    <div key={s.name} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})} className="source-fill-tag !p-1.5 !text-[9px] w-fit">
+                                                                    <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
+                                                                        {/* 修改：來源移除標籤改為小紅X且滑鼠指住才顯示 */}
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none"
+                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}
+                                                                        >×</button>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -958,7 +1002,6 @@
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
                                                 <div className="pt-4 md:pt-0 border-t border-white/10 md:border-t-0">
                                                     <label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label>
-                                                    {/* 名稱框: 支援多行與自動延伸 */}
                                                     <AutoResizeTextarea 
                                                         className="modal-input-base w-full font-black text-white text-lg"
                                                         value={formData.name}
@@ -1039,12 +1082,21 @@
                                                     <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
                                                     <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="pt-4 md:pt-6 flex flex-col md:flex-row gap-2 md:gap-4">
-                                            <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button>
-                                            <button type="submit" disabled={isNameDuplicate} className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] md:text-[12px] ${isNameDuplicate ? 'bg-gray-700 text-white/20 cursor-not-allowed opacity-50' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>確認提交資料</button>
+                                                {/* 修改：按鈕上移至備註下方，電腦版左取消右確定 */}
+                                                <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => {setIsModalOpen(false); setEditingId(null);}} 
+                                                        className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase transition-all hover:bg-white/10"
+                                                    >取消修改</button>
+                                                    <button 
+                                                        type="submit" 
+                                                        disabled={isNameDuplicate} 
+                                                        className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] md:text-[12px] ${isNameDuplicate ? 'bg-gray-700 text-white/20 cursor-not-allowed opacity-50' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}
+                                                    >確認提交資料</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </form>
                                 </div>
