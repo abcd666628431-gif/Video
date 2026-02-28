@@ -73,13 +73,16 @@
         .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
-        .fab-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; opacity: 0.7; }
-        .fab-btn:hover { transform: scale(1.15) rotate(90deg); box-shadow: 0 10px 30px rgba(0,0,0,0.4); opacity: 1; }
+        .fab-btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 100; }
+        .fab-btn-sub { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .fab-btn-sub:hover { background: #ffbae9; color: #3f5968; transform: scale(1.1); border-color: #fff; }
+        .fab-btn-main { width: 52px; height: 52px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; }
+        .fab-btn-main:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .quick-fill-btn { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .quick-fill-btn.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
+        .quick-fill-btn.active { background: #ffbae9 !important; color: #3f5968 !important; border-color: #fff !important; }
         .source-fill-tag { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: all 0.2s; }
         .source-fill-tag:hover { background: rgba(255, 186, 233, 0.2); border-color: #ffbae9; }
-        .source-fill-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
+        .source-fill-tag.active { background: #ffbae9 !important; color: #3f5968 !important; border-color: #fff !important; }
         .plus-toggle-btn { width: 32px; height: 32px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: #ffbae9; color: #3f5968; }
         .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 60px; max-height: 160px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -148,6 +151,18 @@
             const Y = date.getFullYear(), M = (date.getMonth() + 1).toString().padStart(2, '0'), D = date.getDate().toString().padStart(2, '0');
             if (dateOnly) return `${Y}-${M}-${D}`;
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
+        };
+
+        // 高精準度繁簡對應標準化 (包含 陸/陆 等關鍵字)
+        const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯灯门门问问开开兰兰庆庆国国层层陆录剧电视飞观药优叶";
+        const tsNormalize = (str) => {
+            if (!str) return "";
+            let res = str.toLowerCase();
+            for(let i=0; i<tradStr.length; i++) {
+                res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
+            }
+            return res;
         };
 
         const compressImage = (dataUrl, maxWidth = 800) => {
@@ -455,13 +470,11 @@
             const [showTimeSettings, setShowTimeSettings] = useState(false);
             const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
             
-            // 修復：進度預設單位結構
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
-            const [colorChangingMember, setColorChangingMember] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             
@@ -600,7 +613,7 @@
             const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
             const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
             
-            // 修復：重新實作分類重命名功能
+            // 修復：重新實作分類重新命名功能
             const handleRenameGroup = async () => {
                 if(!user || !activeTab || activeTab === "最新入庫" || activeTab === "編號排序") return;
                 const oldName = activeTab;
@@ -764,7 +777,21 @@
 
             const filteredGames = useMemo(() => {
                 let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
-                if(q) l = l.filter(g => (g.name||"").toLowerCase().includes(q) || (g.category||"").toLowerCase().includes(q));
+                
+                if(q) {
+                    const qNorm = tsNormalize(q);
+                    const isNumSearch = /^\d+$/.test(q) || q.startsWith('#');
+                    const numToSearch = isNumSearch ? parseInt(q.replace('#', '')) : null;
+
+                    l = l.filter(g => {
+                        if (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) return true;
+                        
+                        const nameNorm = tsNormalize((g.name || "").toLowerCase());
+                        const catNorm = tsNormalize((g.category || "").toLowerCase());
+                        return nameNorm.includes(qNorm) || catNorm.includes(qNorm);
+                    });
+                }
+
                 if (memberFilter) {
                     const { name, type } = memberFilter;
                     l = l.filter(g => {
@@ -861,7 +888,7 @@
                             {!isEditLocked && (
                                 <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>
                             )}
-                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如#1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                             {memberFilter && (
                                 <div className="px-4 py-2 flex items-center">
                                     <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
@@ -879,12 +906,13 @@
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
                                 <div className="ml-auto flex gap-2 pr-2">
-                                    {/* 修復：分類修改按鈕 */}
                                     {!isEditLocked && activeTab && (activeTab !== "最新入庫" && activeTab !== "編號排序") && (
-                                        <div className="tab-action-btn btn-edit" title="修改目前選中分類" onClick={handleRenameGroup}><Icon name="edit-3" className="w-4 h-4" /></div>
+                                        <div className="tab-action-btn btn-edit" title="修改目前選中分類名稱" onClick={handleRenameGroup}><Icon name="edit-3" className="w-4 h-4" /></div>
                                     )}
                                     {!isEditLocked && <div className="tab-action-btn btn-plus" title="新增分類" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}
-                                    {!isEditLocked && activeTab && <div className="tab-action-btn btn-minus" title="刪除目前選中分類" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>}
+                                    {!isEditLocked && activeTab && (activeTab !== "最新入庫" && activeTab !== "編號排序") && (
+                                        <div className="tab-action-btn btn-minus" title="刪除目前選中分類" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>
+                                    )}
                                 </div>
                             </nav> 
                             <div className="component-view">
@@ -895,8 +923,24 @@
                         </article>
                     </div>
 
-                    <div className="fab-btn" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}>
-                        {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-8 h-8" /> : <Icon key="plus-icon" name="plus" className="w-8 h-8" />}
+                    <div className="fab-btn-container">
+                        <div className="fab-btn-sub" title="回到頂部" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
+                            <Icon name="chevron-up" className="w-6 h-6" />
+                        </div>
+                        
+                        {!isEditLocked && (
+                            <div className="fab-btn-sub !bg-red-600 !text-white" title="鎖定管理模式" onClick={() => setIsEditLocked(true)}>
+                                <Icon name="lock" className="w-5 h-5" />
+                            </div>
+                        )}
+
+                        <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}>
+                            {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-8 h-8" /> : <Icon key="plus-icon" name="plus" className="w-8 h-8" />}
+                        </div>
+
+                        <div className="fab-btn-sub" title="跳至底部" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}>
+                            <Icon name="chevron-down" className="w-6 h-6" />
+                        </div>
                     </div>
 
                     {isAddGroupModalOpen && (
@@ -984,10 +1028,10 @@
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
-                                                                        {/* 修改：來源移除標籤改為小紅X且滑鼠指住才顯示 */}
+                                                                        {/* 右上角小紅X：滑鼠指住才顯示 */}
                                                                         <button 
                                                                             type="button" 
-                                                                            className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none"
+                                                                            className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none px-0.5"
                                                                             onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}
                                                                         >×</button>
                                                                     </div>
@@ -1083,7 +1127,7 @@
                                                     <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
                                                 </div>
 
-                                                {/* 修改：按鈕上移至備註下方，電腦版左取消右確定 */}
+                                                {/* 電腦版按鈕組：上移至備註框正下方 */}
                                                 <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4">
                                                     <button 
                                                         type="button" 
