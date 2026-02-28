@@ -351,8 +351,14 @@
                 return m; 
             }, [onlineUsers, userProfiles, userName, userColor]);
 
-            // 限定「誰在看」的選項只有 雲雲 與 糖糖
-            const allMemberIDs = useMemo(() => ['雲雲', '糖糖'], []);
+            const allMemberIDs = useMemo(() => { 
+                const ids = new Set([userName]); 
+                games.forEach(g => { 
+                    if(g.addedBy) ids.add(g.addedBy); 
+                    if(Array.isArray(g.watchingBy)) g.watchingBy.forEach(n => ids.add(n)); 
+                }); 
+                return Array.from(ids).filter(Boolean).sort(); 
+            }, [userName, games]);
 
             const isNameDuplicate = useMemo(() => {
                 const currentName = formData.name.trim();
