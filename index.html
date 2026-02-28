@@ -92,12 +92,12 @@
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
         const firebaseConfig = {
-            apiKey: "AIzaSyA-bOghSL8apcO6NEda6nc_-_UO6-h9SDs",
-            authDomain: "video-b02b3.firebaseapp.com",
-            projectId: "video-b02b3",
-            storageBucket: "video-b02b3.firebasestorage.app",
-            messagingSenderId: "25339039789",
-            appId: "1:25339039789:web:6bc5a86b6e2cf39a1f68a4"
+          apiKey: "AIzaSyBowrV3MzZkXVRt-7kTK3dYuwU0Ce-uul0",
+          authDomain: "video2-a50eb.firebaseapp.com",
+          projectId: "video2-a50eb",
+          storageBucket: "video2-a50eb.firebasestorage.app",
+          messagingSenderId: "113893899942",
+          appId: "1:113893899942:web:58fe57a9ab41ce13427e67"
         };
         
         const app = initializeApp(firebaseConfig);
@@ -553,12 +553,22 @@
             };
 
             const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
+            
             const handleDeleteGame = async (id) => { 
-                if(!user) return; const g = games.find(x => x.id === id); 
-                const order = g?.order;
-                await deleteDoc(doc(getPublicCol('games'), id)); 
-                logActivity("刪除", g?.name || "未知", order);
-                showNotify("已刪除"); setDeleteGameTarget(null); 
+                if(!user) return;
+                // 立即關閉選框
+                setDeleteGameTarget(null);
+                
+                try {
+                    const g = games.find(x => x.id === id); 
+                    const order = g?.order;
+                    await deleteDoc(doc(getPublicCol('games'), id)); 
+                    logActivity("刪除", g?.name || "未知", order);
+                    showNotify("已刪除"); 
+                } catch (e) {
+                    showNotify("刪除失敗");
+                    console.error(e);
+                }
             };
 
             const handleClearAllData = async () => { 
@@ -756,7 +766,6 @@
                                     <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
                                             
-                                            {/* 左欄: md:col-span-4 */}
                                             <div className="md:col-span-4 flex flex-col gap-4">
                                                 <div className="flex flex-col items-center">
                                                     <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current?.click(); }} className={`w-20 md:w-24 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
@@ -786,7 +795,6 @@
                                                             <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label>
                                                             <input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} />
                                                         </div>
-                                                        {/* 狀態快捷鍵：手機版同步顯示，佔用整行空間 */}
                                                         <div className="col-span-2 flex flex-wrap gap-1 mt-1">
                                                             {recentStatuses.map(s => (
                                                                 <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className="quick-fill-btn">{s}</button>
@@ -800,7 +808,6 @@
                                                             <option value="">- 分類 -</option>
                                                             {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                         </select>
-                                                        {/* 分類快捷鍵：手機版同步顯示 */}
                                                         <div className="flex flex-wrap gap-1 mt-1.5">
                                                             {recentCategories.map(c => (
                                                                 <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className="quick-fill-btn">{c}</button>
@@ -837,9 +844,7 @@
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
                                             </div>
 
-                                            {/* 右欄: md:col-span-8 */}
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
-                                                {/* 手機版分界線：在名稱上方 */}
                                                 <div className="pt-4 md:pt-0 border-t border-white/10 md:border-t-0">
                                                     <label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label>
                                                     <input required className={`modal-input-base w-full font-black text-white text-lg ${isNameDuplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
