@@ -84,14 +84,14 @@
         /* 修復螢幕閃爍/藍屏提示樣式 */
         #error-boundary { position: fixed; inset: 0; background: #3f5968; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 20px; text-align: center; }
         #error-boundary h2 { font-size: 2rem; font-weight: 900; margin-bottom: 1rem; color: #ffbae9; }
-        #error-boundary p { opacity: 0.8; max-width: 500px; }
-        #error-boundary button { margin-top: 2rem; padding: 10px 30px; background: #fff; color: #3f5968; font-weight: 900; border-radius: 4px; cursor: pointer; }
+        #error-boundary p { opacity: 0.8; max-width: 500px; color: #fff; }
+        #error-boundary button { margin-top: 2rem; padding: 10px 30px; background: #fff; color: #3f5968; font-weight: 900; border-radius: 4px; cursor: pointer; border: none; }
+        #loading-fallback { height: 100vh; background: #3f5968; display: flex; align-items: center; justify-content: center; font-weight: 900; color: rgba(255,255,255,0.2); letter-spacing: 0.2em; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div id="root">
-        <!-- 預設載入狀態，防止藍屏 -->
-        <div id="loading-fallback" style="height: 100vh; display: flex; align-items: center; justify-content: center; font-weight: 900; color: rgba(255,255,255,0.2); letter-spacing: 0.2em; text-transform: uppercase;">
+        <div id="loading-fallback">
             Initializing System...
         </div>
     </div>
@@ -104,27 +104,39 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
-        // 安全地解析 Firebase 配置 (修復藍屏關鍵點)
+        // 全域錯誤監控，防止靜默失敗
+        window.addEventListener('error', (event) => {
+            console.error('Captured Global Error:', event.error);
+            const root = document.getElementById('root');
+            if (root && root.innerHTML.includes('Initializing')) {
+                root.innerHTML = `
+                    <div id="error-boundary">
+                        <h2>系統發生崩潰</h2>
+                        <p>載入腳本或執行渲染時發生不可預期的錯誤。</p>
+                        <p style="font-size: 11px; font-family: monospace; margin-top: 10px; color: rgba(255,255,255,0.4)">${event.error?.message || 'Unknown Error'}</p>
+                        <button onclick="location.reload()">重新整理頁面</button>
+                    </div>
+                `;
+            }
+        });
+
+        // 核心資料庫與認證物件初始化
         let db, auth, appId;
+        let isConfigReady = false;
+
         try {
             const configRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-            if (!configRaw) throw new Error("Firebase Configuration Missing");
+            if (!configRaw) throw new Error("環境變數 __firebase_config 遺失");
             
             const firebaseConfig = JSON.parse(configRaw);
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
             appId = typeof __app_id !== 'undefined' ? __app_id : 'video-library-v1';
+            isConfigReady = true;
         } catch (err) {
             console.error("Initialization Failed:", err);
-            document.getElementById('root').innerHTML = `
-                <div id="error-boundary">
-                    <h2>系統初始化失敗</h2>
-                    <p>這通常是由於環境配置變數 (__firebase_config) 遺失或格式錯誤導致的。<br/>請確保在正確的環境中執行此應用程式。</p>
-                    <p style="font-size: 12px; font-family: monospace; margin-top: 20px; color: rgba(255,255,255,0.4)">Error: ${err.message}</p>
-                    <button onclick="location.reload()">重新整理</button>
-                </div>
-            `;
+            // 稍後在 App 渲染時顯示詳細錯誤
         }
 
         const extractFirstNumber = (val) => {
@@ -355,8 +367,16 @@
         });
 
         function App() {
-            // 如果 Firebase 沒連上，React 元件內部也需要做保護
-            if (!db) return null;
+            // 如果連線失敗，直接在頁面中央顯示詳細的錯誤畫面，而不是空白
+            if (!isConfigReady) {
+                return (
+                    <div id="error-boundary">
+                        <h2>系統初始化失敗</h2>
+                        <p>環境配置 (__firebase_config) 無法被正確解析。<br/>請確認是否正確傳入了資料庫金鑰，或者您目前的執行環境是否支援這些變數。</p>
+                        <button onClick={() => location.reload()}>重新嘗試</button>
+                    </div>
+                );
+            }
 
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
@@ -422,7 +442,10 @@
                         } else {
                             await signInAnonymously(auth);
                         }
-                    } catch (e) { console.error("Auth failed:", e); }
+                    } catch (e) { 
+                        console.error("Auth Error:", e);
+                        showNotify("資料庫認證失敗，部分功能可能無法使用");
+                    }
                 };
                 initAuth();
                 return onAuthStateChanged(auth, setUser);
@@ -430,20 +453,28 @@
             
             useEffect(() => {
                 if (!user || !db) return;
-                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => console.error(e));
+                
+                const errorLog = (e) => {
+                    console.error("Snapshot Error:", e);
+                    if (e.code === 'permission-denied') {
+                        showNotify("存取權限被拒絕，請檢查資料庫路徑");
+                    }
+                };
+
+                const ug = onSnapshot(getPublicCol('games'), (s) => setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))), errorLog);
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                     setActivityLogs(logs.slice(0, 30)); 
-                }, (e) => console.error(e));
+                }, errorLog);
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } 
-                }, (e) => console.error(e));
+                }, errorLog);
                 const up = onSnapshot(getPublicCol('presence'), (s) => { 
                     const now = Date.now(); 
                     setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); 
-                }, (e) => console.error(e));
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())), (e) => console.error(e));
+                }, errorLog);
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => setUserProfiles(s.docs.map(d => d.data())), errorLog);
 
                 const updP = () => { 
                     if(auth.currentUser) {
@@ -760,8 +791,14 @@
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // 啟動 React，並在失敗時給予提示
+        try {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+        } catch (e) {
+            console.error("Mount Error:", e);
+            document.getElementById('root').innerHTML = `<div id="error-boundary"><h2>React 啟動失敗</h2><p>${e.message}</p></div>`;
+        }
     </script>
 </body>
 </html>
