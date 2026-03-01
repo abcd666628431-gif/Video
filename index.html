@@ -49,9 +49,8 @@
         .badge-completed { background-color: #dc2626; color: #fff; }
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-shrink: 0; }
+        .update-progress-circle { position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
-        .progress-circles-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 20; }
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
@@ -63,7 +62,7 @@
         .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
         .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .progress-stat { display: flex; align-items: baseline; gap: 2px; }
-        .progress-val-current { font-weight: 900; font-size: 15px; line-height: 1; display: flex; align-items: center; }
+        .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
         .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
         .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
@@ -94,9 +93,9 @@
 <body>
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
+        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
@@ -114,6 +113,7 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
+        // --- Helpers ---
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -128,12 +128,6 @@
             if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
             if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
             return 100;
-        };
-
-        const getWatchedProgressByMember = (watchedProgress, memberName) => {
-            if (!watchedProgress) return null;
-            if (watchedProgress.v1 !== undefined) return watchedProgress;
-            return watchedProgress[memberName] || null;
         };
 
         const formatProgressText = (prog) => {
@@ -159,8 +153,9 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
+        // 高精準度繁簡對應標準化 (包含 陸/陆 等關鍵字)
         const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯灯门门问问开开蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯灯门门问问开开兰兰庆庆国国层层陆录剧电视飞观药优叶";
         const tsNormalize = (str) => {
             if (!str) return "";
             let res = str.toLowerCase();
@@ -189,6 +184,7 @@
             });
         };
 
+        // --- Components ---
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -280,24 +276,9 @@
 
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
+            const percentage = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
+            const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-            
-            const barPercentage = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
-            
-            const progressDisplay = watchingByList.length > 0 
-                ? watchingByList.map((name, index) => {
-                    const p = getWatchedProgressByMember(g.watchedProgress, name);
-                    const memberColor = nameColorMap?.[name] || '#ffffff';
-                    const text = p ? formatProgressText(p) : '0';
-                    return (
-                        <React.Fragment key={name}>
-                            <span style={{ color: memberColor }}>{text}</span>
-                            {index < watchingByList.length - 1 && <span className="text-white/30 mx-1">/</span>}
-                        </React.Fragment>
-                    );
-                  })
-                : <span className="text-cyan-400">0</span>;
-
             const sourceInfo = allSources.find(s => s.name === g.source);
             
             return (
@@ -308,18 +289,7 @@
                         {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
                     </div> 
                     <div className="desc">
-                        <div className="progress-circles-stack">
-                            {watchingByList.map(name => {
-                                const memberProg = getWatchedProgressByMember(g.watchedProgress, name);
-                                const per = calculateDualProgress(memberProg, g.updatedEpisodes);
-                                const color = nameColorMap?.[name] || '#ffbae9';
-                                return (
-                                    <div key={name} className="update-progress-circle !border-2" style={{ borderColor: color }} title={`${name} 相對於最新更新的進度`}>
-                                        <span style={{ color: color }}>{per}%</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                        <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
                         <div className="title-container">
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
                                 <span className="id-label">#{g.order || 0}</span>{g.name}
@@ -338,32 +308,14 @@
                             </div>
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <strong className="text-[11px] leading-none">觀看進度：</strong>
-                                        <div className="progress-stat">
-                                            <span className="progress-val-current">{progressDisplay}</span>
-                                        </div>
-                                    </div>
-                                    {watchingByList.length > 0 && (
-                                        <div className="flex flex-wrap items-center justify-end gap-1 flex-1">
-                                            <strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong>
-                                            <div className="flex flex-wrap justify-end gap-1">
-                                                {watchingByList.map(name => {
-                                                    const c = nameColorMap?.[name] || '#ffffff';
-                                                    return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>;
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress) || '0'}</span></div></div>
+                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1"><strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
                                 </div>
                                 <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
                                     <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
-                                <div className="progress-container">
-                                    <div className="progress-fill" style={{ width: `${barPercentage}%` }}></div>
-                                    <div className="progress-text-overlay">更新率 {barPercentage}%</div>
-                                </div>
+                                <div className="progress-container"><div className="progress-fill" style={{ width: `${percentage}%` }}></div><div className="progress-text-overlay">{percentage}%</div></div>
                             </div>
                         </div>
                         {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
@@ -372,16 +324,17 @@
             );
         });
 
-        const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, containerClass, memberColor }) => {
-            const [isExpanded, setIsExpanded] = useState(!!value?.v2);
+        const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, containerClass }) => {
+            const [isExpanded, setIsExpanded] = useState(!!value.v2);
             const [activeDropdown, setActiveDropdown] = useState(null); 
-            const val = value || { v1: '', u1: '集', v2: '', u2: '分鐘' };
-            const handleChange = (field, newVal) => onChange({ ...val, [field]: newVal });
+            const handleChange = (field, val) => onChange({ ...value, [field]: val });
             
-            const getDynamicWidth = (v, isNumber = false) => {
-                const str = v ? v.toString() : "";
+            const getDynamicWidth = (val, isNumber = false) => {
+                const str = val ? val.toString() : "";
                 const len = str.length;
-                if (isNumber) return Math.max(54, len * 13 + 12) + "px";
+                if (isNumber) {
+                    return Math.max(54, len * 13 + 12) + "px";
+                }
                 return Math.max(32, len * 13 + 12) + 'px';
             };
 
@@ -396,21 +349,21 @@
             
             return (
                 <div className={`w-full ${containerClass || ''}`}>
-                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={{ color: memberColor || '' }}>-{label}-</label>
-                    <div className="progress-input-row" style={{ borderLeft: memberColor ? `3px solid ${memberColor}` : 'none', paddingLeft: memberColor ? '8px' : '0' }}>
+                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                    <div className="progress-input-row">
                         <input 
                             type="number" 
                             className="modal-input-base font-black text-sm p-1.5 text-center" 
-                            style={{ width: getDynamicWidth(val.v1, true) }}
-                            value={val.v1} 
+                            style={{ width: getDynamicWidth(value.v1, true) }}
+                            value={value.v1} 
                             onChange={e=>handleChange('v1', e.target.value)} 
                         />
                         
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
                             <input 
                                 className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                style={{ width: getDynamicWidth(val.u1) }}
-                                value={val.u1} 
+                                style={{ width: getDynamicWidth(value.u1) }}
+                                value={value.u1} 
                                 onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }}
                                 onChange={e=>handleChange('u1', e.target.value)} 
                             />
@@ -428,15 +381,15 @@
                                 <input 
                                     type="number" 
                                     className="modal-input-base font-black text-sm p-1.5 text-center" 
-                                    style={{ width: getDynamicWidth(val.v2, true) }}
-                                    value={val.v2} 
+                                    style={{ width: getDynamicWidth(value.v2, true) }}
+                                    value={value.v2} 
                                     onChange={e=>handleChange('v2', e.target.value)} 
                                 />
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
                                     <input 
                                         className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                        style={{ width: getDynamicWidth(val.u2) }}
-                                        value={val.u2} 
+                                        style={{ width: getDynamicWidth(value.u2) }}
+                                        value={value.u2} 
                                         onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }}
                                         onChange={e=>handleChange('u2', e.target.value)} 
                                     />
@@ -516,10 +469,9 @@
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const [showTimeSettings, setShowTimeSettings] = useState(false);
             const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
-            const [colorChangingMember, setColorChangingMember] = useState(null);
             
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
             const [memberFilter, setMemberFilter] = useState(null);
@@ -529,7 +481,7 @@
             const unitSuggestions = useMemo(() => { 
                 const r = new Set(['集', '話', '章', '季', '卷', '冊', '分鐘']); 
                 games.forEach(g => { 
-                    ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
+                    ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
                         const p = g[k]; 
                         if (p && typeof p === 'object') {
                             if (p.u1 && typeof p.u1 === 'string' && p.u1.trim()) r.add(p.u1.trim()); 
@@ -661,6 +613,7 @@
             const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
             const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
             
+            // 修復：重新實作分類重新命名功能
             const handleRenameGroup = async () => {
                 if(!user || !activeTab || activeTab === "最新入庫" || activeTab === "編號排序") return;
                 const oldName = activeTab;
@@ -706,7 +659,7 @@
 
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
                 setShowTimeSettings(false);
                 setShowManualUpdateInput(false);
                 setIsModalOpen(true); 
@@ -716,21 +669,9 @@
                 setEditingId(item.id); setRawImageData(item.cover); 
                 const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
                 const sObj = customSources.find(s => s.name === item.source);
-                
-                let watchedMap = {};
-                if (item.watchedProgress) {
-                    if (item.watchedProgress.v1 !== undefined) {
-                        const defaultName = Array.isArray(item.watchingBy) && item.watchingBy.length > 0 ? item.watchingBy[0] : "糖糖";
-                        watchedMap[defaultName] = { ...item.watchedProgress };
-                    } else {
-                        watchedMap = { ...item.watchedProgress };
-                    }
-                }
-
                 setFormData({ 
                     ...item, sourceIcon: sObj ? sObj.icon : '',
-                    totalEpisodes: ensureP(item.totalEpisodes), 
-                    watchedProgress: watchedMap, 
+                    totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), 
                     updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress),
                     notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', 
                     watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
@@ -757,14 +698,8 @@
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-                    
-                    const cleanWatchedProg = {};
-                    formData.watchingBy.forEach(name => {
-                        cleanWatchedProg[name] = formData.watchedProgress[name] || { ...emptyProgress };
-                    });
-
                     const { sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, watchedProgress: cleanWatchedProg, updatedAt: serverTimestamp() }; 
+                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
                     if(editingId) { 
                         await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
                         logActivity("修改", cn, to);
@@ -862,8 +797,7 @@
                     l = l.filter(g => {
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
                         if (!watchers.includes(name)) return false;
-                        const prog = getWatchedProgressByMember(g.watchedProgress, name);
-                        const p = calculateDualProgress(prog, g.updatedEpisodes);
+                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
                         if (type === 'unstarted') return p === 0;
                         if (type === 'watching') return p > 0 && p < 100;
                         if (type === 'completed') return p >= 100;
@@ -879,7 +813,7 @@
             }, [games, searchQuery, activeTab, memberFilter]);
 
             const memberStats = useMemo(() => {
-                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const prog = getWatchedProgressByMember(g.watchedProgress, n); const p = calculateDualProgress(prog, g.updatedEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
+                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
 
@@ -1015,6 +949,7 @@
                         </div>
                     )}
 
+                    {/* MODAL / 資料卡 */}
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col">
@@ -1093,6 +1028,7 @@
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
+                                                                        {/* 右上角小紅X：滑鼠指住才顯示 */}
                                                                         <button 
                                                                             type="button" 
                                                                             className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none px-0.5"
@@ -1124,70 +1060,37 @@
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="!max-w-full" />
                                                 </div>
 
-                                                <div className="flex flex-row gap-6 items-start">
-                                                    <div className="flex-1 flex flex-col gap-4">
-                                                        <div>
-                                                            <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
-                                                            {showTimeSettings ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
-                                                                        <option value="">-</option>
-                                                                        {['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
-                                                                    </select>
-                                                                    <button type="button" onClick={() => { setFormData({...formData, updateDay: ""}); if(!formData.updateTime) setShowTimeSettings(false); }} className="text-white/20 hover:text-red-400 flex-shrink-0"><Icon name="x" className="w-4 h-4" /></button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-col gap-4">
-                                                            {(formData.watchingBy || []).length > 0 ? (
-                                                                formData.watchingBy.map(name => (
-                                                                    <ProgressInputField 
-                                                                        key={name}
-                                                                        label={`${name} 觀看進度`} 
-                                                                        memberColor={nameColorMap?.[name]}
-                                                                        value={formData.watchedProgress[name]} 
-                                                                        unitSuggestions={unitSuggestions} 
-                                                                        onChange={v => setFormData({ 
-                                                                            ...formData, 
-                                                                            watchedProgress: { ...formData.watchedProgress, [name]: v } 
-                                                                        })} 
-                                                                        containerClass="!max-w-full" 
-                                                                    />
-                                                                ))
-                                                            ) : (
-                                                                <div className="opacity-40">
-                                                                    <ProgressInputField 
-                                                                        label="觀看進度" 
-                                                                        labelClass="text-cyan-400" 
-                                                                        value={null} 
-                                                                        unitSuggestions={unitSuggestions} 
-                                                                        onChange={v => {}} 
-                                                                        containerClass="!max-w-full pointer-events-none" 
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                <div className="flex flex-row gap-6 items-end">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
+                                                        {showTimeSettings ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
+                                                                    <option value="">-</option>
+                                                                    {['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
+                                                                </select>
+                                                                <button type="button" onClick={() => { setFormData({...formData, updateDay: ""}); if(!formData.updateTime) setShowTimeSettings(false); }} className="text-white/20 hover:text-red-400 flex-shrink-0"><Icon name="x" className="w-4 h-4" /></button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
+                                                        )}
                                                     </div>
-                                                    <div className="flex-1 flex flex-col gap-4">
-                                                        <div>
-                                                            <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新時間-</label>
-                                                            {showTimeSettings ? (
-                                                                <div className="flex flex-col gap-4">
-                                                                    <TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="!max-w-full" />
-                                                        </div>
+                                                    <div className="flex-1">
+                                                        <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
+                                                        {showTimeSettings ? (
+                                                            <TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />
+                                                        ) : (
+                                                            <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
+                                                        )}
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end pt-4 border-t border-white/5">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="!max-w-full" />
+                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="!max-w-full" />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
                                                     <div className="col-span-1">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
                                                         {showManualUpdateInput ? (
@@ -1211,12 +1114,7 @@
                                                         {displayMembers.map(name => (
                                                             <div key={name} onClick={() => { 
                                                                 const list = [...(formData.watchingBy || [])]; 
-                                                                const newList = list.includes(name) ? list.filter(n => n !== name) : [...list, name];
-                                                                const newWatchedProg = { ...formData.watchedProgress };
-                                                                if (newList.includes(name) && !newWatchedProg[name]) {
-                                                                    newWatchedProg[name] = { ...emptyProgress };
-                                                                }
-                                                                setFormData({...formData, watchingBy: newList, watchedProgress: newWatchedProg }); 
+                                                                setFormData({...formData, watchingBy: list.includes(name) ? list.filter(n => n !== name) : [...list, name]}); 
                                                             }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>
                                                                 {name}
                                                             </div>
@@ -1229,6 +1127,7 @@
                                                     <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
                                                 </div>
 
+                                                {/* 電腦版按鈕組：上移至備註框正下方 */}
                                                 <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4">
                                                     <button 
                                                         type="button" 
