@@ -154,7 +154,7 @@
         };
 
         const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯灯門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
         const tsNormalize = (str) => {
             if (!str) return "";
             let res = str.toLowerCase();
@@ -886,14 +886,14 @@
                                     <>
                                         <thead>
                                             <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 sticky left-0 bg-[#0b0e14]/80 z-10">成員</th>
+                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10">成員</th>
                                                 {activeCategoriesInUse.map(c => <th key={c} className="pb-1 text-center px-2 min-w-[60px]">{c}</th>)}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {memberStats.map(m => (
                                                 <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 sticky left-0 bg-[#0b0e14]/80 z-10 shadow-[4px_0_10px_rgba(0,0,0,0.5)]" style={{ color: m.color }}>{m.name}</td>
+                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)]" style={{ color: m.color }}>{m.name}</td>
                                                     {activeCategoriesInUse.map(c => {
                                                         const count = m.stats.cats[c] || 0;
                                                         return <td key={c} className={`py-1.5 text-center ${count > 0 ? 'text-[#ffbae9]' : 'opacity-20'}`}>{count}</td>
