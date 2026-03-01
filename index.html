@@ -978,19 +978,23 @@
                                     <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
                                             <div className="md:col-span-4 flex flex-col gap-4">
-                                                <div className="flex flex-col items-center">
-                                                    <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current?.click(); }} className={`w-20 md:w-24 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                        {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[8px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">貼上封面</div>}
-                                                    </div>
-                                                    {formData.cover && (
-                                                        <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[9px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-2.5 h-2.5" /> 裁剪</button>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col gap-4">
-                                                    <div>
+                                                {/* 編號與封面水平佈局 */}
+                                                <div className="flex gap-4 items-start w-full">
+                                                    <div className="flex-shrink-0">
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
-                                                        <input type="text" className="modal-input-base w-full max-w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
+                                                        <input type="text" className="modal-input-base w-[50px] text-center font-black p-1" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                     </div>
+                                                    <div className="flex-grow flex flex-col items-center">
+                                                        <div onClick={() => { setLastSelectedImgZone('cover'); fileInputRef.current?.click(); }} className={`w-20 md:w-24 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[8px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">貼上封面</div>}
+                                                        </div>
+                                                        {formData.cover && (
+                                                            <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[9px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-2.5 h-2.5" /> 裁剪</button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col gap-4">
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div>
                                                             <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
@@ -1029,13 +1033,23 @@
                                                                 <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); fileInputRef.current.click(); }}>
                                                                     {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                                 </div>
-                                                                <div className="flex-1 flex gap-1 items-center">
-                                                                    <input placeholder="輸入來源..." className="modal-input-base w-auto max-w-[150px] text-[11px] font-bold px-1.5" value={formData.source} onChange={e => { 
-                                                                        const v=e.target.value; const ex=customSources.find(s=>s.name===v); 
-                                                                        setFormData({...formData, source:v, sourceIcon:ex?ex.icon:formData.sourceIcon}); 
-                                                                    }} />
+                                                                <div className="flex-1">
+                                                                    <select 
+                                                                        className="modal-input-base w-full text-[11px] font-bold px-2" 
+                                                                        value={formData.source} 
+                                                                        onChange={e => { 
+                                                                            const v = e.target.value; 
+                                                                            const ex = customSources.find(s => s.name === v); 
+                                                                            setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); 
+                                                                        }}
+                                                                    >
+                                                                        <option value="">- 來源 -</option>
+                                                                        {customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                                                                        {formData.source && !customSources.find(s => s.name === formData.source) && <option value={formData.source}>{formData.source}</option>}
+                                                                    </select>
                                                                 </div>
                                                             </div>
+                                                            {/* 保留下方的快速標籤以便顯示所有來源並提供刪除選項 */}
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
                                                                 {customSources.map(s => (
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
@@ -1044,6 +1058,7 @@
                                                                         <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none px-0.5" onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}>×</button>
                                                                     </div>
                                                                 ))}
+                                                                {/* 若需要手動輸入新來源，可點擊圖標後貼上圖片，下拉選單會自動建立暫時選項 */}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1135,7 +1150,7 @@
 
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 leading-relaxed px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
