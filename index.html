@@ -74,8 +74,8 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
         .fab-btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 100; }
-        .fab-btn-sub { width: 40px; height: 40px; border-radius: 50%; background: rgba(100,116,139,0.2); backdrop-filter: blur(8px); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .fab-btn-sub:hover { background: rgba(255, 186, 233, 0.3); color: #fff; transform: scale(1.1); border-color: #fff; }
+        .fab-btn-sub { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .fab-btn-sub:hover { background: #ffbae9; color: #3f5968; transform: scale(1.1); border-color: #fff; }
         .fab-btn-main { width: 52px; height: 52px; border-radius: 50%; background: #ffbae9; color: #3f5968; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #fff; }
         .fab-btn-main:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .quick-fill-btn { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -99,6 +99,7 @@
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
+        // --- Firebase Configuration & Initialization ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "", 
             authDomain: "video2-a50eb.firebaseapp.com",
@@ -154,7 +155,7 @@
         };
 
         const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯灯门门问问开开兰兰庆庆国国层层陆录剧电视飞观药优叶";
         const tsNormalize = (str) => {
             if (!str) return "";
             let res = str.toLowerCase();
@@ -468,7 +469,7 @@
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const [showTimeSettings, setShowTimeSettings] = useState(false);
             const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
-            const [statMode, setStatMode] = useState('progress'); // 'progress' or 'group'
+            const [colorChangingMember, setColorChangingMember] = useState(null);
             
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
@@ -568,7 +569,9 @@
                         } else {
                             await signInAnonymously(auth); 
                         }
-                    } catch (e) {} 
+                    } catch (e) {
+                        console.error("Auth Error", e);
+                    } 
                 }; 
                 init(); 
                 return onAuthStateChanged(auth, setUser); 
@@ -624,7 +627,7 @@
                     const tid = setTimeout(() => window.lucide.createIcons(), 32);
                     return () => clearTimeout(tid);
                 }
-            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showTimeSettings, showManualUpdateInput, statMode]);
+            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showTimeSettings, showManualUpdateInput]);
 
             const logActivity = useCallback(async (action, gameName, gameOrder) => { 
                 if(!user) return; 
@@ -733,6 +736,8 @@
                 } catch(e) { console.error(e); showNotify("操作失敗"); }
             };
 
+            const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
+            
             const handleDeleteGame = async (id) => { 
                 if(!user) return;
                 setDeleteGameTarget(null);
@@ -805,6 +810,7 @@
 
                     l = l.filter(g => {
                         if (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) return true;
+                        
                         const nameNorm = tsNormalize((g.name || "").toLowerCase());
                         const catNorm = tsNormalize((g.category || "").toLowerCase());
                         return nameNorm.includes(qNorm) || catNorm.includes(qNorm);
@@ -832,36 +838,9 @@
             }, [games, searchQuery, activeTab, memberFilter]);
 
             const memberStats = useMemo(() => {
-                const sm = {}; 
-                const validCategories = customCategories.filter(c => c !== "最新入庫" && c !== "編號排序");
-                
-                games.forEach(g => { 
-                    const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
-                    w.forEach(n => { 
-                        if(!sm[n]) {
-                            sm[n] = { 
-                                total: 0, unstarted: 0, watching: 0, completed: 0,
-                                groups: {} 
-                            };
-                            validCategories.forEach(c => sm[n].groups[c] = 0);
-                        }
-                        sm[n].total++; 
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); 
-                        if(p === 0) sm[n].unstarted++; 
-                        else if(p >= 100) sm[n].completed++; 
-                        else sm[n].watching++; 
-
-                        if(g.category && sm[n].groups[g.category] !== undefined) {
-                            sm[n].groups[g.category]++;
-                        }
-                    }); 
-                }); 
-                return Object.keys(sm).sort().map(n => ({ 
-                    name: n, 
-                    color: nameColorMap[n] || '#ffffff', 
-                    stats: sm[n] 
-                }));
-            }, [games, nameColorMap, customCategories]);
+                const sm = {}; games.forEach(g => { const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); w.forEach(n => { if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0 }; sm[n].total++; const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; }); });
+                return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
+            }, [games, nameColorMap]);
 
             const toggleMemberFilter = useCallback((name, type) => {
                 setMemberFilter(prev => (prev?.name === name && prev?.type === type) ? null : { name, type });
@@ -883,13 +862,11 @@
                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', profile.uid), { color: newColor }, { merge: true });
                         showNotify(`已更新雲端顏色`);
                     } catch (e) { showNotify("更新失敗"); }
+                } else {
+                    showNotify(`暫無法修改此成員顏色`);
                 }
                 setColorChangingMember(null);
             };
-
-            const statCategories = useMemo(() => {
-                return customCategories.filter(c => c !== "最新入庫" && c !== "編號排序");
-            }, [customCategories]);
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
@@ -918,62 +895,18 @@
                                 ))}
                             </div></div>
                             <div className="lg:col-span-2 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col">
-                                <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
-                                <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest">
-                                    <div className="flex items-center gap-3">
-                                        <span>成員統計</span>
-                                        <Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} />
-                                        <Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} />
-                                        <input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} />
-                                    </div>
-                                    <div className="flex items-center gap-2 text-[10px] opacity-40">
-                                        <Icon name="layout-grid" className={`w-3 h-3 hover:text-white transition-colors cursor-pointer ${statMode === 'group' ? 'text-[#ffbae9] opacity-100' : ''}`} onClick={() => setStatMode(p => p === 'progress' ? 'group' : 'progress')} title="切換統計模式" />
-                                        總存檔數: {games.length}
-                                    </div>
-                                </div>
-                                <div className="flex-1 overflow-x-auto custom-scrollbar">
-                                    <table className="w-full text-[11px] font-black border-collapse min-w-full">
-                                        <thead>
-                                            <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 pr-2 whitespace-nowrap">成員</th>
-                                                {statMode === 'progress' ? (
-                                                    <>
-                                                        <th className="pb-1 text-center whitespace-nowrap">總計</th>
-                                                        <th className="pb-1 text-center whitespace-nowrap">未觀看</th>
-                                                        <th className="pb-1 text-center text-cyan-400 whitespace-nowrap">觀看中</th>
-                                                        <th className="pb-1 text-center text-green-400 whitespace-nowrap">已看完</th>
-                                                    </>
-                                                ) : (
-                                                    statCategories.map(c => <th key={c} className="pb-1 text-center px-2 whitespace-nowrap">{c}</th>)
-                                                )}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {memberStats.map(m => {
-                                                const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
-                                                return (
-                                                    <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                        <td className="py-1.5 pr-2 whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
-                                                        {statMode === 'progress' ? (
-                                                            <>
-                                                                <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
-                                                                <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
-                                                                <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20' : 'text-cyan-400'}`}>{m.stats.watching}</td>
-                                                                <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20' : 'text-green-400'}`}>{m.stats.completed}</td>
-                                                            </>
-                                                        ) : (
-                                                            statCategories.map(c => (
-                                                                <td key={c} className="py-1.5 text-center px-2 whitespace-nowrap opacity-80">{m.stats.groups[c] || 0}</td>
-                                                            ))
-                                                        )}
-                                                    </tr>
-                                                )
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div><div className="flex-1 overflow-y-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse"><thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總計</th><th className="pb-1 text-center">未開</th><th className="pb-1 text-center text-cyan-400">看中</th><th className="pb-1 text-center text-green-400">看完</th></tr></thead><tbody>{memberStats.map(m => {
+                                const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
+                                return (
+                                    <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                        <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20' : 'text-cyan-400'}`}>{m.stats.watching}</td>
+                                        <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20' : 'text-green-400'}`}>{m.stats.completed}</td>
+                                    </tr>
+                                )
+                            })}</tbody></table></div></div>
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
@@ -1017,7 +950,7 @@
 
                     <div className="fab-btn-container">
                         <div className="fab-btn-sub" title="回到頂部" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-                            <Icon name="arrow-up" className="w-6 h-6" />
+                            <Icon name="chevron-up" className="w-6 h-6" />
                         </div>
                         
                         {!isEditLocked && (
@@ -1031,7 +964,7 @@
                         </div>
 
                         <div className="fab-btn-sub" title="跳至底部" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}>
-                            <Icon name="arrow-down" className="w-6 h-6" />
+                            <Icon name="chevron-down" className="w-6 h-6" />
                         </div>
                     </div>
 
