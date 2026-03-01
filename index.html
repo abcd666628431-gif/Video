@@ -63,7 +63,7 @@
         .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
         .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .progress-stat { display: flex; align-items: baseline; gap: 2px; }
-        .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
+        .progress-val-current { font-weight: 900; font-size: 15px; line-height: 1; display: flex; align-items: center; }
         .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
         .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
@@ -114,7 +114,6 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
-        // --- Helpers ---
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -190,7 +189,6 @@
             });
         };
 
-        // --- Components ---
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -284,9 +282,22 @@
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             
-            // 長條形 UI 計算「更新至 / 總集數」的百分比
             const barPercentage = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
             
+            const progressDisplay = watchingByList.length > 0 
+                ? watchingByList.map((name, index) => {
+                    const p = getWatchedProgressByMember(g.watchedProgress, name);
+                    const memberColor = nameColorMap?.[name] || '#ffffff';
+                    const text = p ? formatProgressText(p) : '0';
+                    return (
+                        <React.Fragment key={name}>
+                            <span style={{ color: memberColor }}>{text}</span>
+                            {index < watchingByList.length - 1 && <span className="text-white/30 mx-1">/</span>}
+                        </React.Fragment>
+                    );
+                  })
+                : <span className="text-cyan-400">0</span>;
+
             const sourceInfo = allSources.find(s => s.name === g.source);
             
             return (
@@ -297,7 +308,6 @@
                         {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
                     </div> 
                     <div className="desc">
-                        {/* 圓形進度條：計算「各成員進度 / 更新至」的百分比 */}
                         <div className="progress-circles-stack">
                             {watchingByList.map(name => {
                                 const memberProg = getWatchedProgressByMember(g.watchedProgress, name);
@@ -329,9 +339,9 @@
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <strong className="text-[11px]">總更新率：</strong>
+                                        <strong className="text-[11px] leading-none">觀看進度：</strong>
                                         <div className="progress-stat">
-                                            <span className="progress-val-current">{barPercentage}%</span>
+                                            <span className="progress-val-current">{progressDisplay}</span>
                                         </div>
                                     </div>
                                     {watchingByList.length > 0 && (
@@ -707,7 +717,6 @@
                 const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
                 const sObj = customSources.find(s => s.name === item.source);
                 
-                // 修正：確保舊資料編輯時能對應到成員
                 let watchedMap = {};
                 if (item.watchedProgress) {
                     if (item.watchedProgress.v1 !== undefined) {
@@ -1131,7 +1140,6 @@
                                                                 <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
                                                             )}
                                                         </div>
-                                                        {/* 修正：觀看進度移動到 更新星期 下方 */}
                                                         <div className="flex flex-col gap-4">
                                                             {(formData.watchingBy || []).length > 0 ? (
                                                                 formData.watchingBy.map(name => (
@@ -1166,7 +1174,9 @@
                                                         <div>
                                                             <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新時間-</label>
                                                             {showTimeSettings ? (
-                                                                <TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />
+                                                                <div className="flex flex-col gap-4">
+                                                                    <TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />
+                                                                </div>
                                                             ) : (
                                                                 <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
                                                             )}
