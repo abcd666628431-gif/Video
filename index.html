@@ -114,6 +114,8 @@
         const appId = 'video-library-v1';
 
         // --- Helpers ---
+        const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'object' && val.v1 !== undefined) return parseFloat(val.v1) || 0;
@@ -767,6 +769,7 @@
             };
 
             const handleExportData = () => { 
+                // 依編號數值順序排列內容資料
                 const sortedGames = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
                 const blob = new Blob([JSON.stringify({ version: "11.6", games: sortedGames, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
                 const a = document.createElement('a'); 
@@ -1025,8 +1028,11 @@
                                                     
                                                     {/* 封面區域 (右) */}
                                                     <div className="flex-grow flex flex-col items-center">
-                                                        <div onClick={() => { setLastSelectedImgZone('cover'); }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">CTRL+V 貼上圖(連結)</div>}
+                                                        <div onClick={() => { 
+                                                            setLastSelectedImgZone('cover'); 
+                                                            if (isMobileDevice()) fileInputRef.current?.click();
+                                                        }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
                                                         </div>
                                                         {formData.cover && (
                                                             <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>
@@ -1070,7 +1076,10 @@
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定與快速選擇</label>
                                                         <div className="flex flex-col gap-2">
                                                             <div className="flex w-full gap-2 items-center">
-                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); }}>
+                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { 
+                                                                    setLastSelectedImgZone('source');
+                                                                    if (isMobileDevice()) fileInputRef.current?.click();
+                                                                }}>
                                                                     {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                                 </div>
                                                                 <div className="flex-1">
