@@ -50,6 +50,7 @@
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         
+        /* 右上角成員圓圈堆疊 */
         .member-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
         .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
@@ -290,6 +291,7 @@
                         {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
                     </div> 
                     <div className="desc">
+                        {/* A. 右上方圓形進度圈堆疊 */}
                         <div className="member-progress-stack">
                             {watchingByList.map(name => {
                                 const memberColor = nameColorMap?.[name] || '#ffffff';
@@ -320,6 +322,7 @@
                                 {(g.updateDay || g.updateTime) && <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">每周{g.updateDay ? `(${g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下午 ' + (g.updateTime.split(':')[0] % 12 || 12) : '上午 ' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}</span>}
                             </div>
                             <div className="mt-auto pt-2">
+                                {/* B. 資訊列表區 (Info Row) - 水平並排 */}
                                 <div className="flex justify-between items-center w-full gap-2">
                                     <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
                                         <strong className="text-[11px] whitespace-nowrap">觀看進度：</strong>
@@ -348,6 +351,7 @@
                                     <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
+                                {/* C. 長條進度條 - 顏色 #c6b8ff */}
                                 <div className="progress-container"><div className="progress-fill" style={{ width: `${overallPercentage}%` }}></div><div className="progress-text-overlay">{overallPercentage}%</div></div>
                             </div>
                         </div>
@@ -837,7 +841,7 @@
                                                 </div>
                                             </div>
 
-                                            {/* 右側：名稱、備註、進度 (雙欄) */}
+                                            {/* 右側：詳細欄位 */}
                                             <div className="md:col-span-8 border-l border-white/5 pl-0 md:pl-8 space-y-5">
                                                 <div>
                                                     <label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label>
@@ -848,8 +852,9 @@
                                                     <input className="modal-input-base w-full font-black text-[11px]" value={formData.notes} onChange={e=>setFormData({...formData, notes: e.target.value})} />
                                                 </div>
 
+                                                {/* 詳細進度佈局 */}
                                                 <div className="grid grid-cols-2 gap-8">
-                                                    {/* 右側左欄：更新星期、動態成員進度 */}
+                                                    {/* 左子欄：更新星期 + 動態生成的成員進度 */}
                                                     <div className="space-y-5">
                                                         <div>
                                                             <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
@@ -858,7 +863,7 @@
                                                             </div>
                                                         </div>
 
-                                                        {/* 動態生成進度輸入框 */}
+                                                        {/* 根據 watchingBy 動態生成的成員觀看進度 */}
                                                         {formData.watchingBy.map(name => (
                                                             <ProgressInputField 
                                                                 key={name}
@@ -871,7 +876,7 @@
                                                         ))}
                                                     </div>
 
-                                                    {/* 右側右欄：更新時間、已付費、總數、更新至 */}
+                                                    {/* 右子欄：更新時間 + 進度資訊 */}
                                                     <div className="space-y-5">
                                                         <div>
                                                             <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
