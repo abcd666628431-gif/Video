@@ -470,14 +470,14 @@
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
             const [showTimeSettings, setShowTimeSettings] = useState(false);
             const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
-            const [statMode, setStatMode] = useState('progress'); // 'progress' | 'category'
+            const [statMode, setStatMode] = useState('progress'); // 'progress' | 'category' | 'source'
             const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
             
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
             const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
-            const [memberFilter, setMemberFilter] = useState(null);
+            const [memberFilter, setMemberFilter] = useState(null); // { name: string, type: string, value?: string }
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             
@@ -769,7 +769,6 @@
             };
 
             const handleExportData = () => { 
-                // 依編號數值順序排列內容資料
                 const sortedGames = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
                 const blob = new Blob([JSON.stringify({ version: "11.6", games: sortedGames, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
                 const a = document.createElement('a'); 
@@ -831,14 +830,27 @@
                 }
 
                 if (memberFilter) {
-                    const { name, type } = memberFilter;
+                    const { name, type, value } = memberFilter;
                     l = l.filter(g => {
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
                         if (!watchers.includes(name)) return false;
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-                        if (type === 'unstarted') return p === 0;
-                        if (type === 'watching') return p > 0 && p < 100;
-                        if (type === 'completed') return p >= 100;
+                        
+                        if (type === 'progress') {
+                            const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
+                            if (value === 'unstarted') return p === 0;
+                            if (value === 'watching') return p > 0 && p < 100;
+                            if (value === 'completed') return p >= 100;
+                            return true; // value === 'total'
+                        }
+                        
+                        if (type === 'category') {
+                            return (g.category || "未分類") === value;
+                        }
+                        
+                        if (type === 'source') {
+                            return (g.source || "未知來源") === value;
+                        }
+                        
                         return true;
                     });
                 }
@@ -855,7 +867,7 @@
                 games.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
                     w.forEach(n => { 
-                        if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {} }; 
+                        if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
                         sm[n].total++; 
                         const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); 
                         if(p === 0) sm[n].unstarted++; 
@@ -864,6 +876,9 @@
                         
                         const c = g.category || "未分類";
                         sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
+                        
+                        const s = g.source || "未知來源";
+                        sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
                     }); 
                 }); 
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
@@ -874,9 +889,18 @@
                 games.forEach(g => s.add(g.category || "未分類"));
                 return Array.from(s).sort();
             }, [games]);
+            
+            const activeSourcesInUse = useMemo(() => {
+                const s = new Set();
+                games.forEach(g => s.add(g.source || "未知來源"));
+                return Array.from(s).sort();
+            }, [games]);
 
-            const toggleMemberFilter = useCallback((name, type) => {
-                setMemberFilter(prev => (prev?.name === name && prev?.type === type) ? null : { name, type });
+            const toggleMemberFilter = useCallback((name, type, value) => {
+                setMemberFilter(prev => {
+                    if (prev?.name === name && prev?.type === type && prev?.value === value) return null;
+                    return { name, type, value };
+                });
             }, []);
 
             return (
@@ -904,24 +928,24 @@
                                 ))}
                             </div></div>
                             <div className="lg:col-span-1 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
-                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode === 'category' ? 'text-[#ffbae9]' : 'text-white/40 hover:text-white'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : 'progress')} title="切換統計模式" /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse min-w-[300px]">
+                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40 hover:text-white'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} title="切換統計模式" /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse min-w-[300px]">
                                 {statMode === 'progress' ? (
                                     <>
                                         <thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center">總計</th><th className="pb-1 text-center">還未看</th><th className="pb-1 text-center text-cyan-400">觀看中</th><th className="pb-1 text-center text-green-400">已看完</th></tr></thead>
                                         <tbody>{memberStats.map(m => {
-                                            const isF = (type) => memberFilter?.name === m.name && memberFilter?.type === type;
+                                            const isF = (val) => memberFilter?.name === m.name && memberFilter?.type === 'progress' && memberFilter?.value === val;
                                             return (
                                                 <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
                                                     <td className="py-1.5" style={{ color: m.color }}>{m.name}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400' : 'text-cyan-400'}`}>{m.stats.watching}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400' : 'text-green-400'}`}>{m.stats.completed}</td>
+                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
+                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
+                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400' : 'text-cyan-400'}`}>{m.stats.watching}</td>
+                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400' : 'text-green-400'}`}>{m.stats.completed}</td>
                                                 </tr>
                                             )
                                         })}</tbody>
                                     </>
-                                ) : (
+                                ) : statMode === 'category' ? (
                                     <>
                                         <thead>
                                             <tr className="text-left text-white/30 border-b border-white/5">
@@ -935,7 +959,45 @@
                                                     <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)]" style={{ color: m.color }}>{m.name}</td>
                                                     {activeCategoriesInUse.map(c => {
                                                         const count = m.stats.cats[c] || 0;
-                                                        return <td key={c} className={`py-1.5 text-center ${count > 0 ? 'text-[#ffbae9]' : 'opacity-20'}`}>{count}</td>
+                                                        const isF = memberFilter?.name === m.name && memberFilter?.type === 'category' && memberFilter?.value === c;
+                                                        return (
+                                                            <td 
+                                                                key={c} 
+                                                                onClick={() => count > 0 && toggleMemberFilter(m.name, 'category', c)}
+                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-[#ffbae9] cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-[#ffbae9]/20 ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}
+                                                            >
+                                                                {count}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </>
+                                ) : (
+                                    <>
+                                        <thead>
+                                            <tr className="text-left text-white/30 border-b border-white/5">
+                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10">成員</th>
+                                                {activeSourcesInUse.map(s => <th key={s} className="pb-1 text-center px-2 min-w-[60px] truncate max-w-[100px]" title={s}>{s}</th>)}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {memberStats.map(m => (
+                                                <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)]" style={{ color: m.color }}>{m.name}</td>
+                                                    {activeSourcesInUse.map(s => {
+                                                        const count = m.stats.sources[s] || 0;
+                                                        const isF = memberFilter?.name === m.name && memberFilter?.type === 'source' && memberFilter?.value === s;
+                                                        return (
+                                                            <td 
+                                                                key={s} 
+                                                                onClick={() => count > 0 && toggleMemberFilter(m.name, 'source', s)}
+                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-cyan-400 cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-cyan-400/20 ring-1 ring-inset ring-cyan-400/50' : ''}`}
+                                                            >
+                                                                {count}
+                                                            </td>
+                                                        );
                                                     })}
                                                 </tr>
                                             ))}
@@ -953,7 +1015,7 @@
                             {memberFilter && (
                                 <div className="px-4 py-2 flex items-center">
                                     <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
-                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3 ml-1" />
+                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} {memberFilter.type === 'category' ? `(${memberFilter.value})` : memberFilter.type === 'source' ? `(${memberFilter.value})` : ''} <Icon name="x" className="w-3 h-3 ml-1" />
                                     </button>
                                 </div>
                             )}
