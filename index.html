@@ -40,9 +40,9 @@
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
         .meta strong { color: #ffbae9; margin-right: 0.3rem; }
-        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
         
-        /* 長條進度條優化 */
+        /* 長條進度條優化：顏色與非粗體 */
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
         .progress-fill { height: 100%; background: #c6b8ff; transition: width 0.5s ease; }
         .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 400; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
         
@@ -125,19 +125,17 @@
         };
 
         const calculateDualProgress = (cur, tot) => {
-            const c1 = parseFloat(cur?.v1) || 0, c2 = parseFloat(cur?.v2) || 0;
-            const t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
+            const c1 = parseFloat(cur?.v1) || 0;
+            const t1 = parseFloat(tot?.v1) || 0;
             if (t1 <= 0) return 0;
-            if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
-            if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
-            return 100;
+            // 這裡採用觀看量/更新量的比率
+            return Math.min(Math.floor((c1 / t1) * 100), 100);
         };
 
         const formatProgressText = (prog) => {
             if (!prog || typeof prog !== 'object') return prog || "0";
             let parts = [];
             if (prog.v1 && prog.v1 !== "") parts.push(`${prog.v1}${prog.u1 || ''}`);
-            if (prog.v2 && prog.v2 !== "") parts.push(`${prog.v2}${prog.u2 || ''}`);
             return parts.join(' ') || "0";
         };
 
@@ -207,8 +205,8 @@
             </svg>
         );
 
-        // 垂直排列的成員進度 UI 圈圈（復刻舊樣式）
-        const MemberCircularProgressItem = memo(({ percent, color, name }) => (
+        // 垂直排列的成員進度圈（舊版復刻樣式）
+        const MemberCircularItem = memo(({ percent, color, name }) => (
             <div className="update-progress-circle" style={{ borderColor: color }}>
                 <span style={{ color: color }}>{percent}%</span>
                 <div className="member-initial-badge" style={{ backgroundColor: color }}>{name ? name[0] : '?'}</div>
@@ -231,7 +229,7 @@
                 };
             });
 
-            // 長條進度：更新至 / 總集數
+            // 長條進度：更新至 / 總集數 (邏輯還原)
             const totalUpdatedPercentage = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
 
             return (
@@ -245,7 +243,7 @@
                     {/* 右上方垂直排列的成員進度圈 */}
                     <div className="member-progress-list">
                         {memberProgresses.map(mp => (
-                            <MemberCircularProgressItem key={mp.name} percent={mp.percent} color={mp.color} name={mp.name} />
+                            <MemberCircularItem key={mp.name} percent={mp.percent} color={mp.color} name={mp.name} />
                         ))}
                     </div>
 
@@ -267,11 +265,11 @@
                                 {(g.updateDay || g.updateTime) && <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">每周{g.updateDay ? `(${g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下午 ' + (g.updateTime.split(':')[0] % 12 || 12) : '上午 ' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}</span>}
                             </div>
                             <div className="mt-auto pt-1">
-                                {/* 水平同一行：左進度，右誰在看 */}
-                                <div className="flex justify-between items-center w-full gap-2 mb-1">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <strong className="text-[11px]">觀看進度:</strong>
-                                        <div className="flex items-center gap-1">
+                                {/* 修正：觀看進度與誰在看處於同一水平行 */}
+                                <div className="flex justify-between items-center w-full gap-2 mb-1.5">
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <strong className="text-[10px]">觀看進度:</strong>
+                                        <div className="flex items-center">
                                             {memberProgresses.map((mp, idx) => (
                                                 <React.Fragment key={mp.name}>
                                                     <span style={{ color: mp.color }} className="progress-val-current">{mp.watchedText}</span>
@@ -284,7 +282,7 @@
                                         <strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看:</strong>
                                         <div className="flex flex-wrap justify-end gap-1">
                                             {watchingByList.map(name => (
-                                                <span key={name} className="member-badge !text-[9px] !py-0.5" style={{ color: nameColorMap[name] || '#ffffff', backgroundColor: (nameColorMap[name] || '#ffffff') + '15', borderColor: (nameColorMap[name] || '#ffffff') + '30' }}>{name}</span>
+                                                <span key={name} style={{ color: nameColorMap[name] }} className="font-black text-[10px]">[{name}]</span>
                                             ))}
                                         </div>
                                     </div>
@@ -294,7 +292,7 @@
                                     <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
-                                {/* 長條進度條 */}
+                                {/* 長條進度條：更新至 / 總集數 */}
                                 <div className="progress-container">
                                     <div className="progress-fill" style={{ width: `${totalUpdatedPercentage}%` }}></div>
                                     <div className="progress-text-overlay">{totalUpdatedPercentage}%</div>
@@ -782,7 +780,6 @@
                                     <h3 className="text-xl md:text-2xl font-black italic mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
                                     <form onSubmit={handleSaveGame} className="space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                                            {/* 左側封面區域 */}
                                             <div className="md:col-span-4 space-y-4">
                                                 <div className="flex gap-3 items-end">
                                                     <div className="flex-shrink-0 mb-1">
@@ -830,7 +827,6 @@
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, [lastSelectedImgZone==='source'?'sourceIcon':'cover']: c})); } }} />
                                             </div>
 
-                                            {/* 右側詳細區域 */}
                                             <div className="md:col-span-8 space-y-5 border-l border-white/5 pl-8">
                                                 <div>
                                                     <label className="block text-[11px] font-black text-[#ffbae9]/60 uppercase mb-2">-名稱-</label>
