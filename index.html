@@ -884,7 +884,7 @@
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
 
-            // 按總數量降序排列分組標籤
+            // 按數量降序排列
             const activeCategoriesInUse = useMemo(() => {
                 const counts = {};
                 games.forEach(g => {
@@ -894,7 +894,6 @@
                 return Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
             }, [games]);
             
-            // 按總數量降序排列來源標籤
             const activeSourcesInUse = useMemo(() => {
                 const counts = {};
                 games.forEach(g => {
@@ -939,7 +938,7 @@
                             <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40 hover:text-white'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} title="切換統計模式" /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse min-w-[300px]">
                                 {statMode === 'progress' ? (
                                     <>
-                                        <thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center whitespace-nowrap">總計</th><th className="pb-1 text-center whitespace-nowrap">還未看</th><th className="pb-1 text-center text-cyan-400 whitespace-nowrap">觀看中</th><th className="pb-1 text-center text-green-400 whitespace-nowrap">已看完</th></tr></thead>
+                                        <thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center whitespace-nowrap">總計</th><th className="pb-1 text-center whitespace-nowrap px-2">還未看</th><th className="pb-1 text-center text-cyan-400 whitespace-nowrap px-2">觀看中</th><th className="pb-1 text-center text-green-400 whitespace-nowrap px-2">已看完</th></tr></thead>
                                         <tbody>{memberStats.map(m => {
                                             const isF = (val) => memberFilter?.name === m.name && memberFilter?.type === 'progress' && memberFilter?.value === val;
                                             return (
@@ -957,14 +956,14 @@
                                     <>
                                         <thead>
                                             <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap">成員</th>
+                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap pr-4">成員</th>
                                                 {activeCategoriesInUse.map(c => <th key={c} className="pb-1 text-center px-2 min-w-[80px] whitespace-nowrap">{c}</th>)}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {memberStats.map(m => (
                                                 <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
+                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap pr-4" style={{ color: m.color }}>{m.name}</td>
                                                     {activeCategoriesInUse.map(c => {
                                                         const count = m.stats.cats[c] || 0;
                                                         const isF = memberFilter?.name === m.name && memberFilter?.type === 'category' && memberFilter?.value === c;
@@ -972,7 +971,7 @@
                                                             <td 
                                                                 key={c} 
                                                                 onClick={() => count > 0 && toggleMemberFilter(m.name, 'category', c)}
-                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-[#ffbae9] cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-[#ffbae9]/20 ring-1 ring-inset ring-[#ffbae9]/50' : ''} whitespace-nowrap`}
+                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-[#ffbae9] cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-[#ffbae9]/20 ring-1 ring-inset ring-[#ffbae9]/50' : ''} whitespace-nowrap px-4`}
                                                             >
                                                                 {count}
                                                             </td>
@@ -986,14 +985,14 @@
                                     <>
                                         <thead>
                                             <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap">成員</th>
+                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap pr-4">成員</th>
                                                 {activeSourcesInUse.map(s => <th key={s} className="pb-1 text-center px-2 min-w-[80px] whitespace-nowrap" title={s}>{s}</th>)}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {memberStats.map(m => (
                                                 <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
+                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap pr-4" style={{ color: m.color }}>{m.name}</td>
                                                     {activeSourcesInUse.map(s => {
                                                         const count = m.stats.sources[s] || 0;
                                                         const isF = memberFilter?.name === m.name && memberFilter?.type === 'source' && memberFilter?.value === s;
@@ -1001,7 +1000,7 @@
                                                             <td 
                                                                 key={s} 
                                                                 onClick={() => count > 0 && toggleMemberFilter(m.name, 'source', s)}
-                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-cyan-400 cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-cyan-400/20 ring-1 ring-inset ring-cyan-400/50' : ''} whitespace-nowrap`}
+                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-cyan-400 cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-cyan-400/20 ring-1 ring-inset ring-cyan-400/50' : ''} whitespace-nowrap px-4`}
                                                             >
                                                                 {count}
                                                             </td>
@@ -1184,6 +1183,7 @@
                                                     <AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} />
                                                 </div>
                                                 
+                                                {/* 備註移到名稱下方 */}
                                                 <div>
                                                     <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
                                                     <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
@@ -1277,9 +1277,10 @@
                         </div>
                     )}
 
+                    {/* 重複名稱警告彈窗 */}
                     {showDuplicateConfirm && (
                         <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <h4 className="text-red-500 font-black mb-2 uppercase text-lg tracking-widest">發現同名項目</h4>
                                 <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">
