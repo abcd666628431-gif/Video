@@ -185,31 +185,18 @@
             });
         };
 
-        /**
-         * 強度清理數據與遞迴控制 (Robust Sanitization with Depth Control)
-         * 修復：FirebaseError: paths must have at most 20 elements
-         * 原因：遞迴進入了 Firestore 內部物件（FieldValue 等），導致嵌套層級異常。
-         */
         const sanitizePayload = (obj, depth = 0) => {
-            // 限制遞迴深度，Firestore 一般不需要超過 10 層的嵌套資料
             if (depth > 12) return null;
             if (obj === null || obj === undefined) return "";
-            
-            // 關鍵修復：如果是 Firestore 內部的特殊物件（如 serverTimestamp 產生的對象），直接返回，不要遞迴！
-            // 我們檢查是否有私有屬性或特定構造函數來識別 FieldValue
             if (obj && typeof obj === 'object') {
                 if (obj.hasOwnProperty('_methodName') || (obj.constructor && obj.constructor.name === 'FieldValueImpl')) {
                     return obj;
                 }
-                // 保留日期物件
                 if (obj instanceof Date) return obj;
             }
-
             if (Array.isArray(obj)) {
                 return obj.map(v => sanitizePayload(v, depth + 1));
             }
-
-            // 僅對「純物件」(Plain Object) 進行遞迴清理
             if (typeof obj === 'object' && obj.constructor === Object) {
                 const cleaned = {};
                 Object.keys(obj).forEach(key => {
@@ -217,7 +204,6 @@
                 });
                 return cleaned;
             }
-            
             return obj;
         };
 
@@ -510,14 +496,14 @@
 
             const recentStatuses = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
 
             const recentCategories = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.category && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
@@ -534,6 +520,48 @@
             }, [user]);
 
             useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
+
+            // --- 修復：處理貼上圖片與連結邏輯 ---
+            useEffect(() => {
+                const handlePaste = async (e) => {
+                    if (!isModalOpen) return;
+                    
+                    // 1. 處理檔案 (直接貼上圖片二進位)
+                    const items = e.clipboardData?.items;
+                    if (items) {
+                        for (const item of items) {
+                            if (item.type.indexOf("image") !== -1) {
+                                const file = item.getAsFile();
+                                const reader = new FileReader();
+                                reader.onload = async (event) => {
+                                    const isCover = lastSelectedImgZone === 'cover';
+                                    const compressed = await compressImage(event.target.result, isCover ? 800 : 100);
+                                    setFormData(prev => ({ 
+                                        ...prev, 
+                                        [isCover ? 'cover' : 'sourceIcon']: compressed 
+                                    }));
+                                    showNotify(isCover ? "封面已貼上" : "來源圖標已貼上");
+                                };
+                                reader.readAsDataURL(file);
+                                return; // 優先處理檔案，處理完即返回
+                            }
+                        }
+                    }
+
+                    // 2. 處理文字 (貼上圖片連結 URL)
+                    const textData = e.clipboardData.getData('text/plain');
+                    if (textData && (textData.startsWith('http') || textData.startsWith('data:image'))) {
+                        const isCover = lastSelectedImgZone === 'cover';
+                        setFormData(prev => ({ 
+                            ...prev, 
+                            [isCover ? 'cover' : 'sourceIcon']: textData 
+                        }));
+                        showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
+                    }
+                };
+                window.addEventListener('paste', handlePaste);
+                return () => window.removeEventListener('paste', handlePaste);
+            }, [isModalOpen, lastSelectedImgZone]);
 
             const logActivity = useCallback(async (action, gameName, gameOrder) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) {} }, [user, userName]);
             
@@ -593,7 +621,6 @@
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
 
-                    // --- 精確構建資料 (完全排除 ID 與 sourceIcon) ---
                     const rawPayload = {
                         name: formData.name || "",
                         notes: formData.notes || "",
@@ -613,10 +640,9 @@
                         watchingBy: formData.watchingBy || [],
                         updateDay: formData.updateDay || "",
                         updateTime: formData.updateTime || "",
-                        updatedAt: serverTimestamp() // 保留伺服器時間戳
+                        updatedAt: serverTimestamp() 
                     };
 
-                    // 使用修復後的強化版清理工具處理資料 (會自動識別並跳過 serverTimestamp 產生的特殊對象)
                     const finalData = sanitizePayload(rawPayload);
 
                     if(editingId) { 
@@ -739,7 +765,7 @@
                         return true;
                     });
                 }
-                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
