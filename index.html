@@ -185,6 +185,42 @@
             });
         };
 
+        /**
+         * 強度清理數據與遞迴控制 (Robust Sanitization with Depth Control)
+         * 修復：FirebaseError: paths must have at most 20 elements
+         * 原因：遞迴進入了 Firestore 內部物件（FieldValue 等），導致嵌套層級異常。
+         */
+        const sanitizePayload = (obj, depth = 0) => {
+            // 限制遞迴深度，Firestore 一般不需要超過 10 層的嵌套資料
+            if (depth > 12) return null;
+            if (obj === null || obj === undefined) return "";
+            
+            // 關鍵修復：如果是 Firestore 內部的特殊物件（如 serverTimestamp 產生的對象），直接返回，不要遞迴！
+            // 我們檢查是否有私有屬性或特定構造函數來識別 FieldValue
+            if (obj && typeof obj === 'object') {
+                if (obj.hasOwnProperty('_methodName') || (obj.constructor && obj.constructor.name === 'FieldValueImpl')) {
+                    return obj;
+                }
+                // 保留日期物件
+                if (obj instanceof Date) return obj;
+            }
+
+            if (Array.isArray(obj)) {
+                return obj.map(v => sanitizePayload(v, depth + 1));
+            }
+
+            // 僅對「純物件」(Plain Object) 進行遞迴清理
+            if (typeof obj === 'object' && obj.constructor === Object) {
+                const cleaned = {};
+                Object.keys(obj).forEach(key => {
+                    cleaned[key] = sanitizePayload(obj[key], depth + 1);
+                });
+                return cleaned;
+            }
+            
+            return obj;
+        };
+
         // --- Components ---
         const Icon = memo(({ name, className, onClick, title }) => {
             return (
@@ -539,29 +575,67 @@
             }, []);
 
             const proceedSave = async () => {
-                setShowDuplicateConfirm(false); try {
+                setShowDuplicateConfirm(false); 
+                try {
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
                     if(formData.order === "") while(orders.includes(to)) to++;
+                    
                     if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
                         let chain = [], check = to; while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
                         chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
+
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
                         if(idx === -1) sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-                    const { id: dummyId, sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
-                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", formData.name, to); }
-                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", formData.name, to); }
-                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { showNotify("操作失敗"); }
+
+                    // --- 精確構建資料 (完全排除 ID 與 sourceIcon) ---
+                    const rawPayload = {
+                        name: formData.name || "",
+                        notes: formData.notes || "",
+                        addedBy: String(formData.addedBy || userName || "系統"),
+                        year: formData.year || "",
+                        order: to,
+                        url: formData.url || "",
+                        cover: formData.cover || null,
+                        totalEpisodes: formData.totalEpisodes || { ...emptyProgress },
+                        updatedEpisodes: formData.updatedEpisodes || { ...emptyProgress },
+                        paidProgress: formData.paidProgress || { ...emptyProgress },
+                        watchedProgress: formData.watchedProgress || {},
+                        airingStatus: formData.airingStatus || "連載中",
+                        source: formData.source.trim() || "未知來源",
+                        category: formData.category || "未分類",
+                        manualUpdatedAt: formData.manualUpdatedAt || "",
+                        watchingBy: formData.watchingBy || [],
+                        updateDay: formData.updateDay || "",
+                        updateTime: formData.updateTime || "",
+                        updatedAt: serverTimestamp() // 保留伺服器時間戳
+                    };
+
+                    // 使用修復後的強化版清理工具處理資料 (會自動識別並跳過 serverTimestamp 產生的特殊對象)
+                    const finalData = sanitizePayload(rawPayload);
+
+                    if(editingId) { 
+                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
+                        logActivity("修改", finalData.name, to); 
+                    } else { 
+                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
+                        logActivity("錄入", finalData.name, to); 
+                    }
+                    
+                    showNotify("資料已儲存"); 
+                    setIsModalOpen(false); 
+                    setEditingId(null);
+                } catch(e) { 
+                    console.error("Save error detail:", e);
+                    showNotify(`操作失敗：數據層級錯誤 (${e.message})`); 
+                }
             };
 
-            // --- 新增：批量修復數據工具 ---
             const handleRepairData = async () => {
                 if(!user) return;
                 showNotify("正在啟動修復程序...");
@@ -572,7 +646,6 @@
                         const data = d.data();
                         const watchers = Array.isArray(data.watchingBy) ? data.watchingBy : (data.watchingBy ? [data.watchingBy] : []);
                         
-                        // 標準化進度結構
                         let normalizedWp = {};
                         let wp = data.watchedProgress || {};
                         if (wp.v1 !== undefined) {
@@ -583,12 +656,12 @@
                             });
                         }
 
-                        const updateObj = {
+                        const updateObj = sanitizePayload({
                             totalEpisodes: ensureP(data.totalEpisodes),
                             updatedEpisodes: ensureP(data.updatedEpisodes),
                             paidProgress: ensureP(data.paidProgress),
                             watchedProgress: normalizedWp
-                        };
+                        });
 
                         await updateDoc(d.ref, updateObj);
                         count++;
@@ -638,7 +711,7 @@
             
             const handleImportData = async (e) => {
                 const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), {...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()}); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
+                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()})); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
                 r.readAsText(f);
             };
 
