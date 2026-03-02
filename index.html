@@ -49,7 +49,8 @@
         .badge-completed { background-color: #dc2626; color: #fff; }
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-        .update-progress-circle { position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .circle-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
+        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
@@ -63,7 +64,6 @@
         .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
         .progress-stat { display: flex; align-items: baseline; gap: 2px; }
         .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
-        .source-input-group { display: flex; gap: 0.75rem; align-items: flex-start; }
         .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
@@ -155,10 +155,10 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
-        const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-        const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
         const tsNormalize = (str) => {
             if (!str) return "";
+            const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -186,6 +186,12 @@
         };
 
         // --- Components ---
+        const Icon = memo(({ name, className, onClick, title }) => {
+            return (
+                <span key={name} onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
+            );
+        });
+
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
@@ -254,12 +260,6 @@
             );
         });
 
-        const Icon = memo(({ name, className, onClick, title }) => {
-            return (
-                <span onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
-            );
-        });
-
         const TitleIcon = () => (
             <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
@@ -277,11 +277,16 @@
 
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
-            const percentage = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-            const updatePercentage = calculateDualProgress(g.watchedProgress, g.updatedEpisodes);
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             const sourceInfo = allSources.find(s => s.name === g.source);
-            
+
+            const getMemberProgress = (name) => {
+                const wp = g.watchedProgress;
+                if (!wp) return { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
+                if (wp.v1 !== undefined) { return watchingByList[0] === name ? wp : { v1: '0', u1: '集', v2: '0', u2: '分鐘' }; }
+                return wp[name] || { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
+            };
+
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -290,7 +295,18 @@
                         {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
                     </div> 
                     <div className="desc">
-                        <div className="update-progress-circle"><span>{updatePercentage}%</span></div>
+                        <div className="circle-progress-stack">
+                            {watchingByList.map(name => {
+                                const prog = getMemberProgress(name);
+                                const pct = calculateDualProgress(prog, g.totalEpisodes);
+                                const color = nameColorMap[name] || '#ffbae9';
+                                return (
+                                    <div key={name} className="update-progress-circle" style={{ borderColor: color }} title={`${name}: ${pct}%`}>
+                                        <span style={{ color: color }}>{pct}%</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                         <div className="title-container">
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
                                 <span className="id-label">#{g.order || 0}</span>{g.name}
@@ -309,14 +325,38 @@
                             </div>
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">觀看進度：</strong><div className="progress-stat"><span className="progress-val-current">{formatProgressText(g.watchedProgress) || '0'}</span></div></div>
-                                    {watchingByList.length > 0 && <div className="flex flex-wrap items-center justify-end gap-1 flex-1"><strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>}
+                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                        <strong className="text-[11px]">觀看進度：</strong>
+                                        <div className="flex items-baseline gap-1 text-[11px] font-black">
+                                            {watchingByList.map((name, idx) => (
+                                                <span key={name}>
+                                                    <span style={{ color: nameColorMap[name] || '#fff' }}>{formatProgressText(getMemberProgress(name))}</span>
+                                                    {idx < watchingByList.length - 1 && <span className="mx-1 opacity-30">/</span>}
+                                                </span>
+                                            ))}
+                                            {watchingByList.length === 0 && <span className="opacity-40">--</span>}
+                                        </div>
+                                    </div>
+                                    {watchingByList.length > 0 && (
+                                        <div className="flex flex-wrap items-center justify-end gap-1 flex-1">
+                                            <strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong>
+                                            <div className="flex flex-wrap justify-end gap-1">
+                                                {watchingByList.map(name => {
+                                                    const c = nameColorMap?.[name] || '#ffffff';
+                                                    return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>;
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
                                     <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
-                                <div className="progress-container"><div className="progress-fill" style={{ width: `${percentage}%` }}></div><div className="progress-text-overlay">{percentage}%</div></div>
+                                <div className="progress-container">
+                                    <div className="progress-fill" style={{ width: `${watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes) : 0}%` }}></div>
+                                    <div className="progress-text-overlay">{watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes) : 0}%</div>
+                                </div>
                             </div>
                         </div>
                         {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
@@ -325,90 +365,48 @@
             );
         });
 
-        const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, containerClass }) => {
+        const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, labelStyle, containerClass }) => {
             const [isExpanded, setIsExpanded] = useState(!!value.v2);
             const [activeDropdown, setActiveDropdown] = useState(null); 
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
-            
             const getDynamicWidth = (val, isNumber = false) => {
                 const str = val ? val.toString() : "";
-                const len = str.length;
-                if (isNumber) {
-                    return "56px"; 
-                }
-                return Math.max(32, len * 13 + 12) + 'px';
+                if (isNumber) return "56px"; 
+                return Math.max(32, str.length * 13 + 12) + 'px';
             };
-
             const dropdownRef = useRef(null);
             useEffect(() => {
-                const handleClickOutside = (e) => {
-                    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setActiveDropdown(null);
-                };
+                const handleClickOutside = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setActiveDropdown(null); };
                 document.addEventListener("mousedown", handleClickOutside);
                 return () => document.removeEventListener("mousedown", handleClickOutside);
             }, []);
-            
             return (
                 <div className={`w-full ${containerClass || ''}`}>
-                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`}>-{label}-</label>
+                    <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={labelStyle}>-{label}-</label>
                     <div className="progress-input-row">
-                        <input 
-                            type="number" 
-                            className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
-                            style={{ width: getDynamicWidth(value.v1, true) }}
-                            value={value.v1} 
-                            onChange={e=>handleChange('v1', e.target.value)} 
-                        />
-                        
+                        <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v1, true) }} value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
-                            <input 
-                                className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                style={{ width: getDynamicWidth(value.u1) }}
-                                value={value.u1} 
-                                onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }}
-                                onChange={e=>handleChange('u1', e.target.value)} 
-                            />
+                            <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u1) }} value={value.u1} onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }} onChange={e=>handleChange('u1', e.target.value)} />
                             {activeDropdown === 'u1' && (
                                 <div className="custom-unit-dropdown custom-scrollbar">
-                                    {unitSuggestions.map(u => (
-                                        <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>
-                                    ))}
+                                    {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>)}
                                 </div>
                             )}
                         </div>
-                        
                         {isExpanded ? (
                             <>
-                                <input 
-                                    type="number" 
-                                    className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
-                                    style={{ width: getDynamicWidth(value.v2, true) }}
-                                    value={value.v2} 
-                                    onChange={e=>handleChange('v2', e.target.value)} 
-                                />
+                                <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v2, true) }} value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
-                                    <input 
-                                        className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                        style={{ width: getDynamicWidth(value.u2) }}
-                                        value={value.u2} 
-                                        onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }}
-                                        onChange={e=>handleChange('u2', e.target.value)} 
-                                    />
+                                    <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u2) }} value={value.u2} onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }} onChange={e=>handleChange('u2', e.target.value)} />
                                     {activeDropdown === 'u2' && (
                                         <div className="custom-unit-dropdown custom-scrollbar">
-                                            {unitSuggestions.map(u => (
-                                                <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>
-                                            ))}
+                                            {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>)}
                                         </div>
                                     )}
                                 </div>
                             </>
                         ) : (
-                            <div className="flex justify-center ml-1">
-                                <div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={() => setIsExpanded(true)}>
-                                    <Icon name="plus" className="w-4 h-4" />
-                                </div>
-                            </div>
+                            <div className="flex justify-center ml-1"><div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={() => setIsExpanded(true)}><Icon name="plus" className="w-4 h-4" /></div></div>
                         )}
                     </div>
                 </div>
@@ -417,45 +415,24 @@
 
         const AutoResizeTextarea = ({ value, onChange, className, isError }) => {
             const textareaRef = useRef(null);
-            const adjustHeight = () => {
-                const textarea = textareaRef.current;
-                if (textarea) {
-                    textarea.style.height = "auto";
-                    textarea.style.height = textarea.scrollHeight + "px";
-                }
-            };
+            const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
             useEffect(() => { adjustHeight(); }, [value]);
-            return (
-                <textarea
-                    ref={textareaRef}
-                    rows="1"
-                    className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    required
-                />
-            );
+            return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} required />;
         };
 
         const TimeSelector = memo(({ value, onChange }) => {
-            if (!value) return (
-                <div onClick={() => onChange("18:00")} className="plus-toggle-btn">
-                    <Icon name="plus" className="w-4 h-4" />
-                </div>
-            );
-            const parts = value.split(':'), h = parseInt(parts[0]) || 0, m = parseInt(parts[1]) || 0;
-            const period = h >= 12 ? '下午' : '上午', displayH = h % 12 || 12;
+            if (!value) return <div onClick={() => onChange("18:00")} className="plus-toggle-btn"><Icon name="plus" className="w-4 h-4" /></div>;
+            const h = parseInt(value.split(':')[0]) || 0, m = parseInt(value.split(':')[1]) || 0;
             const updateTime = (nP, nH, nM) => {
                 let fH = parseInt(nH);
-                if (nP === '下午' && fH !== 12) fH += 12;
-                if (nP === '上午' && fH === 12) fH = 0;
+                if (nP === '下午' && fH !== 12) fH += 12; else if (nP === '上午' && fH === 12) fH = 0;
                 onChange(`${String(fH).padStart(2, '0')}:${String(nM).padStart(2, '0')}`);
             };
             return (
                 <div className="flex gap-1.5 w-full max-w-[144px]">
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={period} onChange={(e) => updateTime(e.target.value, displayH, m)}><option value="上午">上午</option><option value="下午">下午</option></select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={displayH} onChange={(e) => updateTime(period, e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
-                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={m} onChange={(e) => updateTime(period, displayH, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={h >= 12 ? '下午' : '上午'} onChange={(e) => updateTime(e.target.value, h % 12 || 12, m)}><option value="上午">上午</option><option value="下午">下午</option></select>
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={h % 12 || 12} onChange={(e) => updateTime(h >= 12 ? '下午' : '上午', e.target.value, m)}>{Array.from({ length: 12 }, (_, i) => i + 1).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
+                    <select className="modal-input-base flex-1 text-[11px] font-black px-1.5" value={m} onChange={(e) => updateTime(h >= 12 ? '下午' : '上午', h % 12 || 12, e.target.value)}>{Array.from({ length: 60 }, (_, i) => i).map(v => <option key={v} value={v}>{String(v).padStart(2, '0')}</option>)}</select>
                     <button type="button" onClick={() => onChange("")} className="w-6 flex items-center justify-center text-red-400/50 hover:text-red-400 transition-colors"><Icon name="trash-2" className="w-3.5 h-3.5" /></button>
                 </div>
             );
@@ -467,44 +444,25 @@
             const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
-            const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null);
-            const [showTimeSettings, setShowTimeSettings] = useState(false);
-            const [showManualUpdateInput, setShowManualUpdateInput] = useState(false);
-            const [statMode, setStatMode] = useState('progress'); // 'progress' | 'category' | 'source'
-            const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
-            
+            const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null), [showTimeSettings, setShowTimeSettings] = useState(false), [showManualUpdateInput, setShowManualUpdateInput] = useState(false), [statMode, setStatMode] = useState('progress'), [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
-            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null);
-            const [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null);
-            const [memberFilter, setMemberFilter] = useState(null);
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' });
+            const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-            
+            const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
+            const displayMembers = ["糖糖", "雲雲"];
+
             const unitSuggestions = useMemo(() => { 
                 const r = new Set(['集', '話', '章', '季', '卷', '冊', '分鐘']); 
                 games.forEach(g => { 
-                    ['totalEpisodes', 'watchedProgress', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
-                        const p = g[k]; 
-                        if (p && typeof p === 'object') {
-                            if (p.u1 && typeof p.u1 === 'string' && p.u1.trim()) r.add(p.u1.trim()); 
-                            if (p.u2 && typeof p.u2 === 'string' && p.u2.trim()) r.add(p.u2.trim()); 
-                        }
-                    }); 
+                    ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
+                        const p = g[k]; if (p?.u1) r.add(p.u1.trim()); if (p?.u2) r.add(p.u2.trim()); 
+                    });
+                    if (g.watchedProgress) { Object.values(g.watchedProgress).forEach(p => { if (p?.u1) r.add(p.u1.trim()); if (p?.u2) r.add(p.u2.trim()); }); }
                 }); 
                 return Array.from(r).sort(); 
             }, [games]);
-            
-            const nameColorMap = useMemo(() => { 
-                const m = {};
-                userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; });
-                onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; });
-                m[userName] = userColor;
-                m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff";
-                return m; 
-            }, [onlineUsers, userProfiles, userName, userColor]);
-
-            const displayMembers = ["糖糖", "雲雲"];
 
             const isNameDuplicate = useMemo(() => {
                 const currentName = formData.name.trim();
@@ -513,213 +471,57 @@
             }, [formData.name, games, editingId]);
 
             const recentStatuses = useMemo(() => {
-                const seen = new Set();
-                const result = [];
-                const sortedGames = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-                for(const g of sortedGames) {
-                    if(g.airingStatus && !seen.has(g.airingStatus)) {
-                        seen.add(g.airingStatus);
-                        result.push(g.airingStatus);
-                    }
-                    if(result.length >= 3) break;
-                }
+                const seen = new Set(); const result = [];
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
 
             const recentCategories = useMemo(() => {
-                const seen = new Set();
-                const result = [];
-                const sortedGames = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-                for(const g of sortedGames) {
-                    if(g.category && !seen.has(g.category)) {
-                        seen.add(g.category);
-                        result.push(g.category);
-                    }
-                    if(result.length >= 3) break;
-                }
+                const seen = new Set(); const result = [];
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                for(const g of sorted) { if(g.category && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
 
-            const handlePaste = useCallback(async (e) => {
-                if (!isModalOpen) return;
-                
-                const textData = (e.clipboardData || window.clipboardData).getData('text');
-                if (textData && (textData.trim().startsWith('http') || textData.trim().startsWith('data:image'))) {
-                    const trimmedUrl = textData.trim();
-                    if (lastSelectedImgZone === 'cover') { 
-                        setFormData(p => ({ ...p, cover: trimmedUrl })); 
-                        showNotify("已貼上封面連結"); 
-                    } else if (lastSelectedImgZone === 'source') { 
-                        setFormData(p => ({ ...p, sourceIcon: trimmedUrl })); 
-                        showNotify("已貼上來源連結"); 
-                    }
-                    return; 
-                }
-
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf("image") !== -1) {
-                        const blob = items[i].getAsFile(); const url = URL.createObjectURL(blob);
-                        if (lastSelectedImgZone === 'source') { 
-                            const c = await compressImage(url, 100); 
-                            setFormData(p => ({ ...p, sourceIcon: c })); 
-                            showNotify("來源圖標已貼上"); 
-                        } else { 
-                            setRawImageData(url); 
-                            const c = await compressImage(url, 1000); 
-                            setFormData(p => ({ ...p, cover: c }));
-                            showNotify("封面已縮放貼上"); 
-                        }
-                        break;
-                    }
-                }
-            }, [isModalOpen, lastSelectedImgZone, showNotify]);
-
-            useEffect(() => { window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste); }, [handlePaste]);
             useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
-            
             useEffect(() => {
                 if (!user) return;
-                setIsLoadingGames(true); setIsLoadingLogs(true);
-                const fetchMyProfile = async () => {
-                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid));
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        if (data.name) setUserName(data.name);
-                        if (data.color) setUserColor(data.color);
-                    }
-                };
-                fetchMyProfile();
-                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (err) => console.error(err));
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
-                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() }));
-                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    setActivityLogs(logs.slice(0, 30)); 
-                    setIsLoadingLogs(false); 
-                }, (err) => console.error(err));
-                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } else setDoc(doc(getPublicCol('settings'), 'config'), { categories: ["最新入庫", "編號排序"], sources: [] }); }, (err) => console.error(err));
-                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); }, (err) => console.error(err));
+                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); });
+                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); setActivityLogs(logs.slice(0, 30)); setIsLoadingLogs(false); });
+                const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { if(d.exists()) { setCustomCategories(d.data().categories || ["最新入庫", "編號排序"]); setCustomSources(d.data().sources || []); } });
+                const up = onSnapshot(getPublicCol('presence'), (s) => { const now = Date.now(); setOnlineUsers(s.docs.map(d => d.data()).filter(u => u.lastSeen && (now - u.lastSeen.toMillis() < 300000))); });
                 const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
-                const updP = () => { 
-                    if(auth.currentUser) {
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor, lastSeen: serverTimestamp() }, { merge: true });
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', auth.currentUser.uid), { uid: auth.currentUser.uid, name: userName, color: userColor }, { merge: true });
-                    }
-                };
-                updP(); 
-                const inv = setInterval(updP, 120000); 
-                return () => { ug(); ul(); us(); up(); upro(); clearInterval(inv); };
-            }, [user, userName, userColor]);
+                return () => { ug(); ul(); us(); up(); upro(); };
+            }, [user]);
 
-            useEffect(() => {
-                if (window.lucide) {
-                    const tid = setTimeout(() => window.lucide.createIcons(), 32);
-                    return () => clearTimeout(tid);
-                }
-            }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, showTimeSettings, showManualUpdateInput, statMode]);
+            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
 
-            const logActivity = useCallback(async (action, gameName, gameOrder) => { 
-                if(!user) return; 
-                try { 
-                    await addDoc(getPublicCol('activity_logs'), { 
-                        userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() 
-                    }); 
-                } catch(e) {} 
-            }, [user, userName]);
-
-            const handleAddGroup = async () => { const n = newGroupName.trim(); if(!n || !user || customCategories.includes(n)) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: [...customCategories, n] }, { merge: true }); setNewGroupName(''); setIsAddGroupModalOpen(false); showNotify("分組已新增"); };
-            const handleDeleteGroup = async () => { if(!user || !activeTab) return; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: customCategories.filter(c => c !== activeTab) }, { merge: true }); setActiveTab(null); showNotify("分組已刪除"); };
+            const logActivity = useCallback(async (action, gameName, gameOrder) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) {} }, [user, userName]);
             
-            const handleRenameGroup = async () => {
-                if(!user || !activeTab || activeTab === "最新入庫" || activeTab === "編號排序") return;
-                const oldName = activeTab;
-                const newName = prompt("請輸入分類的新名稱：", oldName);
-                if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
-                
-                const trimmedNewName = newName.trim();
-                const updatedCategories = customCategories.map(c => c === oldName ? trimmedNewName : c);
-                
-                showNotify(`正在同步更新分類資料...`);
-                try {
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updatedCategories }, { merge: true });
-                    const affectedGames = games.filter(g => g.category === oldName);
-                    await Promise.all(affectedGames.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: trimmedNewName })));
-                    setActiveTab(trimmedNewName);
-                    showNotify("分類名稱已更新");
-                } catch (e) {
-                    showNotify("更新失敗");
-                }
-            };
-
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); if(formData.source === sn) setFormData(p => ({ ...p, source: '', sourceIcon: '' })); showNotify("來源已移除"); };
-            
-            const handleRenameSource = async (sn) => {
-                if(!user || !sn) return;
-                const newName = prompt("請輸入來源的新名稱：", sn);
-                if (!newName || newName.trim() === "" || newName.trim() === sn) return;
-                
-                const trimmedNewName = newName.trim();
-                const updatedSources = customSources.map(s => s.name === sn ? { ...s, name: trimmedNewName } : s);
-                
-                showNotify(`正在同步更新來源資料...`);
-                try {
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { sources: updatedSources }, { merge: true });
-                    const affectedGames = games.filter(g => g.source === sn);
-                    await Promise.all(affectedGames.map(g => updateDoc(doc(getPublicCol('games'), g.id), { source: trimmedNewName })));
-                    if (formData.source === sn) setFormData(p => ({ ...p, source: trimmedNewName }));
-                    showNotify("來源名稱已更新");
-                } catch (e) {
-                    showNotify("更新失敗");
-                }
-            };
-
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: { ...emptyProgress }, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
-                setShowTimeSettings(false);
-                setShowManualUpdateInput(false);
-                setIsModalOpen(true); 
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: '', updateTime: '' }); 
+                setShowTimeSettings(false); setShowManualUpdateInput(false); setIsModalOpen(true); 
             }, [userName, games.length]);
 
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
                 const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
-                const sObj = customSources.find(s => s.name === item.source);
-                setFormData({ 
-                    ...item, sourceIcon: sObj ? sObj.icon : '',
-                    totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: ensureP(item.watchedProgress), 
-                    updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress),
-                    notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', 
-                    watchingBy: Array.isArray(item.watchingBy) ? item.watchingBy : [] 
-                }); 
-                setShowTimeSettings(!!(item.updateDay || item.updateTime));
-                setShowManualUpdateInput(!!item.manualUpdatedAt);
-                setIsModalOpen(true); 
-            }, [customSources]);
-
-            const handleSaveGame = async (e) => {
-                if(e) e.preventDefault(); 
-                const cn = formData.name.trim(); 
-                if(!cn || !user) return;
-                
-                if (isNameDuplicate && !showDuplicateConfirm) {
-                    setShowDuplicateConfirm(true);
-                    return;
-                }
-
-                proceedSave();
-            };
+                const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
+                let wp = item.watchedProgress || {};
+                if (wp.v1 !== undefined) { wp = { [watchers[0] || 'Unknown']: wp }; }
+                setFormData({ ...item, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: wp, updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers }); 
+                setShowTimeSettings(!!(item.updateDay || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
+            }, []);
 
             const proceedSave = async () => {
-                setShowDuplicateConfirm(false);
-                const cn = formData.name.trim();
-                try {
+                setShowDuplicateConfirm(false); try {
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
                     if(formData.order === "") while(orders.includes(to)) to++;
                     if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
-                        showNotify("編號衝突，正在智慧順延..."); let chain = [], check = to;
-                        while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
+                        let chain = [], check = to; while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
                         chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
                     if(formData.source.trim()) { 
@@ -729,138 +531,12 @@
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
                     const { sourceIcon, ...cleanData } = formData;
-                    const finalData = { ...cleanData, name: cn, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
-                    if(editingId) { 
-                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
-                        logActivity("修改", cn, to);
-                    } else { 
-                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
-                        logActivity("錄入", cn, to);
-                    }
+                    const finalData = { ...cleanData, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
+                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", formData.name, to); }
+                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", formData.name, to); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { console.error(e); showNotify("操作失敗"); }
+                } catch(e) { showNotify("操作失敗"); }
             };
-
-            const handleDeleteTarget = useCallback((item) => setDeleteGameTarget(item), []);
-            
-            const handleDeleteGame = async (id) => { 
-                if(!user) return;
-                setDeleteGameTarget(null);
-                try {
-                    const g = games.find(x => x.id === id); 
-                    const order = g?.order;
-                    await deleteDoc(doc(getPublicCol('games'), id)); 
-                    logActivity("刪除", g?.name || "未知", order);
-                    showNotify("已刪除"); 
-                } catch (e) {
-                    showNotify("刪除失敗");
-                }
-            };
-
-            const handleClearAllData = async () => { 
-                if(!user) return; setShowClearConfirm(false); 
-                try { 
-                    showNotify("正在啟動深度清空程序...");
-                    const querySnapshot = await getDocs(getPublicCol('games'));
-                    const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(doc(getPublicCol('games'), docSnap.id)));
-                    await Promise.all(deletePromises);
-                    showNotify("數據已徹底抹除"); logActivity("清空全庫", "全部內容", "ALL");
-                } catch(e) { console.error(e); showNotify("清空程序異常"); } 
-            };
-
-            const handleExportData = () => { 
-                const sortedGames = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                const blob = new Blob([JSON.stringify({ version: "11.6", games: sortedGames, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
-                const a = document.createElement('a'); 
-                a.href = URL.createObjectURL(blob); 
-                a.download = `backup_${Date.now()}.json`; 
-                a.click(); 
-            };
-            
-            const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { 
-                    try { 
-                        const d = JSON.parse(ev.target.result); showNotify("正在修復導入..."); 
-                        if(d.games) {
-                            for(const g of d.games) {
-                                const { id, ...gameData } = g;
-                                const targetDoc = id ? doc(getPublicCol('games'), id) : doc(getPublicCol('games'));
-                                await setDoc(targetDoc, { ...gameData, updatedAt: serverTimestamp(), createdAt: gameData.createdAt || serverTimestamp() }, { merge: true });
-                            }
-                        }
-                        if(d.categories || d.sources) await setDoc(doc(getPublicCol('settings'), 'config'), { categories: d.categories || customCategories, sources: d.sources || customSources }, { merge: true }); 
-                        showNotify("導入成功"); 
-                    } catch(e) { showNotify("導入失敗"); } 
-                }; 
-                r.readAsText(f);
-            };
-
-            const handleReorderIDs = async () => {
-                if (!user || games.length === 0) return;
-                try {
-                    showNotify("正在強制校正編號系統...");
-                    const sorted = [...games].sort((a, b) => {
-                        const oa = extractFirstNumber(a.order), ob = extractFirstNumber(b.order);
-                        if (oa !== ob) return oa - ob;
-                        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
-                    });
-                    const updates = sorted.map((g, index) => setDoc(doc(getPublicCol('games'), g.id), { order: index + 1 }, { merge: true }));
-                    await Promise.all(updates);
-                    logActivity("全局校正編號", `總數 ${updates.length} 項已對齊`, "REFIX");
-                    showNotify(`校正完成！最大編號已對齊至 #${updates.length}`);
-                } catch (e) { showNotify("校正失敗"); }
-            };
-
-            const filteredGames = useMemo(() => {
-                let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
-                
-                if(q) {
-                    const qNorm = tsNormalize(q);
-                    const isNumSearch = /^\d+$/.test(q) || q.startsWith('#');
-                    const numToSearch = isNumSearch ? parseInt(q.replace('#', '')) : null;
-
-                    l = l.filter(g => {
-                        if (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) return true;
-                        
-                        const nameNorm = tsNormalize((g.name || "").toLowerCase());
-                        const catNorm = tsNormalize((g.category || "").toLowerCase());
-                        return nameNorm.includes(qNorm) || catNorm.includes(qNorm);
-                    });
-                }
-
-                if (memberFilter) {
-                    const { name, type, value } = memberFilter;
-                    l = l.filter(g => {
-                        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-                        if (!watchers.includes(name)) return false;
-                        
-                        if (type === 'progress') {
-                            const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes);
-                            if (value === 'unstarted') return p === 0;
-                            if (value === 'watching') return p > 0 && p < 100;
-                            if (value === 'completed') return p >= 100;
-                            return true; // value === 'total'
-                        }
-                        
-                        if (type === 'category') {
-                            return (g.category || "未分類") === value;
-                        }
-                        
-                        if (type === 'source') {
-                            return (g.source || "未知來源") === value;
-                        }
-                        
-                        return true;
-                    });
-                }
-                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                else { 
-                    if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); 
-                    l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); 
-                }
-                return l;
-            }, [games, searchQuery, activeTab, memberFilter]);
 
             const memberStats = useMemo(() => {
                 const sm = {}; 
@@ -869,47 +545,73 @@
                     w.forEach(n => { 
                         if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
                         sm[n].total++; 
-                        const p = calculateDualProgress(g.watchedProgress, g.totalEpisodes); 
-                        if(p === 0) sm[n].unstarted++; 
-                        else if(p >= 100) sm[n].completed++; 
-                        else sm[n].watching++; 
-                        
-                        const c = g.category || "未分類";
-                        sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
-                        
-                        const s = g.source || "未知來源";
-                        sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
+                        const wp = g.watchedProgress?.[n] || { v1: 0 };
+                        const p = calculateDualProgress(wp, g.totalEpisodes); 
+                        if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; 
+                        const c = g.category || "未分類"; sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
+                        const s = g.source || "未知來源"; sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
                     }); 
                 }); 
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
 
-            // 按總數量降序排列分組標籤
             const activeCategoriesInUse = useMemo(() => {
-                const counts = {};
-                games.forEach(g => {
-                    const c = g.category || "未分類";
-                    counts[c] = (counts[c] || 0) + 1;
-                });
-                return Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-            }, [games]);
-            
-            // 按總數量降序排列來源標籤
+                const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.cats).forEach(([cat, count]) => { sums[cat] = (sums[cat] || 0) + count; }); });
+                return Object.keys(sums).sort((a, b) => sums[b] - sums[a]);
+            }, [memberStats]);
+
             const activeSourcesInUse = useMemo(() => {
-                const counts = {};
-                games.forEach(g => {
-                    const s = g.source || "未知來源";
-                    counts[s] = (counts[s] || 0) + 1;
-                });
-                return Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-            }, [games]);
+                const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.sources).forEach(([src, count]) => { sums[src] = (sums[src] || 0) + count; }); });
+                return Object.keys(sums).sort((a, b) => sums[b] - sums[a]);
+            }, [memberStats]);
 
             const toggleMemberFilter = useCallback((name, type, value) => {
-                setMemberFilter(prev => {
-                    if (prev?.name === name && prev?.type === type && prev?.value === value) return null;
-                    return { name, type, value };
-                });
+                setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value });
             }, []);
+
+            const handleExportData = () => { 
+                const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+                const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); 
+            };
+            
+            const handleImportData = async (e) => {
+                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
+                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), {...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()}); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
+                r.readAsText(f);
+            };
+
+            const filteredGames = useMemo(() => {
+                let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
+                if(q) {
+                    const qNorm = tsNormalize(q); const isNumSearch = /^\d+$/.test(q) || q.startsWith('#');
+                    const numToSearch = isNumSearch ? parseInt(q.replace('#', '')) : null;
+                    l = l.filter(g => (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) || tsNormalize(g.name || "").toLowerCase().includes(qNorm) || tsNormalize(g.category || "").toLowerCase().includes(qNorm));
+                }
+                if (memberFilter) {
+                    const { name, type, value } = memberFilter;
+                    l = l.filter(g => {
+                        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
+                        if (!watchers.includes(name)) return false;
+                        if (type === 'progress') {
+                            const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes);
+                            if (value === 'unstarted') return p === 0;
+                            if (value === 'watching') return p > 0 && p < 100;
+                            if (value === 'completed') return p >= 100;
+                            return true;
+                        }
+                        if (type === 'category') return (g.category || "未分類") === value;
+                        if (type === 'source') return (g.source || "未知來源") === value;
+                        return true;
+                    });
+                }
+                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
+                return l;
+            }, [games, searchQuery, activeTab, memberFilter]);
+
+            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
@@ -926,109 +628,38 @@
                                 {activityLogs.map(l => (
                                     <div key={l.id} className="border-b border-white/5 pb-0.5">
                                         <span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
-                                        <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
-                                        <span className="mx-1">{l.action}</span> 
-                                        <span className="font-black">
-                                            {l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}
-                                            "{l.gameName}"
-                                        </span>
+                                        <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> 
+                                        <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}"{l.gameName}"</span>
                                     </div>
                                 ))}
                             </div></div>
-                            <div className="lg:col-span-1 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div><div className="flex justify-between items-center pt-1 border-t border-white/5"><div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingName(true)}>{isEditingName ? <input autoFocus className="bg-black border-b border-[#ffbae9] text-[11px] w-20 outline-none" defaultValue={userName} onBlur={e => { setUserName(e.target.value.trim()||userName); setIsEditingName(false); }} /> : <span className="text-xs font-black" style={{ color: userColor }}>{userName}</span>}<Icon name="edit-3" className="w-3 h-3 text-white/20" /></div><input type="color" className="w-6 h-6 bg-transparent cursor-pointer" value={userColor} onChange={e => setUserColor(e.target.value)} /></div></div>
-                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40 hover:text-white'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} title="切換統計模式" /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar pr-1"><table className="w-full text-[11px] font-black border-collapse min-w-[300px]">
+                            <div className="lg:col-span-1 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div></div>
+                            
+                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse">
                                 {statMode === 'progress' ? (
-                                    <>
-                                        <thead><tr className="text-left text-white/30 border-b border-white/5"><th className="pb-1">成員</th><th className="pb-1 text-center whitespace-nowrap">總計</th><th className="pb-1 text-center whitespace-nowrap">還未看</th><th className="pb-1 text-center text-cyan-400 whitespace-nowrap">觀看中</th><th className="pb-1 text-center text-green-400 whitespace-nowrap">已看完</th></tr></thead>
-                                        <tbody>{memberStats.map(m => {
-                                            const isF = (val) => memberFilter?.name === m.name && memberFilter?.type === 'progress' && memberFilter?.value === val;
-                                            return (
-                                                <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('total') ? 'bg-[#ffbae9]/20 text-[#ffbae9] ring-1 ring-inset ring-[#ffbae9]/50' : ''}`}>{m.stats.total}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('unstarted') ? 'bg-white/10' : ''}`}>{m.stats.unstarted}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('watching') ? 'bg-cyan-400/20 text-cyan-400' : 'text-cyan-400'}`}>{m.stats.watching}</td>
-                                                    <td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className={`py-1.5 text-center cursor-pointer hover:bg-white/10 transition-colors ${isF('completed') ? 'bg-green-400/20 text-green-400' : 'text-green-400'}`}>{m.stats.completed}</td>
-                                                </tr>
-                                            )
-                                        })}</tbody>
-                                    </>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center">總計</th><th className="text-center">還未看</th><th className="text-center text-cyan-400">觀看中</th><th className="text-center text-green-400">已看完</th></tr></thead>
+                                    <tbody>{memberStats.map(m => (
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer">{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer">{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center text-cyan-400 cursor-pointer">{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center text-green-400 cursor-pointer">{m.stats.completed}</td></tr>
+                                    ))}</tbody></>
                                 ) : statMode === 'category' ? (
-                                    <>
-                                        <thead>
-                                            <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap">成員</th>
-                                                {activeCategoriesInUse.map(c => <th key={c} className="pb-1 text-center px-2 min-w-[80px] whitespace-nowrap">{c}</th>)}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {memberStats.map(m => (
-                                                <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
-                                                    {activeCategoriesInUse.map(c => {
-                                                        const count = m.stats.cats[c] || 0;
-                                                        const isF = memberFilter?.name === m.name && memberFilter?.type === 'category' && memberFilter?.value === c;
-                                                        return (
-                                                            <td 
-                                                                key={c} 
-                                                                onClick={() => count > 0 && toggleMemberFilter(m.name, 'category', c)}
-                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-[#ffbae9] cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-[#ffbae9]/20 ring-1 ring-inset ring-[#ffbae9]/50' : ''} whitespace-nowrap`}
-                                                            >
-                                                                {count}
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeCategoriesInUse.map(c => <th key={c} className="text-center px-4 whitespace-nowrap">{c}</th>)}</tr></thead>
+                                    <tbody>{memberStats.map(m => (
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer ${m.stats.cats[c] > 0 ? 'text-[#ffbae9]' : 'opacity-20'}`}>{m.stats.cats[c] || 0}</td>)}</tr>
+                                    ))}</tbody></>
                                 ) : (
-                                    <>
-                                        <thead>
-                                            <tr className="text-left text-white/30 border-b border-white/5">
-                                                <th className="pb-1 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 whitespace-nowrap">成員</th>
-                                                {activeSourcesInUse.map(s => <th key={s} className="pb-1 text-center px-2 min-w-[80px] whitespace-nowrap" title={s}>{s}</th>)}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {memberStats.map(m => (
-                                                <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
-                                                    <td className="py-1.5 sticky left-0 bg-[#314a58]/95 backdrop-blur-sm z-10 shadow-[2px_0_5px_rgba(0,0,0,0.2)] whitespace-nowrap" style={{ color: m.color }}>{m.name}</td>
-                                                    {activeSourcesInUse.map(s => {
-                                                        const count = m.stats.sources[s] || 0;
-                                                        const isF = memberFilter?.name === m.name && memberFilter?.type === 'source' && memberFilter?.value === s;
-                                                        return (
-                                                            <td 
-                                                                key={s} 
-                                                                onClick={() => count > 0 && toggleMemberFilter(m.name, 'source', s)}
-                                                                className={`py-1.5 text-center transition-colors ${count > 0 ? 'text-cyan-400 cursor-pointer hover:bg-white/10' : 'opacity-20'} ${isF ? 'bg-cyan-400/20 ring-1 ring-inset ring-cyan-400/50' : ''} whitespace-nowrap`}
-                                                            >
-                                                                {count}
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeSourcesInUse.map(s => <th key={s} className="text-center px-4 whitespace-nowrap">{s}</th>)}</tr></thead>
+                                    <tbody>{memberStats.map(m => (
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer ${m.stats.sources[s] > 0 ? 'text-cyan-400' : 'opacity-20'}`}>{m.stats.sources[s] || 0}</td>)}</tr>
+                                    ))}</tbody></>
                                 )}
                             </table></div></div>
                         </div>
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
-                            {!isEditLocked && (
-                                <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>
-                            )}
+                            {!isEditLocked && <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如#1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                            {memberFilter && (
-                                <div className="px-4 py-2 flex items-center">
-                                    <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2 hover:bg-[#ffbae9]/20 transition-all">
-                                        <Icon name="filter" className="w-3 h-3" /> 正在篩選: {memberFilter.name} {memberFilter.type === 'category' ? `(${memberFilter.value})` : memberFilter.type === 'source' ? `(${memberFilter.value})` : ''} <Icon name="x" className="w-3 h-3 ml-1" />
-                                    </button>
-                                </div>
-                            )}
+                            {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3" /></button></div>}
                             <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
-                                {!isEditLocked && <button onClick={handleReorderIDs} title="校正編號" className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-black text-[10px] uppercase hover:bg-cyan-500/20 flex items-center gap-2 transition-all"><Icon name="list-ordered" className="w-3 h-3" /> 校正編號</button>}
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
                             </div>
                         </div>
@@ -1036,46 +667,23 @@
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
-                                <div className="ml-auto flex gap-2 pr-2">
-                                    {!isEditLocked && activeTab && (activeTab !== "最新入庫" && activeTab !== "編號排序") && (
-                                        <div className="tab-action-btn btn-edit" title="修改目前選中分類名稱" onClick={handleRenameGroup}><Icon name="edit-3" className="w-4 h-4" /></div>
-                                    )}
-                                    {!isEditLocked && <div className="tab-action-btn btn-plus" title="新增分類" onClick={() => setIsAddGroupModalOpen(true)}><Icon name="plus" className="w-4 h-4" /></div>}
-                                    {!isEditLocked && activeTab && (activeTab !== "最新入庫" && activeTab !== "編號排序") && (
-                                        <div className="tab-action-btn btn-minus" title="刪除目前選中分類" onClick={handleDeleteGroup}><Icon name="minus" className="w-4 h-4" /></div>
-                                    )}
-                                </div>
                             </nav> 
                             <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.length === 0 ? <div className="col-span-full py-20 text-center text-white/10 font-black uppercase">目前無資料 {memberFilter ? "(篩選狀態下)" : ""}</div> : filteredGames.map(g => (
-                                    <GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={handleDeleteTarget} />
+                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.map(g => (
+                                    <GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={setDeleteGameTarget} />
                                 ))}</ul>
                             </div> 
                         </article>
                     </div>
 
                     <div className="fab-btn-container">
-                        <div className="fab-btn-sub" title="回到頂部" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-                            <Icon name="chevron-up" className="w-6 h-6" />
+                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>
+                        {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
+                        <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>
+                            {isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}
                         </div>
-                        {!isEditLocked && (
-                            <div className="fab-btn-sub !bg-red-600/40 !text-white" title="鎖定管理模式" onClick={() => setIsEditLocked(true)}>
-                                <Icon name="lock" className="w-5 h-5" />
-                            </div>
-                        )}
-                        <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()} title={isEditLocked ? "點擊解鎖管理模式" : "快速錄入"}>
-                            {isEditLocked ? <Icon key="lock-icon" name="lock" className="w-8 h-8" /> : <Icon key="plus-icon" name="plus" className="w-8 h-8" />}
-                        </div>
-                        <div className="fab-btn-sub" title="跳至底部" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}>
-                            <Icon name="chevron-down" className="w-6 h-6" />
-                        </div>
+                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div>
                     </div>
-
-                    {isAddGroupModalOpen && (
-                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                            <div className="bg-[#0b0e14] border border-white/20 p-6 rounded shadow-2xl w-full max-w-xs text-center"><h4 className="text-sm font-black mb-4 uppercase tracking-widest">新增自定義分組</h4><input autoFocus className="modal-input-base w-full mb-4 text-sm" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddGroup()}/><div className="flex gap-2"><button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[10px] font-black rounded uppercase">取消</button><button onClick={handleAddGroup} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[10px] font-black rounded uppercase">確定新增</button></div></div>
-                        </div>
-                    )}
 
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
@@ -1084,43 +692,25 @@
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
                                 <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1">
                                     <h3 className="text-xl md:text-2xl font-black italic mb-4 md:mb-8 underline decoration-[#ffbae9]/30 decoration-4 uppercase tracking-tighter">{editingId ? 'Modify' : 'New Entry'} 資料卡</h3>
-                                    <form onSubmit={handleSaveGame} className="space-y-4 md:space-y-6">
+                                    <form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
-                                            {/* 左側封面與基本欄位區域 */}
                                             <div className="md:col-span-4 flex flex-col gap-4 items-start">
                                                 <div className="flex flex-row items-end gap-3 w-full">
                                                     <div className="flex-shrink-0 mb-1">
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">編號</label>
                                                         <input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                     </div>
-                                                    
                                                     <div className="flex-grow flex flex-col items-center">
-                                                        <div onClick={() => { 
-                                                            setLastSelectedImgZone('cover'); 
-                                                            if (isMobileDevice()) fileInputRef.current?.click();
-                                                        }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                        <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                             {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
                                                         </div>
-                                                        {formData.cover && (
-                                                            <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>
-                                                        )}
+                                                        {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
                                                     </div>
                                                 </div>
-
                                                 <div className="flex flex-col gap-4 w-full">
                                                     <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label>
-                                                            <select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}>
-                                                                <option value="連載中">連載中</option>
-                                                                <option value="已完結">已完結</option>
-                                                                <option value="待播出">待播出</option>
-                                                            </select>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label>
-                                                            <input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} />
-                                                        </div>
+                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
+                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
                                                         <div className="col-span-2 flex flex-wrap gap-1 mt-1">
                                                             {recentStatuses.map(s => (
                                                                 <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>
@@ -1140,34 +730,18 @@
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定與快速選擇</label>
+                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label>
                                                         <div className="flex flex-col gap-2">
                                                             <div className="flex w-full gap-2 items-center">
-                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>
-                                                                    {formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <select 
-                                                                        className="modal-input-base w-full text-[11px] font-bold px-2" 
-                                                                        value={formData.source} 
-                                                                        onChange={e => { 
-                                                                            const v = e.target.value; 
-                                                                            const ex = customSources.find(s => s.name === v); 
-                                                                            setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); 
-                                                                        }}
-                                                                    >
-                                                                        <option value="">- 來源 -</option>
-                                                                        {customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                                                                        {formData.source && !customSources.find(s => s.name === formData.source) && <option value={formData.source}>{formData.source}</option>}
-                                                                    </select>
-                                                                </div>
+                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
+                                                                <div className="flex-1"><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }}><option value="">- 來源 -</option>{customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}</select></div>
                                                             </div>
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
                                                                 {customSources.map(s => (
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
-                                                                        <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 hover:text-red-700 transition-all z-10 font-black text-[12px] leading-none px-0.5" onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}>×</button>
+                                                                        <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}>×</button>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -1177,97 +751,83 @@
                                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setFormData(p=>({...p, sourceIcon: c})); } }} />
                                             </div>
 
-                                            {/* 右側詳細欄位區域 */}
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
-                                                <div className="pt-4 md:pt-0 border-t border-white/10 md:border-t-0">
-                                                    <label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label>
-                                                    <AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} />
+                                                <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} /></div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
+                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} />
                                                 </div>
-                                                
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label>
-                                                    <input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} />
+
+                                                <div className="flex flex-row gap-6 items-end">
+                                                    <div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? (<div className="flex items-center gap-2"><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}><option value="">-</option>{['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}</select><button type="button" onClick={() => { setFormData({...formData, updateDay: ""}); if(!formData.updateTime) setShowTimeSettings(false); }} className="text-white/20 hover:text-red-400 flex-shrink-0"><Icon name="x" className="w-4 h-4" /></button></div>) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div>
+                                                    <div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} containerClass="!max-w-full" />
-                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} containerClass="!max-w-full" />
+                                                    <div className="col-span-1">
+                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
+                                                        <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-full">
+                                                            {displayMembers.map(name => (
+                                                                <div key={name} onClick={() => { 
+                                                                    const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; 
+                                                                    const isSelected = list.includes(name);
+                                                                    const newList = isSelected ? list.filter(n => n !== name) : [...list, name];
+                                                                    const newWP = { ...formData.watchedProgress };
+                                                                    if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress };
+                                                                    setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); 
+                                                                }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} />
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-row gap-6 items-end">
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
-                                                        {showTimeSettings ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.updateDay} onChange={e=>setFormData({...formData, updateDay: e.target.value})}>
-                                                                    <option value="">-</option>
-                                                                    {['一','二','三','四','五','六','日'].map(d => <option key={d} value={d}>每周 ({d})</option>)}
-                                                                </select>
-                                                                <button type="button" onClick={() => { setFormData({...formData, updateDay: ""}); if(!formData.updateTime) setShowTimeSettings(false); }} className="text-white/20 hover:text-red-400 flex-shrink-0"><Icon name="x" className="w-4 h-4" /></button>
+
+                                                <div className="grid grid-cols-2 gap-4 items-start">
+                                                    <div className="p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度控制</span>
+                                                        </div>
+                                                        {formData.watchingBy.map(name => (
+                                                            <ProgressInputField 
+                                                                key={name}
+                                                                label={`${name} 的觀看進度`} 
+                                                                labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} 
+                                                                value={formData.watchedProgress[name] || { ...emptyProgress }} 
+                                                                unitSuggestions={unitSuggestions} 
+                                                                onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} 
+                                                            />
+                                                        ))}
+                                                        {formData.watchingBy.length === 0 && (
+                                                            <div className="text-[10px] text-white/20 font-black italic">請先選擇「誰在看」成員</div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="space-y-4">
+                                                        <label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-最後更新-</label>
+                                                        {showManualUpdateInput ? (
+                                                            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5">
+                                                                <input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
+                                                                <button type="button" onClick={() => { setFormData({...formData, manualUpdatedAt: ""}); setShowManualUpdateInput(false); }} className="text-white/20 hover:text-red-400"><Icon name="x" className="w-3.5 h-3.5" /></button>
                                                             </div>
-                                                        ) : (
-                                                            <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                        )}
+                                                        ) : (<div className="plus-toggle-btn !w-full" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>)}
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>
-                                                        {showTimeSettings ? (
-                                                            <TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && !formData.updateDay) setShowTimeSettings(false); }} />
-                                                        ) : (
-                                                            <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <ProgressInputField label="觀看進度" labelClass="text-cyan-400" value={formData.watchedProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: v })} containerClass="!max-w-full" />
-                                                    <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} containerClass="!max-w-full" />
                                                 </div>
                                                 
                                                 <div className="w-full">
                                                     <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
                                                     <div className="relative group">
                                                         <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
-                                                        {formData.url && (
-                                                            <button 
-                                                                type="button" 
-                                                                onClick={() => { if(formData.url.startsWith('http')) window.open(formData.url, '_blank'); else showNotify("格式錯誤，需以 http 開頭"); }} 
-                                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-white transition-all bg-black/40 p-1 rounded"
-                                                                title="點擊跳轉"
-                                                            >
-                                                                <Icon name="external-link" className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-col md:flex-row gap-6 items-end">
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
-                                                        <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-[280px]">
-                                                            {displayMembers.map(name => (
-                                                                <div key={name} onClick={() => { 
-                                                                    const list = [...(formData.watchingBy || [])]; 
-                                                                    setFormData({...formData, watchingBy: list.includes(name) ? list.filter(n => n !== name) : [...list, name]}); 
-                                                                }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-最後更新-</label>
-                                                        {showManualUpdateInput ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <input className="modal-input-base w-full font-black text-[11px] p-1.5" placeholder="手動輸入" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
-                                                                <button type="button" onClick={() => { setFormData({...formData, manualUpdatedAt: ""}); setShowManualUpdateInput(false); }} className="text-white/20 hover:text-red-400 flex-shrink-0"><Icon name="x" className="w-3 h-3" /></button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="plus-toggle-btn" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                        )}
+                                                        {formData.url && <button type="button" onClick={() => { if(formData.url.startsWith('http')) window.open(formData.url, '_blank'); else showNotify("格式錯誤"); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-white transition-all bg-black/40 p-1 rounded"><Icon name="external-link" className="w-4 h-4" /></button>}
                                                     </div>
                                                 </div>
 
                                                 <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4">
-                                                    <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] md:text-[12px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button>
-                                                    <button type="submit" className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] md:text-[12px] bg-[#ffbae9] text-[#3f5968] hover:bg-white`}>確認提交資料</button>
+                                                    <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button>
+                                                    <button type="submit" className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] bg-[#ffbae9] text-[#3f5968] hover:bg-white`}>確認提交資料</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1279,27 +839,21 @@
 
                     {showDuplicateConfirm && (
                         <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <h4 className="text-red-500 font-black mb-2 uppercase text-lg tracking-widest">發現同名項目</h4>
-                                <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">
-                                    資料庫中已存在名為 <span className="text-red-400">"{formData.name}"</span> 的檔案。<br/>
-                                    您確定要建立/儲存同名項目嗎？
-                                </p>
-                                <div className="flex gap-4">
-                                    <button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">返回修改</button>
-                                    <button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">仍要儲存</button>
-                                </div>
+                                <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">資料庫中已存在名為 <span className="text-red-400">"{formData.name}"</span> 的檔案。<br/>您確定要建立/儲存同名項目嗎？</p>
+                                <div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回修改</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">仍要儲存</button></div>
                             </div>
                         </div>
                     )}
 
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded border border-white/5 uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded shadow-lg uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 leading-relaxed px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded border border-white/5">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded shadow-lg">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
                     )}
                 </div>
             );
