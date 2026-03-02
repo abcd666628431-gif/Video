@@ -453,6 +453,8 @@
             const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
             const displayMembers = ["糖糖", "雲雲"];
 
+            const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
+
             const unitSuggestions = useMemo(() => { 
                 const r = new Set(['集', '話', '章', '季', '卷', '冊', '分鐘']); 
                 games.forEach(g => { 
@@ -507,12 +509,33 @@
 
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
-                const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' }; 
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
+                
                 let wp = item.watchedProgress || {};
-                if (wp.v1 !== undefined) { wp = { [watchers[0] || 'Unknown']: wp }; }
-                setFormData({ ...item, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: wp, updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers }); 
-                setShowTimeSettings(!!(item.updateDay || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
+                let normalizedWp = {};
+                
+                if (wp.v1 !== undefined) {
+                    normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) };
+                } else {
+                    Object.keys(wp).forEach(name => {
+                        normalizedWp[name] = ensureP(wp[name]);
+                    });
+                }
+                
+                setFormData({ 
+                    ...item, 
+                    totalEpisodes: ensureP(item.totalEpisodes), 
+                    watchedProgress: normalizedWp, 
+                    updatedEpisodes: ensureP(item.updatedEpisodes), 
+                    paidProgress: ensureP(item.paidProgress), 
+                    notes: item.notes || '', 
+                    manualUpdatedAt: item.manualUpdatedAt || '', 
+                    watchingBy: watchers 
+                }); 
+                
+                setShowTimeSettings(!!(item.updateDay || item.updateTime)); 
+                setShowManualUpdateInput(!!item.manualUpdatedAt); 
+                setIsModalOpen(true); 
             }, []);
 
             const proceedSave = async () => {
@@ -530,12 +553,50 @@
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-                    const { sourceIcon, ...cleanData } = formData;
+                    const { id: dummyId, sourceIcon, ...cleanData } = formData;
                     const finalData = { ...cleanData, source: formData.source.trim(), addedBy: String(formData.addedBy || userName), order: to, updatedAt: serverTimestamp() }; 
                     if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", formData.name, to); }
                     else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", formData.name, to); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch(e) { showNotify("操作失敗"); }
+            };
+
+            // --- 新增：批量修復數據工具 ---
+            const handleRepairData = async () => {
+                if(!user) return;
+                showNotify("正在啟動修復程序...");
+                try {
+                    const snapshot = await getDocs(getPublicCol('games'));
+                    let count = 0;
+                    for(const d of snapshot.docs) {
+                        const data = d.data();
+                        const watchers = Array.isArray(data.watchingBy) ? data.watchingBy : (data.watchingBy ? [data.watchingBy] : []);
+                        
+                        // 標準化進度結構
+                        let normalizedWp = {};
+                        let wp = data.watchedProgress || {};
+                        if (wp.v1 !== undefined) {
+                            normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) };
+                        } else {
+                            Object.keys(wp).forEach(name => {
+                                normalizedWp[name] = ensureP(wp[name]);
+                            });
+                        }
+
+                        const updateObj = {
+                            totalEpisodes: ensureP(data.totalEpisodes),
+                            updatedEpisodes: ensureP(data.updatedEpisodes),
+                            paidProgress: ensureP(data.paidProgress),
+                            watchedProgress: normalizedWp
+                        };
+
+                        await updateDoc(d.ref, updateObj);
+                        count++;
+                    }
+                    showNotify(`修復完成！共更新 ${count} 筆檔案`);
+                } catch(e) {
+                    showNotify("修復失敗，請檢查權限");
+                }
             };
 
             const memberStats = useMemo(() => {
@@ -621,7 +682,15 @@
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
-                            <div className="flex items-center gap-3"><div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>{!isEditLocked && <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>}</div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
+                                {!isEditLocked && (
+                                    <div className="flex gap-2">
+                                        <button onClick={handleRepairData} className="flex items-center gap-2 px-4 py-2 bg-blue-900/40 border border-blue-500/30 text-blue-100 text-xs font-black rounded hover:bg-blue-600 uppercase transition-all shadow-lg"><Icon name="wrench" className="w-4 h-4" /> 數據修復</button>
+                                        <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>
+                                    </div>
+                                )}
+                            </div>
                         </header>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
