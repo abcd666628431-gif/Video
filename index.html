@@ -556,9 +556,14 @@
 
             useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
 
+            // --- 修復：強化版貼上邏輯，支援特定格式圖片網址 ---
             useEffect(() => {
                 const handlePaste = async (e) => {
                     if (!isModalOpen) return;
+                    
+                    const isCover = lastSelectedImgZone === 'cover';
+
+                    // 1. 處理剪貼簿檔案 (ImageData)
                     const items = e.clipboardData?.items;
                     if (items) {
                         for (const item of items) {
@@ -566,7 +571,6 @@
                                 const file = item.getAsFile();
                                 const reader = new FileReader();
                                 reader.onload = async (event) => {
-                                    const isCover = lastSelectedImgZone === 'cover';
                                     const compressed = await compressImage(event.target.result, isCover ? 800 : 100);
                                     if(isCover) {
                                         setFormData(prev => ({ ...prev, cover: compressed }));
@@ -581,16 +585,35 @@
                             }
                         }
                     }
+
+                    // 2. 處理剪貼簿文字 (URL)
                     const textData = e.clipboardData.getData('text/plain');
-                    if (textData && (textData.startsWith('http') || textData.startsWith('data:image'))) {
-                        const isCover = lastSelectedImgZone === 'cover';
-                        if(isCover) {
-                            setFormData(prev => ({ ...prev, cover: textData }));
-                            setRawImageData(textData); 
+                    if (textData) {
+                        const trimmed = textData.trim();
+                        // 判定是否為圖片連結：
+                        // a. 以 data:image 開頭
+                        // b. 以常見圖片副檔名結尾
+                        // c. 包含您提供的特定伺服器特徵 (.image?, fqnovelpic.com)
+                        const isImageUrl = 
+                            trimmed.startsWith('data:image') || 
+                            /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed) ||
+                            trimmed.includes('.image?') || 
+                            trimmed.includes('fqnovelpic.com');
+
+                        if (isImageUrl) {
+                            if(isCover) {
+                                setFormData(prev => ({ ...prev, cover: trimmed }));
+                                setRawImageData(trimmed); 
+                            } else {
+                                setFormData(prev => ({ ...prev, sourceIcon: trimmed }));
+                            }
+                            showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
                         } else {
-                            setFormData(prev => ({ ...prev, sourceIcon: textData }));
+                            // 如果選中的是封面區域，但貼上的不是圖片網址，則不做處理，防止填錯
+                            if(isCover) {
+                                console.log("偵測到非圖片連結，已忽略封圖更新。");
+                            }
                         }
-                        showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
                     }
                 };
                 window.addEventListener('paste', handlePaste);
@@ -618,7 +641,6 @@
                     });
                 }
 
-                // --- 修復：開啟編輯時自動抓取全域設定中的圖案 ---
                 const globalSource = customSources.find(s => s.name === item.source);
                 const initialSourceIcon = globalSource ? globalSource.icon : '';
 
