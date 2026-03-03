@@ -55,7 +55,6 @@
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
-        /* 移除 number 輸入框的微調按鈕以免影響空間 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .btn-delete-bottom { position: absolute; bottom: 12px; right: 12px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
         li:hover .btn-delete-bottom { opacity: 1; }
@@ -396,16 +395,12 @@
             const [activeDropdown, setActiveDropdown] = useState(null); 
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
             
-            // 基礎寬度與伸縮係數調整，確保 3 個字元時能完整顯示
             const getDynamicWidth = (val, isNumber = false, isSpecial = false) => {
                 const str = val ? val.toString() : "";
-                // 數值框：基礎寬度從 42 增加到 52 (+10px 包含預設基礎 2px 與額外餘裕)
-                // 單位框：基礎寬度從 32 增加到 42
                 let base = isNumber ? 52 : 42;
-                if (isSpecial) base += 2; // 第 1 與 第 4 格預設寬度額外多 2px
+                if (isSpecial) base += 2; 
 
                 if (isNumber) {
-                    // 係數調整：確保數字不會因為左右 Padding 或 Spinner 被擠壓
                     return Math.max(base, str.length * 12 + 24) + 'px';
                 }
                 return Math.max(base, str.length * 14 + 20) + 'px';
@@ -422,7 +417,6 @@
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={labelStyle}>-{label}-</label>
                     <div className="progress-input-row">
-                        {/* 第 1 格 (數值 1)：基礎寬度多 2px，強化寬度計算 */}
                         <input 
                             type="number" 
                             className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
@@ -430,7 +424,6 @@
                             value={value.v1} 
                             onChange={e=>handleChange('v1', e.target.value)} 
                         />
-                        {/* 第 2 格 (單位 1)：強化寬度計算 */}
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
                             <input 
                                 className="modal-input-base font-black text-[10px] p-1 text-center" 
@@ -447,7 +440,6 @@
                         </div>
                         {isExpanded ? (
                             <>
-                                {/* 第 3 格 (數值 2)：強化寬度計算 */}
                                 <input 
                                     type="number" 
                                     className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
@@ -455,7 +447,6 @@
                                     value={value.v2} 
                                     onChange={e=>handleChange('v2', e.target.value)} 
                                 />
-                                {/* 第 4 格 (單位 2)：基礎寬度多 2px，強化寬度計算 */}
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
                                     <input 
                                         className="modal-input-base font-black text-[10px] p-1 text-center" 
@@ -626,8 +617,14 @@
                         normalizedWp[name] = ensureP(wp[name]);
                     });
                 }
+
+                // --- 修復：開啟編輯時自動抓取全域設定中的圖案 ---
+                const globalSource = customSources.find(s => s.name === item.source);
+                const initialSourceIcon = globalSource ? globalSource.icon : '';
+
                 setFormData({ 
                     ...item, 
+                    sourceIcon: initialSourceIcon,
                     totalEpisodes: ensureP(item.totalEpisodes), 
                     watchedProgress: normalizedWp, 
                     updatedEpisodes: ensureP(item.updatedEpisodes), 
@@ -639,7 +636,7 @@
                 setShowTimeSettings(!!(item.updateDay || item.updateTime)); 
                 setShowManualUpdateInput(!!item.manualUpdatedAt); 
                 setIsModalOpen(true); 
-            }, []);
+            }, [customSources]);
 
             const proceedSave = async () => {
                 setShowDuplicateConfirm(false); 
@@ -986,7 +983,6 @@
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="col-span-1">
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
-                                                        {/* 修復：將 w-full 改為 w-fit 讓選項框收窄 */}
                                                         <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">
                                                             {displayMembers.map(name => (
                                                                 <div key={name} onClick={() => { 
@@ -1069,7 +1065,7 @@
 
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-2 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
