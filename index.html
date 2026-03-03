@@ -42,7 +42,8 @@
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
         .meta strong { color: #ffbae9; margin-right: 0.3rem; }
         .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 20px; border-radius: 5px; margin-top: auto; margin-bottom: 2px; overflow: hidden; position: relative; }
-        .progress-fill { height: 100%; background: #ffbae9; transition: width 0.5s ease; }
+        /* 更新底部長條進度條顏色為 #c6b8ff */
+        .progress-fill { height: 100%; background: #c6b8ff; transition: width 0.5s ease; }
         .progress-text-overlay { mix-blend-mode: difference; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; pointer-events: none; letter-spacing: 0.05em; }
         .status-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 900; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); z-index: 10; display: flex; align-items: center; justify-content: center; min-width: 52px; letter-spacing: 0.05em; text-shadow: 0 1px 1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); line-height: 1.2; }
         .badge-airing { background-color: #16a34a; color: #fff; }
@@ -124,22 +125,23 @@
         };
 
         /**
-         * 強化版進度計算
-         * 如果 tot (總集數) 為空，則自動使用 updated (更新至) 作為臨時分母進行計算
+         * 圓形與長條進度計算邏輯
+         * 計算方式：分量 (cur) / 基準 (base)。
+         * 若帶有 updated 參數，則代表計算「觀看進度/更新至」的比率。
          */
         const calculateDualProgress = (cur, tot, updated) => {
             const c1 = parseFloat(cur?.v1) || 0, c2 = parseFloat(cur?.v2) || 0;
-            let t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
+            
+            // 決定基準分母
+            // 如果傳入了 updated，代表要算「觀看/更新」
+            // 如果沒傳 updated，代表要算「更新/總計」
+            let d1 = updated ? (parseFloat(updated?.v1) || parseFloat(tot?.v1) || 0) : (parseFloat(tot?.v1) || 0);
+            let d2 = updated ? (parseFloat(updated?.v2) || parseFloat(tot?.v2) || 0) : (parseFloat(tot?.v2) || 0);
 
-            // 核心優化：如果總集數為 0，嘗試使用「更新至」作為計算分母
-            if (t1 <= 0 && updated) {
-                t1 = parseFloat(updated?.v1) || 0;
-                t2 = parseFloat(updated?.v2) || 0;
-            }
+            if (d1 <= 0) return 0;
 
-            if (t1 <= 0) return 0;
-            if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
-            if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
+            if (c1 < d1) return Math.floor(Math.min(((c1 / d1) + ((c2 / 100) * (1 / d1))) * 100, 99)); 
+            if (c1 >= d1) return (d2 > 0 && c1 === d1) ? Math.floor(Math.min((((d1 - 1) / d1) + ((Math.min(c2, d2) / d2) * (1 / d1))) * 100, 100)) : 100;
             return 100;
         };
 
@@ -320,6 +322,9 @@
                 return wp[name] || { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
             };
 
+            // 長條形進度條計算：更新至 / 總集數
+            const seriesCompletionPct = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
+
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
@@ -331,7 +336,7 @@
                         <div className="circle-progress-stack">
                             {watchingByList.map(name => {
                                 const prog = getMemberProgress(name);
-                                // 核心優化：圓形進度 UI 現在支援在總集數為空時改用「更新至」集數作為計算分母
+                                // 圓形進度計算：觀看進度 / 更新至
                                 const pct = calculateDualProgress(prog, g.totalEpisodes, g.updatedEpisodes);
                                 const color = nameColorMap[name] || '#ffbae9';
                                 return (
@@ -388,9 +393,9 @@
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
                                 <div className="progress-container">
-                                    {/* 下方進度條同樣套用強化版計算邏輯 */}
-                                    <div className="progress-fill" style={{ width: `${watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes, g.updatedEpisodes) : 0}%` }}></div>
-                                    <div className="progress-text-overlay">{watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes, g.updatedEpisodes) : 0}%</div>
+                                    {/* 下方長條進度條：計算更新進度相對於總集數的比率 */}
+                                    <div className="progress-fill" style={{ width: `${seriesCompletionPct}%` }}></div>
+                                    <div className="progress-text-overlay">{seriesCompletionPct}%</div>
                                 </div>
                             </div>
                         </div>
@@ -509,14 +514,14 @@
 
             const recentStatuses = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
 
             const recentCategories = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.category && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
@@ -701,7 +706,7 @@
                         if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
                         sm[n].total++; 
                         const wp = g.watchedProgress?.[n] || { v1: 0 };
-                        // 統計列表也支援總集數為空時的計算
+                        // 統計列表維持「觀看/更新」邏輯
                         const p = calculateDualProgress(wp, g.totalEpisodes, g.updatedEpisodes); 
                         if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; 
                         const c = g.category || "未分類"; sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
