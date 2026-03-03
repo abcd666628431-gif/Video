@@ -123,9 +123,20 @@
             return match ? parseFloat(match[1]) : 0;
         };
 
-        const calculateDualProgress = (cur, tot) => {
+        /**
+         * 強化版進度計算
+         * 如果 tot (總集數) 為空，則自動使用 updated (更新至) 作為臨時分母進行計算
+         */
+        const calculateDualProgress = (cur, tot, updated) => {
             const c1 = parseFloat(cur?.v1) || 0, c2 = parseFloat(cur?.v2) || 0;
-            const t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
+            let t1 = parseFloat(tot?.v1) || 0, t2 = parseFloat(tot?.v2) || 0;
+
+            // 核心優化：如果總集數為 0，嘗試使用「更新至」作為計算分母
+            if (t1 <= 0 && updated) {
+                t1 = parseFloat(updated?.v1) || 0;
+                t2 = parseFloat(updated?.v2) || 0;
+            }
+
             if (t1 <= 0) return 0;
             if (c1 < t1) return Math.floor(Math.min(((c1 / t1) + ((c2 / 100) * (1 / t1))) * 100, 99)); 
             if (c1 === t1) return t2 > 0 ? Math.floor(Math.min((((t1 - 1) / t1) + ((Math.min(c2, t2) / t2) * (1 / t1))) * 100, 100)) : 100;
@@ -320,7 +331,8 @@
                         <div className="circle-progress-stack">
                             {watchingByList.map(name => {
                                 const prog = getMemberProgress(name);
-                                const pct = calculateDualProgress(prog, g.totalEpisodes);
+                                // 核心優化：圓形進度 UI 現在支援在總集數為空時改用「更新至」集數作為計算分母
+                                const pct = calculateDualProgress(prog, g.totalEpisodes, g.updatedEpisodes);
                                 const color = nameColorMap[name] || '#ffbae9';
                                 return (
                                     <div key={name} className="update-progress-circle" style={{ borderColor: color }} title={`${name}: ${pct}%`}>
@@ -376,8 +388,9 @@
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
                                 <div className="progress-container">
-                                    <div className="progress-fill" style={{ width: `${watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes) : 0}%` }}></div>
-                                    <div className="progress-text-overlay">{watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes) : 0}%</div>
+                                    {/* 下方進度條同樣套用強化版計算邏輯 */}
+                                    <div className="progress-fill" style={{ width: `${watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes, g.updatedEpisodes) : 0}%` }}></div>
+                                    <div className="progress-text-overlay">{watchingByList.length > 0 ? calculateDualProgress(getMemberProgress(watchingByList[0]), g.totalEpisodes, g.updatedEpisodes) : 0}%</div>
                                 </div>
                             </div>
                         </div>
@@ -496,14 +509,14 @@
 
             const recentStatuses = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
 
             const recentCategories = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
                 for(const g of sorted) { if(g.category && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
@@ -521,12 +534,9 @@
 
             useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
 
-            // --- 修復：處理貼上圖片與連結邏輯 ---
             useEffect(() => {
                 const handlePaste = async (e) => {
                     if (!isModalOpen) return;
-                    
-                    // 1. 處理檔案 (直接貼上圖片二進位)
                     const items = e.clipboardData?.items;
                     if (items) {
                         for (const item of items) {
@@ -543,12 +553,10 @@
                                     showNotify(isCover ? "封面已貼上" : "來源圖標已貼上");
                                 };
                                 reader.readAsDataURL(file);
-                                return; // 優先處理檔案，處理完即返回
+                                return;
                             }
                         }
                     }
-
-                    // 2. 處理文字 (貼上圖片連結 URL)
                     const textData = e.clipboardData.getData('text/plain');
                     if (textData && (textData.startsWith('http') || textData.startsWith('data:image'))) {
                         const isCover = lastSelectedImgZone === 'cover';
@@ -574,10 +582,8 @@
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
-                
                 let wp = item.watchedProgress || {};
                 let normalizedWp = {};
-                
                 if (wp.v1 !== undefined) {
                     normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) };
                 } else {
@@ -585,7 +591,6 @@
                         normalizedWp[name] = ensureP(wp[name]);
                     });
                 }
-                
                 setFormData({ 
                     ...item, 
                     totalEpisodes: ensureP(item.totalEpisodes), 
@@ -596,7 +601,6 @@
                     manualUpdatedAt: item.manualUpdatedAt || '', 
                     watchingBy: watchers 
                 }); 
-                
                 setShowTimeSettings(!!(item.updateDay || item.updateTime)); 
                 setShowManualUpdateInput(!!item.manualUpdatedAt); 
                 setIsModalOpen(true); 
@@ -608,19 +612,16 @@
                     const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
                     let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
                     if(formData.order === "") while(orders.includes(to)) to++;
-                    
                     if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
                         let chain = [], check = to; while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
                         chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
-
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
                         if(idx === -1) sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
                         else sources[idx].icon = formData.sourceIcon || ''; 
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-
                     const rawPayload = {
                         name: formData.name || "",
                         notes: formData.notes || "",
@@ -642,9 +643,7 @@
                         updateTime: formData.updateTime || "",
                         updatedAt: serverTimestamp() 
                     };
-
                     const finalData = sanitizePayload(rawPayload);
-
                     if(editingId) { 
                         await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
                         logActivity("修改", finalData.name, to); 
@@ -652,7 +651,6 @@
                         await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
                         logActivity("錄入", finalData.name, to); 
                     }
-                    
                     showNotify("資料已儲存"); 
                     setIsModalOpen(false); 
                     setEditingId(null);
@@ -671,7 +669,6 @@
                     for(const d of snapshot.docs) {
                         const data = d.data();
                         const watchers = Array.isArray(data.watchingBy) ? data.watchingBy : (data.watchingBy ? [data.watchingBy] : []);
-                        
                         let normalizedWp = {};
                         let wp = data.watchedProgress || {};
                         if (wp.v1 !== undefined) {
@@ -681,14 +678,12 @@
                                 normalizedWp[name] = ensureP(wp[name]);
                             });
                         }
-
                         const updateObj = sanitizePayload({
                             totalEpisodes: ensureP(data.totalEpisodes),
                             updatedEpisodes: ensureP(data.updatedEpisodes),
                             paidProgress: ensureP(data.paidProgress),
                             watchedProgress: normalizedWp
                         });
-
                         await updateDoc(d.ref, updateObj);
                         count++;
                     }
@@ -706,7 +701,8 @@
                         if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
                         sm[n].total++; 
                         const wp = g.watchedProgress?.[n] || { v1: 0 };
-                        const p = calculateDualProgress(wp, g.totalEpisodes); 
+                        // 統計列表也支援總集數為空時的計算
+                        const p = calculateDualProgress(wp, g.totalEpisodes, g.updatedEpisodes); 
                         if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; 
                         const c = g.category || "未分類"; sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
                         const s = g.source || "未知來源"; sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
@@ -754,7 +750,7 @@
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
                         if (!watchers.includes(name)) return false;
                         if (type === 'progress') {
-                            const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes);
+                            const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes, g.updatedEpisodes);
                             if (value === 'unstarted') return p === 0;
                             if (value === 'watching') return p > 0 && p < 100;
                             if (value === 'completed') return p >= 100;
@@ -870,7 +866,7 @@
                                                         <input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                     </div>
                                                     <div className="flex-grow flex flex-col items-center">
-                                                        <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
+                                                        <div onClick={() => { setLastSelectedImgZone('cover'); }} className={`w-32 md:w-36 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                             {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
                                                         </div>
                                                         {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
@@ -902,7 +898,7 @@
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label>
                                                         <div className="flex flex-col gap-2">
                                                             <div className="flex w-full gap-2 items-center">
-                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
+                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
                                                                 <div className="flex-1"><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }}><option value="">- 來源 -</option>{customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}</select></div>
                                                             </div>
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
