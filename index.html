@@ -488,11 +488,12 @@
             );
         });
 
-        const AutoResizeTextarea = ({ value, onChange, className, isError, placeholder }) => {
+        const AutoResizeTextarea = ({ value, onChange, className, isError, placeholder, required = false }) => {
             const textareaRef = useRef(null);
             const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
             useEffect(() => { adjustHeight(); }, [value]);
-            return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required />;
+            // 更新：改為可選的 required 屬性，不再強制
+            return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />;
         };
 
         const TimeSelector = memo(({ value, onChange }) => {
@@ -949,7 +950,6 @@
                                                         <input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
                                                     </div>
                                                     <div className="flex-grow flex flex-col items-center">
-                                                        {/* 更新：圖框寬度縮小約 20% (w-32->w-24, w-36->w-28) */}
                                                         <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                             {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
                                                         </div>
@@ -1024,8 +1024,11 @@
                                             </div>
 
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
-                                                <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" /></div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" /></div>
+                                                {/* 名稱欄位保持必填 required={true} */}
+                                                <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div>
+                                                
+                                                {/* 更新：備註欄位設置為非必填 required={false} */}
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div>
 
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
