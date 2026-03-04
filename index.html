@@ -50,8 +50,8 @@
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .circle-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
-        /* 圓形進度條極細化視覺設定 */
-        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: none; }
+        /* 更新：圓形進度條視覺設定 - 居中優化，防止縮放歪掉 */
+        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; border: none; overflow: hidden; }
         .update-progress-circle span { font-size: 11px; font-weight: 900; letter-spacing: -0.05em; position: relative; z-index: 2; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
@@ -332,7 +332,8 @@
                                             background: `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)`,
                                         }} 
                                         title={`${name}: ${pct}%`}>
-                                        <div className="absolute inset-[0.8px] bg-[#0b0e14]/95 rounded-full flex items-center justify-center z-10">
+                                        {/* 更新：使用寬度百分比並維持 flex 居中，確保網頁縮放時圓心對齊 */}
+                                        <div className="w-[94%] h-[94%] bg-[#0b0e14]/95 rounded-full flex items-center justify-center z-10">
                                             <span style={{ color: color }}>{pct}%</span>
                                         </div>
                                     </div>
@@ -492,7 +493,6 @@
             const textareaRef = useRef(null);
             const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
             useEffect(() => { adjustHeight(); }, [value]);
-            // 更新：改為可選的 required 屬性，不再強制
             return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />;
         };
 
@@ -1024,10 +1024,7 @@
                                             </div>
 
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
-                                                {/* 名稱欄位保持必填 required={true} */}
                                                 <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div>
-                                                
-                                                {/* 更新：備註欄位設置為非必填 required={false} */}
                                                 <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div>
 
                                                 <div className="grid grid-cols-2 gap-4">
@@ -1108,11 +1105,11 @@
                                                     <div className="md:col-span-4 space-y-4 md:pl-6">
                                                         <label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-最後更新-</label>
                                                         {showManualUpdateInput ? (
-                                                            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5">
+                                                            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5 max-w-[160px]">
                                                                 <input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" placeholder="" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
-                                                                <button type="button" onClick={() => { setFormData({...formData, manualUpdatedAt: ""}); setShowManualUpdateInput(false); }} className="text-white/20 hover:text-red-400"><Icon name="x" className="w-3.5 h-3.5" /></button>
+                                                                <button type="button" onClick={() => { setFormData({...formData, manualUpdatedAt: ""}); setShowManualUpdateInput(false); }} className="text-white/20 hover:text-red-400 mr-0.5"><Icon name="x" className="w-3.5 h-3.5" /></button>
                                                             </div>
-                                                        ) : (<div className="plus-toggle-btn !w-full" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>)}
+                                                        ) : (<div className="plus-toggle-btn !w-full max-w-[160px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>)}
                                                     </div>
                                                 </div>
                                                 
