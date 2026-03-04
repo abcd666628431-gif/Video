@@ -50,8 +50,9 @@
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .circle-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
-        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 2px solid #ffbae9; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .update-progress-circle span { font-size: 11px; font-weight: 900; color: #ffbae9; letter-spacing: -0.05em; }
+        /* 更新：圓形進度條極細化視覺設定 */
+        .update-progress-circle { width: 42px; height: 42px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: none; }
+        .update-progress-circle span { font-size: 11px; font-weight: 900; letter-spacing: -0.05em; position: relative; z-index: 2; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
@@ -86,7 +87,7 @@
         .source-fill-tag.active { background: #ffbae9 !important; color: #3f5968 !important; border-color: #fff !important; }
         .plus-toggle-btn { width: 32px; height: 32px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .plus-toggle-btn:hover { background: #ffbae9; color: #3f5968; }
-        .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 60px; max-height: 160px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 80px; max-height: 280px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .custom-unit-dropdown div { padding: 6px 12px; font-size: 11px; font-weight: 900; cursor: pointer; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .custom-unit-dropdown div:hover { background: #ffbae9; color: #3f5968; }
     </style>
@@ -159,7 +160,7 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万 with 实鸟范机战边里里广阳书划划画对对進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万 with 实鸟范机战边里里广阳书划划画对對進進導導燈燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -286,7 +287,7 @@
         const TitleIcon = () => (
             <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
-                <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
+                <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647L11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
                 <path d="M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z" fill="#6D69E4"></path>
                 <path d="M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 26.901 9.647L24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z" fill="#6D69E4"></path>
                 <path d="M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641L11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z" fill="#6D69E4"></path>
@@ -326,8 +327,15 @@
                                 const pct = calculateDualProgress(prog, g.totalEpisodes, g.updatedEpisodes);
                                 const color = nameColorMap[name] || '#ffbae9';
                                 return (
-                                    <div key={name} className="update-progress-circle" style={{ borderColor: color }} title={`${name}: ${pct}%`}>
-                                        <span style={{ color: color }}>{pct}%</span>
+                                    <div key={name} className="update-progress-circle" 
+                                        style={{ 
+                                            background: `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)`,
+                                        }} 
+                                        title={`${name}: ${pct}%`}>
+                                        {/* 更新：調整 inset 值為 0.8px 並強化居中渲染，使進度環極細且視覺平衡 */}
+                                        <div className="absolute inset-[0.8px] bg-[#0b0e14]/95 rounded-full flex items-center justify-center z-10">
+                                            <span style={{ color: color }}>{pct}%</span>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -417,6 +425,13 @@
                 return () => document.removeEventListener("mousedown", handleClickOutside);
             }, []);
 
+            const expandRow = () => {
+                setIsExpanded(true);
+                if (!value.u2) {
+                    onChange({ ...value, v2: value.v2 || '', u2: '分鐘' });
+                }
+            };
+
             return (
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={labelStyle}>-{label}-</label>
@@ -467,18 +482,18 @@
                                 </div>
                             </>
                         ) : (
-                            <div className="flex justify-center ml-1"><div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={() => setIsExpanded(true)}><Icon name="plus" className="w-4 h-4" /></div></div>
+                            <div className="flex justify-center ml-1"><div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={expandRow}><Icon name="plus" className="w-4 h-4" /></div></div>
                         )}
                     </div>
                 </div>
             );
         });
 
-        const AutoResizeTextarea = ({ value, onChange, className, isError }) => {
+        const AutoResizeTextarea = ({ value, onChange, className, isError, placeholder }) => {
             const textareaRef = useRef(null);
             const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
             useEffect(() => { adjustHeight(); }, [value]);
-            return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} required />;
+            return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required />;
         };
 
         const TimeSelector = memo(({ value, onChange }) => {
@@ -517,14 +532,24 @@
             const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
 
             const unitSuggestions = useMemo(() => { 
-                const r = new Set(['集', '話', '章', '季', '卷', '冊', '分鐘']); 
+                const freq = {};
+                const baseUnits = ['集', '話', '章', '季', '卷', '冊', '分鐘']; 
+                baseUnits.forEach(u => freq[u] = 0);
+
                 games.forEach(g => { 
                     ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
-                        const p = g[k]; if (p?.u1) r.add(p.u1.trim()); if (p?.u2) r.add(p.u2.trim()); 
+                        const p = g[k]; 
+                        if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; 
+                        if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; 
                     });
-                    if (g.watchedProgress) { Object.values(g.watchedProgress).forEach(p => { if (p?.u1) r.add(p.u1.trim()); if (p?.u2) r.add(p.u2.trim()); }); }
+                    if (g.watchedProgress) { 
+                        Object.values(g.watchedProgress).forEach(p => { 
+                            if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; 
+                            if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; 
+                        }); 
+                    }
                 }); 
-                return Array.from(r).sort(); 
+                return Object.keys(freq).sort((a, b) => freq[b] - freq[a]); 
             }, [games]);
 
             const isNameDuplicate = useMemo(() => {
@@ -542,8 +567,14 @@
 
             const recentCategories = useMemo(() => {
                 const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
-                for(const g of sorted) { if(g.category && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
+                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                for(const g of sorted) { 
+                    if(g.category && !seen.has(g.category)) { 
+                        seen.add(g.category); 
+                        result.push(g.category); 
+                    } 
+                    if(result.length >= 3) break; 
+                }
                 return result;
             }, [games]);
 
@@ -952,7 +983,19 @@
                                                         <div className="flex flex-col gap-2">
                                                             <div className="flex w-full gap-2 items-center">
                                                                 <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
-                                                                <div className="flex-1"><select className="modal-input-base w-full text-[11px] font-bold px-2" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }}><option value="">- 來源 -</option>{customSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}</select></div>
+                                                                <div className="flex-1">
+                                                                    <input 
+                                                                        type="text"
+                                                                        className="modal-input-base w-full text-[11px] font-bold px-2" 
+                                                                        placeholder="輸入來源名稱"
+                                                                        value={formData.source} 
+                                                                        onChange={e => {
+                                                                            const v = e.target.value;
+                                                                            const ex = customSources.find(s => s.name === v);
+                                                                            setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon });
+                                                                        }}
+                                                                    />
+                                                                </div>
                                                             </div>
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
                                                                 {customSources.map(s => (
@@ -982,7 +1025,7 @@
 
                                             <div className="md:col-span-8 space-y-4 md:space-y-5 border-l border-white/5 md:pl-8">
                                                 <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-2`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} /></div>
-                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><input className="modal-input-base w-full font-black text-[11px] p-1.5" value={formData.notes || ""} onChange={e=>setFormData({...formData, notes: e.target.value})} /></div>
+                                                <div><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="輸入備註..." /></div>
 
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
@@ -994,7 +1037,6 @@
                                                         <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
                                                         {showTimeSettings ? (
                                                             <div className="flex flex-col gap-2">
-                                                                {/* 修改：設置 flex-nowrap 並調整間距，讓標籤縮到一行 */}
                                                                 <div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">
                                                                     {['一','二','三','四','五','六','日'].map(d => (
                                                                         <button 
