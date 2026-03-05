@@ -344,6 +344,7 @@
                                 return (
                                     <div key={name} className="update-progress-circle" 
                                         style={{ 
+                                            /* 使用百分比裁切背景技術，強制圓心重合 */
                                             backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)`
                                         }} 
                                         title={`${name}: ${pct}%`}>
@@ -536,6 +537,9 @@
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
+            
+            // 新增：刪除來源確認狀態
+            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
@@ -826,6 +830,10 @@
                 }
             };
 
+            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
+            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("數據已清空"); } catch(e) { showNotify("操作失敗"); } };
+
             const memberStats = useMemo(() => {
                 const sm = {}; 
                 games.forEach(g => { 
@@ -897,10 +905,6 @@
                 else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
-
-            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
-            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("數據已清空"); } catch(e) { showNotify("操作失敗"); } };
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
@@ -995,7 +999,6 @@
                                     <form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
                                             <div className="md:col-span-4 flex flex-col gap-3 md:gap-4 items-start">
-                                                {/* 修改：編號還原至封面圖左側，底端對齊 */}
                                                 <div className="flex flex-row items-end gap-3 w-full">
                                                     <div className="flex-shrink-0 mb-1">
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label>
@@ -1037,20 +1040,18 @@
                                                             <div className="flex w-full gap-2 items-center">
                                                                 <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
                                                                 <div className="flex-1">
-                                                                    <select 
+                                                                    {/* 更新：還原為可手動輸入的 input */}
+                                                                    <input 
+                                                                        type="text"
                                                                         className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" 
+                                                                        placeholder=""
                                                                         value={formData.source} 
                                                                         onChange={e => {
                                                                             const v = e.target.value;
                                                                             const ex = customSources.find(s => s.name === v);
                                                                             setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon });
                                                                         }}
-                                                                    >
-                                                                        <option value=""></option>
-                                                                        {sortedSourcesByUsage.map(s => (
-                                                                            <option key={s.name} value={s.name}>{s.name}</option>
-                                                                        ))}
-                                                                    </select>
+                                                                    />
                                                                 </div>
                                                             </div>
                                                             <div className="flex flex-wrap gap-1.5 w-full mt-1">
@@ -1058,7 +1059,8 @@
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
-                                                                        <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); handleDeleteSource(s.name); }}>×</button>
+                                                                        {/* 更新：點擊 X 時觸發確認彈窗 */}
+                                                                        <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -1080,7 +1082,6 @@
                                             </div>
 
                                             <div className="md:col-span-8 border-l border-white/5 md:pl-8">
-                                                {/* 修改：進一步縮小名稱與備註的間隔 space-y-3 -> space-y-2 */}
                                                 <div className="space-y-2">
                                                     <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div>
                                                     <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div>
@@ -1187,6 +1188,21 @@
                                             </div>
                                         </div>
                                     </form>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 來源刪除確認彈窗 */}
+                    {deleteSourceTarget && (
+                        <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
+                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg tracking-widest">確認刪除來源？</h4>
+                                <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">確定要從建議清單中移除來源 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p>
+                                <div className="flex gap-4">
+                                    <button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
+                                    <button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
                                 </div>
                             </div>
                         </div>
