@@ -20,7 +20,7 @@
         @keyframes shimmer { to { background-position: 200% center; } }
         .tab-content { width: 100%; margin-top: 1rem; }
         .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; }
+        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; display: flex; align-items: center; gap: 6px; }
         .tab:hover { border-color: #ffbae9; }
         .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
         .tab-action-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #ffffff; color: #3f5968; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; flex-shrink: 0; position: relative; }
@@ -50,8 +50,6 @@
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .circle-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
-        
-        /* 圓形進度條視覺設定 - 使用百分比裁剪背景技術，強制圓心重合 */
         .update-progress-circle { 
             width: 42px; 
             height: 42px; 
@@ -64,10 +62,9 @@
             background-origin: border-box;
             background-clip: content-box, border-box;
             background-size: cover;
-            padding: 1.2px; /* 控制進度環的幼細程度 */
+            padding: 1.2px;
         }
         .update-progress-circle span { font-size: 11px; font-weight: 900; letter-spacing: -0.05em; position: relative; z-index: 2; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
-        
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
@@ -105,6 +102,12 @@
         .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 80px; max-height: 280px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .custom-unit-dropdown div { padding: 6px 12px; font-size: 11px; font-weight: 900; cursor: pointer; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .custom-unit-dropdown div:hover { background: #ffbae9; color: #3f5968; }
+        
+        /* 新增：標籤內的動作按鈕樣式 */
+        .tab-item-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
+        .tab:hover .tab-item-actions { opacity: 1; }
+        .tab-item-btn { padding: 2px; border-radius: 2px; transition: background 0.2s; }
+        .tab-item-btn:hover { background: rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -175,7 +178,7 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万 with 实鸟范机战边里里广阳书划划画对對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万 with 实鳥范机战边里里广阳书划划画对對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -224,7 +227,6 @@
             return obj;
         };
 
-        // --- Components ---
         const Icon = memo(({ name, className, onClick, title }) => {
             return (
                 <span key={name} onClick={(e) => { if(onClick) { e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title}><i data-lucide={name} style={{ width: '100%', height: '100%' }}></i></span>
@@ -344,7 +346,6 @@
                                 return (
                                     <div key={name} className="update-progress-circle" 
                                         style={{ 
-                                            /* 使用百分比裁切背景技術，強制圓心重合 */
                                             backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)`
                                         }} 
                                         title={`${name}: ${pct}%`}>
@@ -537,9 +538,12 @@
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
-            
-            // 新增：刪除來源確認狀態
             const [deleteSourceTarget, setDeleteSourceTarget] = useState(null);
+            const [isWikiFetching, setIsWikiFetching] = useState(false);
+            
+            // 新增：分組操作狀態
+            const [editCategoryTarget, setEditCategoryTarget] = useState(null);
+            const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
@@ -551,7 +555,6 @@
                 const freq = {};
                 const baseUnits = ['集', '話', '章', '季', '卷', '冊', '分鐘']; 
                 baseUnits.forEach(u => freq[u] = 0);
-
                 games.forEach(g => { 
                     ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
                         const p = g[k]; 
@@ -568,7 +571,6 @@
                 return Object.keys(freq).sort((a, b) => freq[b] - freq[a]); 
             }, [games]);
 
-            // 根據使用頻率對來源進行排序
             const sortedSourcesByUsage = useMemo(() => {
                 const freq = {};
                 games.forEach(g => {
@@ -616,7 +618,7 @@
                 return () => { ug(); ul(); us(); up(); upro(); };
             }, [user]);
 
-            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
+            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput, customCategories]);
 
             useEffect(() => {
                 const handlePaste = async (e) => {
@@ -688,11 +690,9 @@
                         normalizedWp[name] = ensureP(wp[name]);
                     });
                 }
-
                 const globalSource = customSources.find(s => s.name === item.source);
                 const initialSourceIcon = globalSource ? globalSource.icon : '';
                 const currentUpdateDay = item.updateDay ? (Array.isArray(item.updateDay) ? item.updateDay : [item.updateDay]) : [];
-
                 setFormData({ 
                     ...item, 
                     sourceIcon: initialSourceIcon,
@@ -710,6 +710,31 @@
                 setIsModalOpen(true); 
             }, [customSources]);
 
+            const fetchWikiImage = async () => {
+                if (!formData.name.trim()) return showNotify("請先輸入標題名稱");
+                setIsWikiFetching(true);
+                try {
+                    const searchUrl = `https://zh.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&titles=${encodeURIComponent(formData.name)}&pithumbsize=800&origin=*`;
+                    const res = await fetch(searchUrl);
+                    const data = await res.json();
+                    const pages = data.query?.pages;
+                    const pageId = Object.keys(pages)[0];
+                    const imgUrl = pages[pageId]?.thumbnail?.source;
+
+                    if (imgUrl) {
+                        setFormData(prev => ({ ...prev, cover: imgUrl }));
+                        setRawImageData(imgUrl);
+                        showNotify("維基抓取成功");
+                    } else {
+                        showNotify("找不到維基封面圖片");
+                    }
+                } catch (e) {
+                    showNotify("抓取失敗");
+                } finally {
+                    setIsWikiFetching(false);
+                }
+            };
+
             const proceedSave = async () => {
                 setShowDuplicateConfirm(false); 
                 try {
@@ -720,7 +745,6 @@
                         let chain = [], check = to; while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
                         chain.reverse(); await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: extractFirstNumber(item.order) + 1 }, { merge: true })));
                     }
-                    
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
                         if(idx === -1) {
@@ -732,7 +756,6 @@
                         }
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-
                     const rawPayload = {
                         name: formData.name || "",
                         notes: formData.notes || "",
@@ -762,7 +785,6 @@
                         await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
                         logActivity("錄入", finalData.name, to); 
                     }
-                    
                     showNotify("資料已儲存"); 
                     setIsModalOpen(false); 
                     setEditingId(null);
@@ -817,7 +839,6 @@
                         }
                         return null;
                     }).filter(p => p !== null);
-
                     if (updates.length > 0) {
                         await Promise.all(updates);
                         showNotify(`重新排列完成！共更新 ${updates.length} 筆資料`);
@@ -833,6 +854,54 @@
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("數據已清空"); } catch(e) { showNotify("操作失敗"); } };
+
+            // 新增：分組管理功能
+            const handleAddCategory = async () => {
+                const name = newGroupName.trim();
+                if (!name) return showNotify("名稱不能為空");
+                if (customCategories.includes(name)) return showNotify("名稱重複");
+                
+                const updated = [...customCategories, name];
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
+                    setNewGroupName("");
+                    setIsAddGroupModalOpen(false);
+                    showNotify(`分組「${name}」已新增`);
+                } catch (e) { showNotify("儲存失敗"); }
+            };
+
+            const handleRenameCategory = async () => {
+                const oldName = editCategoryTarget.old;
+                const newName = editCategoryTarget.current.trim();
+                if (!newName || oldName === newName) return setEditCategoryTarget(null);
+                
+                const updated = customCategories.map(c => c === oldName ? newName : c);
+                try {
+                    // 更新設置
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
+                    // 更新所有關聯的影片資料（批量更新）
+                    const affected = games.filter(g => g.category === oldName);
+                    await Promise.all(affected.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName })));
+                    
+                    setEditCategoryTarget(null);
+                    showNotify("分組名稱已更新");
+                } catch (e) { showNotify("更新失敗"); }
+            };
+
+            const handleDeleteCategory = async (cat) => {
+                if (cat === "最新入庫" || cat === "編號排序") return showNotify("系統分組不可刪除");
+                const updated = customCategories.filter(c => c !== cat);
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
+                    // 將該分類下的影片歸類為未分類
+                    const affected = games.filter(g => g.category === cat);
+                    await Promise.all(affected.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: "未分類" })));
+                    
+                    setDeleteCategoryTarget(null);
+                    if (activeTab === cat) setActiveTab(null);
+                    showNotify("分組已刪除");
+                } catch (e) { showNotify("刪除失敗"); }
+            };
 
             const memberStats = useMemo(() => {
                 const sm = {}; 
@@ -968,7 +1037,22 @@
 
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
-                                {customCategories.map((cat, idx) => (<div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>{cat}</div>))}
+                                {customCategories.map((cat, idx) => (
+                                    <div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
+                                        {cat}
+                                        {!isEditLocked && cat !== "最新入庫" && cat !== "編號排序" && (
+                                            <div className="tab-item-actions ml-1">
+                                                <button onClick={(e) => { e.stopPropagation(); setEditCategoryTarget({ old: cat, current: cat }); }} className="tab-item-btn"><Icon name="edit-3" className="w-3 h-3" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }} className="tab-item-btn"><Icon name="trash-2" className="w-3 h-3" /></button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {!isEditLocked && (
+                                    <button onClick={() => setIsAddGroupModalOpen(true)} className="tab-action-btn btn-plus" title="新增分組">
+                                        <Icon name="plus" className="w-4 h-4" />
+                                    </button>
+                                )}
                             </nav> 
                             <div className="component-view">
                                 <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.map(g => (
@@ -986,6 +1070,51 @@
                         </div>
                         <div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div>
                     </div>
+
+                    {/* 新增分組彈窗 */}
+                    {isAddGroupModalOpen && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded-sm shadow-2xl">
+                                <h4 className="text-[#ffbae9] font-black mb-6 uppercase tracking-widest text-sm italic">新增分組類型</h4>
+                                <input type="text" className="modal-input-base w-full font-black text-sm mb-6" placeholder="分組名稱" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} autoFocus />
+                                <div className="flex gap-3">
+                                    <button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded uppercase">取消</button>
+                                    <button onClick={handleAddCategory} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[11px] font-black rounded uppercase">確認新增</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 修改分組名稱彈窗 */}
+                    {editCategoryTarget && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded-sm shadow-2xl">
+                                <h4 className="text-cyan-400 font-black mb-6 uppercase tracking-widest text-sm italic">重新命名分組</h4>
+                                <input type="text" className="modal-input-base w-full font-black text-sm mb-6" value={editCategoryTarget.current} onChange={e => setEditCategoryTarget({...editCategoryTarget, current: e.target.value})} autoFocus />
+                                <div className="flex gap-3">
+                                    <button onClick={() => setEditCategoryTarget(null)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded uppercase">取消</button>
+                                    <button onClick={handleRenameCategory} className="flex-1 py-2 bg-cyan-400 text-[#3f5968] text-[11px] font-black rounded uppercase">確認修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 刪除分組確認 */}
+                    {deleteCategoryTarget && (
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
+                                <Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4>
+                                <p className="text-xs text-slate-400 mb-8 font-bold leading-relaxed px-4">
+                                    分組「<span className="text-red-400">{deleteCategoryTarget}</span>」內的所有項目將被移至「未分類」。此操作不可恢復。
+                                </p>
+                                <div className="flex gap-4">
+                                    <button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
+                                    <button onClick={() => handleDeleteCategory(deleteCategoryTarget)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
@@ -1008,7 +1137,10 @@
                                                         <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
                                                             {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
                                                         </div>
-                                                        {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
+                                                        <div className="mt-2 flex flex-wrap gap-2 justify-center">
+                                                            {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1 transition-all"><Icon name="scissors" className="w-3 h-3" /> 裁剪</button>}
+                                                            <button type="button" onClick={fetchWikiImage} disabled={isWikiFetching} className={`text-[11px] font-black uppercase flex items-center gap-1 transition-all ${isWikiFetching ? 'text-white/10' : 'text-[#ffbae9]/60 hover:text-[#ffbae9]'}`}><Icon name={isWikiFetching ? "loader" : "globe"} className={`w-3 h-3 ${isWikiFetching ? 'animate-spin' : ''}`} /> 維基抓取</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 
@@ -1025,8 +1157,8 @@
                                                     <div>
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
                                                         <select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
-                                                            <option value=""></option>
-                                                            {customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}
+                                                            <option value="未分類">未分類</option>
+                                                            {customCategories.filter(c => c !== "未分類" && c !== "最新入庫" && c !== "編號排序").map(c => <option key={c} value={c}>{c}</option>)}
                                                         </select>
                                                         <div className="flex flex-wrap gap-1 mt-1">
                                                             {recentCategories.map(c => (
@@ -1040,7 +1172,6 @@
                                                             <div className="flex w-full gap-2 items-center">
                                                                 <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
                                                                 <div className="flex-1">
-                                                                    {/* 更新：還原為可手動輸入的 input */}
                                                                     <input 
                                                                         type="text"
                                                                         className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" 
@@ -1059,7 +1190,6 @@
                                                                     <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
                                                                         {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
                                                                         <span className="truncate max-w-[80px]">{s.name}</span>
-                                                                        {/* 更新：點擊 X 時觸發確認彈窗 */}
                                                                         <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button>
                                                                     </div>
                                                                 ))}
@@ -1193,7 +1323,6 @@
                         </div>
                     )}
 
-                    {/* 來源刪除確認彈窗 */}
                     {deleteSourceTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
