@@ -18,16 +18,63 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
         .animate-text-shimmer { background: linear-gradient(to right, #ffffff, #ffbae9, #818cf8, #ffffff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmer 4s linear infinite; }
         @keyframes shimmer { to { background-position: 200% center; } }
-        .tab-content { width: 100%; margin-top: 1rem; }
-        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; position: relative; display: flex; align-items: center; gap: 6px; }
-        .tab:hover { border-color: #ffbae9; }
-        .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
         
-        .tab-action-group { display: flex; align-items: center; gap: 4px; border-left: 1px solid rgba(63, 89, 104, 0.2); padding-left: 6px; margin-left: 2px; }
-        .tab-icon-btn { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: all 0.2s; cursor: pointer; }
-        .tab-icon-btn:hover { opacity: 1; transform: scale(1.1); }
-        .tab-icon-btn.btn-trash:hover { color: #ef4444; }
+        .tab-content { width: 100%; margin-top: 1rem; }
+        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        
+        .tab { 
+            font-weight: 900; 
+            color: rgba(255,255,255,0.8); 
+            cursor: pointer; 
+            font-size: 0.85rem; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            text-transform: uppercase; 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 8px 20px; 
+            border-radius: 9999px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            white-space: nowrap; 
+            flex-shrink: 0; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .tab:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-1px); }
+        .tab.active { 
+            background: #ffbae9; 
+            color: #3f5968; 
+            border-color: #ffffff; 
+            box-shadow: 0 6px 12px rgba(255, 186, 233, 0.3); 
+        }
+        
+        .tab-action-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            border-left: 1px solid rgba(63, 89, 104, 0.15); 
+            padding-left: 8px; 
+            margin-left: 2px; 
+            transition: all 0.2s;
+        }
+        .tab.active .tab-action-group { border-left-color: rgba(63, 89, 104, 0.3); }
+        
+        .tab-icon-btn { 
+            width: 22px; 
+            height: 22px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 50%;
+            transition: all 0.2s; 
+            cursor: pointer; 
+            color: inherit;
+            opacity: 0.6;
+        }
+        .tab-icon-btn:hover { opacity: 1; background: rgba(0,0,0,0.05); transform: scale(1.15); }
+        .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
 
         .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
@@ -160,7 +207,7 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开兰兰慶慶国国层层陆录剧电视飛觀藥優葉";
+            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开兰兰慶慶国国层层陸錄劇電視飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -839,7 +886,7 @@
                             
                             <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse">
                                 {statMode === 'progress' ? (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center px-0.5">總計</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center px-0.5">總計</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead>
                                     <tbody>{memberStats.map(m => (
                                         <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.completed}</td></tr>
                                     ))}</tbody></>
@@ -869,8 +916,8 @@
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
                             <nav className="tab-bar">
                                 {customCategories.map((cat, idx) => (
-                                    <div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
-                                        {cat}
+                                    <div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
+                                        <span>{cat}</span>
                                         {!isEditLocked && (
                                             <div className="tab-action-group">
                                                 <div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div>
@@ -880,7 +927,7 @@
                                     </div>
                                 ))}
                                 {!isEditLocked && (
-                                    <div className="plus-toggle-btn !w-8 !h-8" onClick={() => setShowAddCategoryModal(true)}><Icon name="plus" className="w-4 h-4" /></div>
+                                    <div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類分組"><Icon name="plus" className="w-5 h-5" /></div>
                                 )}
                             </nav> 
                             <div className="component-view">
@@ -897,8 +944,8 @@
                                 <h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4>
                                 <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} />
                                 <div className="flex gap-4">
-                                    <button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
-                                    <button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded uppercase">確認新增</button>
+                                    <button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
+                                    <button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button>
                                 </div>
                             </div>
                         </div>
@@ -910,8 +957,8 @@
                                 <h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4>
                                 <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} />
                                 <div className="flex gap-4">
-                                    <button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
-                                    <button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded uppercase">儲存修改</button>
+                                    <button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
+                                    <button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">儲存修改</button>
                                 </div>
                             </div>
                         </div>
@@ -1018,7 +1065,7 @@
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><p className="text-sm text-slate-300 mb-8 font-bold">移除 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p>
-                                <div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div>
+                                <div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div>
                             </div>
                         </div>
                     )}
@@ -1034,7 +1081,7 @@
 
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><p className="text-xs text-white/40 mb-8">不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
