@@ -84,7 +84,8 @@
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
         .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
-        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.4rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
+        /* 更新：字體大小縮小約 1px (1.4rem -> 1.33rem) */
+        .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.33rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
         .desc .title-link:hover { color: #ffbae9; }
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
         .meta { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
@@ -207,7 +208,7 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开兰兰慶慶国国层层陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开蘭蘭慶慶国国层层陸錄劇電視飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -383,7 +384,8 @@
                         </div>
                         <div className="title-container">
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                <span className="id-label">#{g.order || 0}</span>{g.name}
+                                {/* 更新：移除 # 號 */}
+                                <span className="id-label">{g.order || 0}</span>{g.name}
                             </div> 
                             <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
                         </div>
@@ -803,8 +805,8 @@
             const filteredGames = useMemo(() => {
                 let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
                 if(q) {
-                    const qNorm = tsNormalize(q); const isNumSearch = /^\d+$/.test(q) || q.startsWith('#');
-                    const numToSearch = isNumSearch ? parseInt(q.replace('#', '')) : null;
+                    const qNorm = tsNormalize(q); const isNumSearch = /^\d+$/.test(q);
+                    const numToSearch = isNumSearch ? parseInt(q) : null;
                     l = l.filter(g => (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) || tsNormalize(g.name || "").toLowerCase().includes(qNorm) || tsNormalize(g.category || "").toLowerCase().includes(qNorm));
                 }
                 if (memberFilter) {
@@ -878,7 +880,8 @@
                                     <div key={l.id} className="border-b border-white/5 pb-0.5">
                                         <span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
                                         <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> 
-                                        <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[#{l.gameOrder}]</span>}"{l.gameName}"</span>
+                                        {/* 更新：日誌中移除 # */}
+                                        <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span>
                                     </div>
                                 ))}
                             </div></div>
@@ -906,7 +909,8 @@
 
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             {!isEditLocked && <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如#1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                            {/* 更新：搜尋框提示移除 # */}
+                            <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                             {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
                             <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
