@@ -20,14 +20,15 @@
         @keyframes shimmer { to { background-position: 200% center; } }
         .tab-content { width: 100%; margin-top: 1rem; }
         .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem 0.5rem 0.8rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; display: flex; align-items: center; gap: 6px; }
+        .tab { font-weight: 900; color: #3f5968; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-transform: uppercase; background-color: #ffffff; padding: 6px 18px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 2px solid transparent; position: relative; display: flex; align-items: center; gap: 6px; }
         .tab:hover { border-color: #ffbae9; }
         .tab.active { background-color: #ffbae9; color: #3f5968; border-color: #ffffff; }
-        .tab-action-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #ffffff; color: #3f5968; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; flex-shrink: 0; position: relative; }
-        .tab-action-btn:hover { transform: scale(1.1); z-index: 10; }
-        .tab-action-btn.btn-plus:hover { background: #ffbae9; }
-        .tab-action-btn.btn-minus:hover { background: #ef4444; color: #fff; }
-        .tab-action-btn.btn-edit:hover { background: #3b82f6; color: #fff; }
+        
+        .tab-action-group { display: flex; align-items: center; gap: 4px; border-left: 1px solid rgba(63, 89, 104, 0.2); padding-left: 6px; margin-left: 2px; }
+        .tab-icon-btn { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: all 0.2s; cursor: pointer; }
+        .tab-icon-btn:hover { opacity: 1; transform: scale(1.1); }
+        .tab-icon-btn.btn-trash:hover { color: #ef4444; }
+
         .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
         .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
@@ -50,21 +51,10 @@
         .badge-waiting { background-color: #475569; color: #fff; }
         .year-badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 900; color: #fff; z-index: 10; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .circle-progress-stack { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
-        .update-progress-circle { 
-            width: 42px; 
-            height: 42px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-            position: relative;
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-            background-size: cover;
-            padding: 1.2px;
-        }
+        
+        .update-progress-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; background-origin: border-box; background-clip: content-box, border-box; background-size: cover; padding: 1.2px; }
         .update-progress-circle span { font-size: 11px; font-weight: 900; letter-spacing: -0.05em; position: relative; z-index: 2; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
+        
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
         .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
@@ -76,8 +66,6 @@
         .member-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.15); line-height: 1; }
         .watcher-tag { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; user-select: none; }
         .watcher-tag.active { background: #ffbae9; color: #3f5968; border-color: #fff; }
-        .progress-stat { display: flex; align-items: baseline; gap: 2px; }
-        .progress-val-current { color: #22d3ee; font-weight: 900; font-size: 1.25rem; line-height: 1; }
         .source-icon-preview-box { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
         .source-icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
@@ -102,20 +90,14 @@
         .custom-unit-dropdown { position: absolute; top: 100%; left: 0; width: auto; min-width: 80px; max-height: 280px; overflow-y: auto; background: #1a202c; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; z-index: 150; margin-top: 2px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .custom-unit-dropdown div { padding: 6px 12px; font-size: 11px; font-weight: 900; cursor: pointer; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .custom-unit-dropdown div:hover { background: #ffbae9; color: #3f5968; }
-        
-        /* 新增：標籤內的動作按鈕樣式 */
-        .tab-item-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
-        .tab:hover .tab-item-actions { opacity: 1; }
-        .tab-item-btn { padding: 2px; border-radius: 2px; transition: background 0.2s; }
-        .tab-item-btn:hover { background: rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback } = React;
 
@@ -178,7 +160,7 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万 with 实鳥范机战边里里广阳书划划画对對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开兰兰慶慶国国层层陆录剧电视飛觀藥優葉";
             let res = str.toLowerCase();
             for(let i=0; i<tradStr.length; i++) {
                 res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
@@ -345,9 +327,7 @@
                                 const color = nameColorMap[name] || '#ffbae9';
                                 return (
                                     <div key={name} className="update-progress-circle" 
-                                        style={{ 
-                                            backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)`
-                                        }} 
+                                        style={{ backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)` }} 
                                         title={`${name}: ${pct}%`}>
                                         <span style={{ color: color }}>{pct}%</span>
                                     </div>
@@ -425,10 +405,7 @@
                 const str = val ? val.toString() : "";
                 let base = isNumber ? 52 : 42;
                 if (isSpecial) base += 2; 
-
-                if (isNumber) {
-                    return Math.max(base, str.length * 12 + 24) + 'px';
-                }
+                if (isNumber) return Math.max(base, str.length * 12 + 24) + 'px';
                 return Math.max(base, str.length * 14 + 20) + 'px';
             };
 
@@ -441,30 +418,16 @@
 
             const expandRow = () => {
                 setIsExpanded(true);
-                if (!value.u2) {
-                    onChange({ ...value, v2: value.v2 || '', u2: '分鐘' });
-                }
+                if (!value.u2) onChange({ ...value, v2: value.v2 || '', u2: '分鐘' });
             };
 
             return (
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={labelStyle}>-{label}-</label>
                     <div className="progress-input-row">
-                        <input 
-                            type="number" 
-                            className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
-                            style={{ width: getDynamicWidth(value.v1, true, true) }} 
-                            value={value.v1} 
-                            onChange={e=>handleChange('v1', e.target.value)} 
-                        />
+                        <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v1, true, true) }} value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
-                            <input 
-                                className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                style={{ width: getDynamicWidth(value.u1) }} 
-                                value={value.u1} 
-                                onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }} 
-                                onChange={e=>handleChange('u1', e.target.value)} 
-                            />
+                            <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u1) }} value={value.u1} onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }} onChange={e=>handleChange('u1', e.target.value)} />
                             {activeDropdown === 'u1' && (
                                 <div className="custom-unit-dropdown custom-scrollbar">
                                     {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>)}
@@ -473,21 +436,9 @@
                         </div>
                         {isExpanded ? (
                             <>
-                                <input 
-                                    type="number" 
-                                    className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" 
-                                    style={{ width: getDynamicWidth(value.v2, true) }} 
-                                    value={value.v2} 
-                                    onChange={e=>handleChange('v2', e.target.value)} 
-                                />
+                                <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v2, true) }} value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
-                                    <input 
-                                        className="modal-input-base font-black text-[10px] p-1 text-center" 
-                                        style={{ width: getDynamicWidth(value.u2, false, true) }} 
-                                        value={value.u2} 
-                                        onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }} 
-                                        onChange={e=>handleChange('u2', e.target.value)} 
-                                    />
+                                    <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u2, false, true) }} value={value.u2} onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }} onChange={e=>handleChange('u2', e.target.value)} />
                                     {activeDropdown === 'u2' && (
                                         <div className="custom-unit-dropdown custom-scrollbar">
                                             {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>)}
@@ -532,18 +483,20 @@
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
             const [onlineUsers, setOnlineUsers] = useState([]), [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
-            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9'), [isEditingName, setIsEditingName] = useState(false);
-            const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null), [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false), [newGroupName, setNewGroupName] = useState('');
+            const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9');
+            const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null);
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null), [showTimeSettings, setShowTimeSettings] = useState(false), [showManualUpdateInput, setShowManualUpdateInput] = useState(false), [statMode, setStatMode] = useState('progress'), [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
-            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null);
-            const [isWikiFetching, setIsWikiFetching] = useState(false);
             
-            // 新增：分組操作狀態
-            const [editCategoryTarget, setEditCategoryTarget] = useState(null);
+            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null);
             const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
+            const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+            const [newCategoryName, setNewCategoryName] = useState("");
+            
+            const [renameCategoryTarget, setRenameCategoryTarget] = useState(null);
+            const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
 
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
@@ -573,12 +526,8 @@
 
             const sortedSourcesByUsage = useMemo(() => {
                 const freq = {};
-                games.forEach(g => {
-                    if (g.source) freq[g.source] = (freq[g.source] || 0) + 1;
-                });
-                return customSources
-                    .filter(s => s.name !== "未知來源")
-                    .sort((a, b) => (freq[b.name] || 0) - (freq[a.name] || 0));
+                games.forEach(g => { if (g.source) freq[g.source] = (freq[g.source] || 0) + 1; });
+                return customSources.filter(s => s.name !== "未知來源").sort((a, b) => (freq[b.name] || 0) - (freq[a.name] || 0));
             }, [games, customSources]);
 
             const isNameDuplicate = useMemo(() => {
@@ -598,10 +547,7 @@
                 const seen = new Set(); const result = [];
                 const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
                 for(const g of sorted) { 
-                    if(g.category && g.category !== "未分類" && !seen.has(g.category)) { 
-                        seen.add(g.category); 
-                        result.push(g.category); 
-                    } 
+                    if(g.category && g.category !== "未分類" && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } 
                     if(result.length >= 3) break; 
                 }
                 return result;
@@ -618,7 +564,7 @@
                 return () => { ug(); ul(); us(); up(); upro(); };
             }, [user]);
 
-            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput, customCategories]);
+            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
 
             useEffect(() => {
                 const handlePaste = async (e) => {
@@ -632,12 +578,8 @@
                                 reader.onload = async (event) => {
                                     const isCover = lastSelectedImgZone === 'cover';
                                     const compressed = await compressImage(event.target.result, isCover ? 800 : 100);
-                                    if(isCover) {
-                                        setFormData(prev => ({ ...prev, cover: compressed }));
-                                        setRawImageData(compressed); 
-                                    } else {
-                                        setFormData(prev => ({ ...prev, sourceIcon: compressed }));
-                                    }
+                                    if(isCover) { setFormData(prev => ({ ...prev, cover: compressed })); setRawImageData(compressed); } 
+                                    else { setFormData(prev => ({ ...prev, sourceIcon: compressed })); }
                                     showNotify(isCover ? "封面已貼上" : "來源圖標已貼上");
                                 };
                                 reader.readAsDataURL(file);
@@ -648,20 +590,11 @@
                     const textData = e.clipboardData.getData('text/plain');
                     if (textData) {
                         const trimmed = textData.trim();
-                        const isImageUrl = 
-                            trimmed.startsWith('data:image') || 
-                            /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed) ||
-                            trimmed.includes('.image?') || 
-                            trimmed.includes('fqnovelpic.com');
-
+                        const isImageUrl = trimmed.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed);
                         if (isImageUrl) {
                             const isCover = lastSelectedImgZone === 'cover';
-                            if(isCover) {
-                                setFormData(prev => ({ ...prev, cover: trimmed }));
-                                setRawImageData(trimmed); 
-                            } else {
-                                setFormData(prev => ({ ...prev, sourceIcon: trimmed }));
-                            }
+                            if(isCover) { setFormData(prev => ({ ...prev, cover: trimmed })); setRawImageData(trimmed); } 
+                            else { setFormData(prev => ({ ...prev, sourceIcon: trimmed })); }
                             showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
                         }
                     }
@@ -683,57 +616,20 @@
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
                 let wp = item.watchedProgress || {};
                 let normalizedWp = {};
-                if (wp.v1 !== undefined) {
-                    normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) };
-                } else {
-                    Object.keys(wp).forEach(name => {
-                        normalizedWp[name] = ensureP(wp[name]);
-                    });
-                }
+                if (wp.v1 !== undefined) { normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) }; } 
+                else { Object.keys(wp).forEach(name => { normalizedWp[name] = ensureP(wp[name]); }); }
                 const globalSource = customSources.find(s => s.name === item.source);
                 const initialSourceIcon = globalSource ? globalSource.icon : '';
                 const currentUpdateDay = item.updateDay ? (Array.isArray(item.updateDay) ? item.updateDay : [item.updateDay]) : [];
                 setFormData({ 
-                    ...item, 
-                    sourceIcon: initialSourceIcon,
-                    totalEpisodes: ensureP(item.totalEpisodes), 
-                    watchedProgress: normalizedWp, 
-                    updatedEpisodes: ensureP(item.updatedEpisodes), 
-                    paidProgress: ensureP(item.paidProgress), 
-                    notes: item.notes || '', 
-                    manualUpdatedAt: item.manualUpdatedAt || '', 
-                    watchingBy: watchers,
-                    updateDay: currentUpdateDay
+                    ...item, sourceIcon: initialSourceIcon, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: normalizedWp, 
+                    updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', 
+                    manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers, updateDay: currentUpdateDay
                 }); 
                 setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); 
                 setShowManualUpdateInput(!!item.manualUpdatedAt); 
                 setIsModalOpen(true); 
             }, [customSources]);
-
-            const fetchWikiImage = async () => {
-                if (!formData.name.trim()) return showNotify("請先輸入標題名稱");
-                setIsWikiFetching(true);
-                try {
-                    const searchUrl = `https://zh.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&titles=${encodeURIComponent(formData.name)}&pithumbsize=800&origin=*`;
-                    const res = await fetch(searchUrl);
-                    const data = await res.json();
-                    const pages = data.query?.pages;
-                    const pageId = Object.keys(pages)[0];
-                    const imgUrl = pages[pageId]?.thumbnail?.source;
-
-                    if (imgUrl) {
-                        setFormData(prev => ({ ...prev, cover: imgUrl }));
-                        setRawImageData(imgUrl);
-                        showNotify("維基抓取成功");
-                    } else {
-                        showNotify("找不到維基封面圖片");
-                    }
-                } catch (e) {
-                    showNotify("抓取失敗");
-                } finally {
-                    setIsWikiFetching(false);
-                }
-            };
 
             const proceedSave = async () => {
                 setShowDuplicateConfirm(false); 
@@ -747,161 +643,80 @@
                     }
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
-                        if(idx === -1) {
-                            sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); 
-                        } else {
-                            if (formData.sourceIcon && formData.sourceIcon.trim() !== "") {
-                                sources[idx].icon = formData.sourceIcon;
-                            }
-                        }
+                        if(idx === -1) { sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); } 
+                        else if (formData.sourceIcon) { sources[idx].icon = formData.sourceIcon; }
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
                     const rawPayload = {
-                        name: formData.name || "",
-                        notes: formData.notes || "",
-                        addedBy: String(formData.addedBy || userName || "系統"),
-                        year: formData.year || "",
-                        order: to,
-                        url: formData.url || "",
-                        cover: formData.cover || null,
-                        totalEpisodes: formData.totalEpisodes || { ...emptyProgress },
-                        updatedEpisodes: formData.updatedEpisodes || { ...emptyProgress },
-                        paidProgress: formData.paidProgress || { ...emptyProgress },
-                        watchedProgress: formData.watchedProgress || {},
-                        airingStatus: formData.airingStatus || "連載中",
-                        source: formData.source.trim() || "未知來源",
-                        category: formData.category || "未分類",
-                        manualUpdatedAt: formData.manualUpdatedAt || "",
-                        watchingBy: formData.watchingBy || [],
-                        updateDay: formData.updateDay || [],
-                        updateTime: formData.updateTime || "",
-                        updatedAt: serverTimestamp() 
+                        name: formData.name || "", notes: formData.notes || "", addedBy: String(formData.addedBy || userName || "系統"),
+                        year: formData.year || "", order: to, url: formData.url || "", cover: formData.cover || null,
+                        totalEpisodes: formData.totalEpisodes || { ...emptyProgress }, updatedEpisodes: formData.updatedEpisodes || { ...emptyProgress },
+                        paidProgress: formData.paidProgress || { ...emptyProgress }, watchedProgress: formData.watchedProgress || {},
+                        airingStatus: formData.airingStatus || "連載中", source: formData.source.trim() || "未知來源",
+                        category: formData.category || "未分類", manualUpdatedAt: formData.manualUpdatedAt || "",
+                        watchingBy: formData.watchingBy || [], updateDay: formData.updateDay || [], updateTime: formData.updateTime || "", updatedAt: serverTimestamp() 
                     };
                     const finalData = sanitizePayload(rawPayload);
-                    if(editingId) { 
-                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
-                        logActivity("修改", finalData.name, to); 
-                    } else { 
-                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
-                        logActivity("錄入", finalData.name, to); 
-                    }
-                    showNotify("資料已儲存"); 
-                    setIsModalOpen(false); 
-                    setEditingId(null);
-                } catch(e) { 
-                    console.error("Save error detail:", e);
-                    showNotify(`操作失敗：數據層級錯誤 (${e.message})`); 
-                }
+                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", finalData.name, to); } 
+                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", finalData.name, to); }
+                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
+                } catch(e) { showNotify(`操作失敗：${e.message}`); }
+            };
+
+            const handleAddCategory = async () => {
+                if(!newCategoryName.trim() || !user) return;
+                if(customCategories.includes(newCategoryName.trim())) { showNotify("該分類已存在"); return; }
+                const nextCats = [...customCategories, newCategoryName.trim()];
+                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                showNotify("分組已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
+            };
+
+            const handleRenameCategory = async () => {
+                if(!renameCategoryTarget || !renameCategoryNewValue.trim() || !user) return;
+                const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c);
+                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                showNotify("分組名稱已更新");
+                setRenameCategoryTarget(null); setRenameCategoryNewValue("");
+            };
+
+            const handleDeleteCategory = async (cat) => {
+                if(!cat || !user) return;
+                const nextCats = customCategories.filter(c => c !== cat);
+                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                showNotify("分組已刪除");
             };
 
             const handleRepairData = async () => {
-                if(!user) return;
-                showNotify("正在啟動修復程序...");
+                if(!user) return; showNotify("正在啟動修復程序...");
                 try {
                     const snapshot = await getDocs(getPublicCol('games'));
                     let count = 0;
                     for(const d of snapshot.docs) {
                         const data = d.data();
-                        const watchers = Array.isArray(data.watchingBy) ? data.watchingBy : (data.watchingBy ? [data.watchingBy] : []);
-                        let normalizedWp = {};
-                        let wp = data.watchedProgress || {};
-                        if (wp.v1 !== undefined) {
-                            normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) };
-                        } else {
-                            Object.keys(wp).forEach(name => {
-                                normalizedWp[name] = ensureP(wp[name]);
-                            });
-                        }
-                        const updateObj = sanitizePayload({
-                            totalEpisodes: ensureP(data.totalEpisodes),
-                            updatedEpisodes: ensureP(data.updatedEpisodes),
-                            paidProgress: ensureP(data.paidProgress),
-                            watchedProgress: normalizedWp
-                        });
-                        await updateDoc(d.ref, updateObj);
-                        count++;
+                        const updateObj = sanitizePayload({ totalEpisodes: ensureP(data.totalEpisodes), updatedEpisodes: ensureP(data.updatedEpisodes), paidProgress: ensureP(data.paidProgress) });
+                        await updateDoc(d.ref, updateObj); count++;
                     }
                     showNotify(`修復完成！共更新 ${count} 筆檔案`);
-                } catch(e) {
-                    showNotify("修復失敗，請檢查權限");
-                }
+                } catch(e) { showNotify("修復失敗"); }
             };
 
             const handleReorderIndices = async () => {
-                if (!user) return;
-                showNotify("正在重新排列編號...");
+                if (!user) return; showNotify("正在重新排列編號...");
                 try {
                     const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
                     const updates = sorted.map((g, index) => {
                         const newOrder = index + 1;
-                        if (extractFirstNumber(g.order) !== newOrder) {
-                            return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true });
-                        }
+                        if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true });
                         return null;
                     }).filter(p => p !== null);
-                    if (updates.length > 0) {
-                        await Promise.all(updates);
-                        showNotify(`重新排列完成！共更新 ${updates.length} 筆資料`);
-                        logActivity("批量重排編號", "全體內容", "");
-                    } else {
-                        showNotify("編號已經是整齊的了");
-                    }
-                } catch (e) {
-                    showNotify("重排失敗，請檢查權限");
-                }
+                    if (updates.length > 0) { await Promise.all(updates); showNotify(`重新排列完成！`); } 
+                    else { showNotify("編號已整齊"); }
+                } catch (e) { showNotify("重排失敗"); }
             };
 
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("數據已清空"); } catch(e) { showNotify("操作失敗"); } };
-
-            // 新增：分組管理功能
-            const handleAddCategory = async () => {
-                const name = newGroupName.trim();
-                if (!name) return showNotify("名稱不能為空");
-                if (customCategories.includes(name)) return showNotify("名稱重複");
-                
-                const updated = [...customCategories, name];
-                try {
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
-                    setNewGroupName("");
-                    setIsAddGroupModalOpen(false);
-                    showNotify(`分組「${name}」已新增`);
-                } catch (e) { showNotify("儲存失敗"); }
-            };
-
-            const handleRenameCategory = async () => {
-                const oldName = editCategoryTarget.old;
-                const newName = editCategoryTarget.current.trim();
-                if (!newName || oldName === newName) return setEditCategoryTarget(null);
-                
-                const updated = customCategories.map(c => c === oldName ? newName : c);
-                try {
-                    // 更新設置
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
-                    // 更新所有關聯的影片資料（批量更新）
-                    const affected = games.filter(g => g.category === oldName);
-                    await Promise.all(affected.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName })));
-                    
-                    setEditCategoryTarget(null);
-                    showNotify("分組名稱已更新");
-                } catch (e) { showNotify("更新失敗"); }
-            };
-
-            const handleDeleteCategory = async (cat) => {
-                if (cat === "最新入庫" || cat === "編號排序") return showNotify("系統分組不可刪除");
-                const updated = customCategories.filter(c => c !== cat);
-                try {
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: updated }, { merge: true });
-                    // 將該分類下的影片歸類為未分類
-                    const affected = games.filter(g => g.category === cat);
-                    await Promise.all(affected.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: "未分類" })));
-                    
-                    setDeleteCategoryTarget(null);
-                    if (activeTab === cat) setActiveTab(null);
-                    showNotify("分組已刪除");
-                } catch (e) { showNotify("刪除失敗"); }
-            };
 
             const memberStats = useMemo(() => {
                 const sm = {}; 
@@ -934,17 +749,9 @@
                 setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value });
             }, []);
 
-            const handleExportData = () => { 
-                const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); 
-            };
-            
-            const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()})); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
-                r.readAsText(f);
-            };
+            const toggleGlobalFilter = useCallback((type, value) => {
+                setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value });
+            }, []);
 
             const filteredGames = useMemo(() => {
                 let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
@@ -957,13 +764,25 @@
                     const { name, type, value } = memberFilter;
                     l = l.filter(g => {
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-                        if (!watchers.includes(name)) return false;
-                        if (type === 'progress') {
-                            const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes, g.updatedEpisodes);
-                            if (value === 'unstarted') return p === 0;
-                            if (value === 'watching') return p > 0 && p < 100;
-                            if (value === 'completed') return p >= 100;
-                            return true;
+                        if (name) {
+                            if (!watchers.includes(name)) return false;
+                            if (type === 'progress') {
+                                const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes, g.updatedEpisodes);
+                                if (value === 'unstarted') return p === 0;
+                                if (value === 'watching') return p > 0 && p < 100;
+                                if (value === 'completed') return p >= 100;
+                                return true;
+                            }
+                        } else {
+                            if (type === 'progress') {
+                                return watchers.some(wName => {
+                                    const p = calculateDualProgress(g.watchedProgress?.[wName], g.totalEpisodes, g.updatedEpisodes);
+                                    if (value === 'unstarted') return p === 0;
+                                    if (value === 'watching') return p > 0 && p < 100;
+                                    if (value === 'completed') return p >= 100;
+                                    return false;
+                                });
+                            }
                         }
                         if (type === 'category') return (g.category || "未分類") === value;
                         if (type === 'source') return (g.source || "未知來源") === value;
@@ -974,6 +793,18 @@
                 else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
+
+            const handleExportData = () => { 
+                const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+                const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); 
+            };
+            
+            const handleImportData = async (e) => {
+                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
+                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()})); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
+                r.readAsText(f);
+            };
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
@@ -1008,19 +839,19 @@
                             
                             <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse">
                                 {statMode === 'progress' ? (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center">總計</th><th className="text-center">還威看</th><th className="text-center text-cyan-400">觀看中</th><th className="text-center text-green-400">已看完</th></tr></thead>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center px-0.5">總計</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead>
                                     <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer">{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer">{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center text-cyan-400 cursor-pointer">{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center text-green-400 cursor-pointer">{m.stats.completed}</td></tr>
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.completed}</td></tr>
                                     ))}</tbody></>
                                 ) : statMode === 'category' ? (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeCategoriesInUse.map(c => <th key={c} className="text-center px-4 whitespace-nowrap">{c}</th>)}</tr></thead>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead>
                                     <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer ${m.stats.cats[c] > 0 ? 'text-[#ffbae9]' : 'opacity-20'}`}>{m.stats.cats[c] || 0}</td>)}</tr>
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-0.5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>
                                     ))}</tbody></>
                                 ) : (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeSourcesInUse.map(s => <th key={s} className="text-center px-4 whitespace-nowrap">{s}</th>)}</tr></thead>
+                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeSourcesInUse.map(s => <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{s}</th>)}</tr></thead>
                                     <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer ${m.stats.sources[s] > 0 ? 'text-cyan-400' : 'opacity-20'}`}>{m.stats.sources[s] || 0}</td>)}</tr>
+                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-0.5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>
                                     ))}</tbody></>
                                 )}
                             </table></div></div>
@@ -1029,7 +860,7 @@
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             {!isEditLocked && <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如#1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                            {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">正在篩選: {memberFilter.name} <Icon name="x" className="w-3 h-3" /></button></div>}
+                            {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
                             <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
                                 <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
                             </div>
@@ -1040,18 +871,16 @@
                                 {customCategories.map((cat, idx) => (
                                     <div key={idx} className={`tab ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
                                         {cat}
-                                        {!isEditLocked && cat !== "最新入庫" && cat !== "編號排序" && (
-                                            <div className="tab-item-actions ml-1">
-                                                <button onClick={(e) => { e.stopPropagation(); setEditCategoryTarget({ old: cat, current: cat }); }} className="tab-item-btn"><Icon name="edit-3" className="w-3 h-3" /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }} className="tab-item-btn"><Icon name="trash-2" className="w-3 h-3" /></button>
+                                        {!isEditLocked && (
+                                            <div className="tab-action-group">
+                                                <div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div>
+                                                <div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div>
                                             </div>
                                         )}
                                     </div>
                                 ))}
                                 {!isEditLocked && (
-                                    <button onClick={() => setIsAddGroupModalOpen(true)} className="tab-action-btn btn-plus" title="新增分組">
-                                        <Icon name="plus" className="w-4 h-4" />
-                                    </button>
+                                    <div className="plus-toggle-btn !w-8 !h-8" onClick={() => setShowAddCategoryModal(true)}><Icon name="plus" className="w-4 h-4" /></div>
                                 )}
                             </nav> 
                             <div className="component-view">
@@ -1062,6 +891,46 @@
                         </article>
                     </div>
 
+                    {showAddCategoryModal && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl">
+                                <h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4>
+                                <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} />
+                                <div className="flex gap-4">
+                                    <button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
+                                    <button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded uppercase">確認新增</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {renameCategoryTarget && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl">
+                                <h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4>
+                                <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} />
+                                <div className="flex gap-4">
+                                    <button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
+                                    <button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded uppercase">儲存修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {deleteCategoryTarget && (
+                        <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
+                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4>
+                                <p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p>
+                                <div className="flex gap-4">
+                                    <button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
+                                    <button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="fab-btn-container">
                         <div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>
                         {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
@@ -1071,250 +940,72 @@
                         <div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div>
                     </div>
 
-                    {/* 新增分組彈窗 */}
-                    {isAddGroupModalOpen && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded-sm shadow-2xl">
-                                <h4 className="text-[#ffbae9] font-black mb-6 uppercase tracking-widest text-sm italic">新增分組類型</h4>
-                                <input type="text" className="modal-input-base w-full font-black text-sm mb-6" placeholder="分組名稱" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} autoFocus />
-                                <div className="flex gap-3">
-                                    <button onClick={() => setIsAddGroupModalOpen(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded uppercase">取消</button>
-                                    <button onClick={handleAddCategory} className="flex-1 py-2 bg-[#ffbae9] text-[#3f5968] text-[11px] font-black rounded uppercase">確認新增</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 修改分組名稱彈窗 */}
-                    {editCategoryTarget && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded-sm shadow-2xl">
-                                <h4 className="text-cyan-400 font-black mb-6 uppercase tracking-widest text-sm italic">重新命名分組</h4>
-                                <input type="text" className="modal-input-base w-full font-black text-sm mb-6" value={editCategoryTarget.current} onChange={e => setEditCategoryTarget({...editCategoryTarget, current: e.target.value})} autoFocus />
-                                <div className="flex gap-3">
-                                    <button onClick={() => setEditCategoryTarget(null)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded uppercase">取消</button>
-                                    <button onClick={handleRenameCategory} className="flex-1 py-2 bg-cyan-400 text-[#3f5968] text-[11px] font-black rounded uppercase">確認修改</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 刪除分組確認 */}
-                    {deleteCategoryTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4>
-                                <p className="text-xs text-slate-400 mb-8 font-bold leading-relaxed px-4">
-                                    分組「<span className="text-red-400">{deleteCategoryTarget}</span>」內的所有項目將被移至「未分類」。此操作不可恢復。
-                                </p>
-                                <div className="flex gap-4">
-                                    <button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
-                                    <button onClick={() => handleDeleteCategory(deleteCategoryTarget)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
                                 <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
                                 <div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1">
-                                    <h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">
-                                        {editingId ? '修改內容' : '錄入內容'}
-                                    </h3>
+                                    <h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3>
                                     <form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2">
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
                                             <div className="md:col-span-4 flex flex-col gap-3 md:gap-4 items-start">
                                                 <div className="flex flex-row items-end gap-3 w-full">
-                                                    <div className="flex-shrink-0 mb-1">
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label>
-                                                        <input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} />
-                                                    </div>
+                                                    <div className="flex-shrink-0 mb-1"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
                                                     <div className="flex-grow flex flex-col items-center">
                                                         <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "CTRL+V 貼上圖(連結)"}</div>}
+                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}
                                                         </div>
-                                                        <div className="mt-2 flex flex-wrap gap-2 justify-center">
-                                                            {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1 transition-all"><Icon name="scissors" className="w-3 h-3" /> 裁剪</button>}
-                                                            <button type="button" onClick={fetchWikiImage} disabled={isWikiFetching} className={`text-[11px] font-black uppercase flex items-center gap-1 transition-all ${isWikiFetching ? 'text-white/10' : 'text-[#ffbae9]/60 hover:text-[#ffbae9]'}`}><Icon name={isWikiFetching ? "loader" : "globe"} className={`w-3 h-3 ${isWikiFetching ? 'animate-spin' : ''}`} /> 維基抓取</button>
-                                                        </div>
+                                                        {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
                                                     </div>
                                                 </div>
-                                                
                                                 <div className="flex flex-col gap-4 w-full">
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
                                                         <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
-                                                        <div className="col-span-2 flex flex-wrap gap-1 mt-1">
-                                                            {recentStatuses.map(s => (
-                                                                <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>
-                                                            ))}
-                                                        </div>
+                                                        <div className="col-span-2 flex flex-wrap gap-1 mt-1">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div>
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
-                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}>
-                                                            <option value="未分類">未分類</option>
-                                                            {customCategories.filter(c => c !== "未分類" && c !== "最新入庫" && c !== "編號排序").map(c => <option key={c} value={c}>{c}</option>)}
-                                                        </select>
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {recentCategories.map(c => (
-                                                                <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>
-                                                            ))}
-                                                        </div>
+                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select>
+                                                        <div className="flex flex-wrap gap-1 mt-1">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div>
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label>
                                                         <div className="flex flex-col gap-2">
                                                             <div className="flex w-full gap-2 items-center">
                                                                 <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
-                                                                <div className="flex-1">
-                                                                    <input 
-                                                                        type="text"
-                                                                        className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" 
-                                                                        placeholder=""
-                                                                        value={formData.source} 
-                                                                        onChange={e => {
-                                                                            const v = e.target.value;
-                                                                            const ex = customSources.find(s => s.name === v);
-                                                                            setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon });
-                                                                        }}
-                                                                    />
-                                                                </div>
+                                                                <div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div>
                                                             </div>
-                                                            <div className="flex flex-wrap gap-1.5 w-full mt-1">
-                                                                {sortedSourcesByUsage.map(s => (
-                                                                    <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>
-                                                                        {s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}
-                                                                        <span className="truncate max-w-[80px]">{s.name}</span>
-                                                                        <button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByUsage.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ 
-                                                    if(e.target.files[0]) { 
-                                                        const isCover = lastSelectedImgZone === 'cover';
-                                                        const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); 
-                                                        if(isCover) {
-                                                            setFormData(p=>({...p, cover: c}));
-                                                            setRawImageData(c); 
-                                                        } else {
-                                                            setFormData(p=>({...p, sourceIcon: c}));
-                                                        }
-                                                    } 
-                                                }} />
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} />
                                             </div>
-
                                             <div className="md:col-span-8 border-l border-white/5 md:pl-8">
                                                 <div className="space-y-2">
                                                     <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div>
                                                     <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div>
                                                 </div>
-
                                                 <div className="mt-4 grid grid-cols-2 gap-4">
                                                     <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
                                                     <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} />
                                                 </div>
-
                                                 <div className="mt-4 flex flex-row gap-6 items-end">
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>
-                                                        {showTimeSettings ? (
-                                                            <div className="flex flex-col gap-2">
-                                                                <div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">
-                                                                    {['一','二','三','四','五','六','日'].map(d => (
-                                                                        <button 
-                                                                            key={d} 
-                                                                            type="button" 
-                                                                            onClick={() => {
-                                                                                const current = Array.isArray(formData.updateDay) ? formData.updateDay : [];
-                                                                                const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d];
-                                                                                setFormData({...formData, updateDay: next});
-                                                                            }}
-                                                                            className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}
-                                                                        >
-                                                                            {d}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-更新時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div>
+                                                    <div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div>
+                                                    <div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div>
                                                 </div>
-
                                                 <div className="mt-4 grid grid-cols-2 gap-4">
-                                                    <div className="col-span-1">
-                                                        <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label>
-                                                        <div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">
-                                                            {displayMembers.map(name => (
-                                                                <div key={name} onClick={() => { 
-                                                                    const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; 
-                                                                    const isSelected = list.includes(name);
-                                                                    const newList = isSelected ? list.filter(n => n !== name) : [...list, name];
-                                                                    const newWP = { ...formData.watchedProgress };
-                                                                    if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress };
-                                                                    setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); 
-                                                                }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-4">
-                                                        <ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} />
-                                                    </div>
+                                                    <div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div>
+                                                    <div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} /></div>
                                                 </div>
-
                                                 <div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start">
-                                                    <div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4">
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度控制</span>
-                                                        </div>
-                                                        {formData.watchingBy.map(name => (
-                                                            <ProgressInputField 
-                                                                key={name}
-                                                                label={`${name} 的觀看進度`} 
-                                                                labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} 
-                                                                value={formData.watchedProgress[name] || { ...emptyProgress }} 
-                                                                unitSuggestions={unitSuggestions} 
-                                                                onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} 
-                                                            />
-                                                        ))}
-                                                        {formData.watchingBy.length === 0 && (
-                                                            <div className="text-[10px] text-white/20 font-black italic">請先選擇「誰在看」成員</div>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    <div className="md:col-span-4 space-y-4 md:pl-6">
-                                                        <label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-最後更新-</label>
-                                                        {showManualUpdateInput ? (
-                                                            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5 max-w-[160px]">
-                                                                <input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" placeholder="" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} />
-                                                                <button type="button" onClick={() => { setFormData({...formData, manualUpdatedAt: ""}); setShowManualUpdateInput(false); }} className="text-white/20 hover:text-red-400 mr-0.5"><Icon name="x" className="w-3.5 h-3.5" /></button>
-                                                            </div>
-                                                        ) : (<div className="plus-toggle-btn !w-full max-w-[160px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>)}
-                                                    </div>
+                                                    <div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div>
+                                                    <div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5 max-w-[160px]"><input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/20 hover:text-red-400 mr-0.5"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[160px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div>
                                                 </div>
-                                                
-                                                <div className="mt-4 w-full">
-                                                    <label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label>
-                                                    <div className="relative group">
-                                                        <input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} />
-                                                        {formData.url && <button type="button" onClick={() => { if(formData.url.startsWith('http')) window.open(formData.url, '_blank'); else showNotify("格式錯誤"); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-white transition-all bg-black/40 p-1 rounded"><Icon name="external-link" className="w-4 h-4" /></button>}
-                                                    </div>
-                                                </div>
-
-                                                <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4">
-                                                    <button type="button" onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="order-2 md:order-1 flex-1 py-3 md:py-4 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button>
-                                                    <button type="submit" className={`order-1 md:order-2 flex-[2] py-3 md:py-4 font-black rounded shadow-lg uppercase transition-all text-[11px] bg-[#ffbae9] text-[#3f5968] hover:bg-white`}>確認提交資料</button>
-                                                </div>
+                                                <div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
+                                                <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] bg-[#ffbae9] text-[#3f5968]`}>確認提交</button></div>
                                             </div>
                                         </div>
                                     </form>
@@ -1326,13 +1017,8 @@
                     {deleteSourceTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg tracking-widest">確認刪除來源？</h4>
-                                <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">確定要從建議清單中移除來源 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p>
-                                <div className="flex gap-4">
-                                    <button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
-                                    <button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
-                                </div>
+                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><p className="text-sm text-slate-300 mb-8 font-bold">移除 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p>
+                                <div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div>
                             </div>
                         </div>
                     )}
@@ -1340,20 +1026,18 @@
                     {showDuplicateConfirm && (
                         <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg tracking-widest">發現同名項目</h4>
-                                <p className="text-sm text-slate-300 mb-8 font-bold leading-relaxed">資料庫中已存在名為 <span className="text-red-400">"{formData.name}"</span> 的檔案。<br/>您確定要建立/儲存同名項目嗎？</p>
-                                <div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回修改</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">仍要儲存</button></div>
+                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p>
+                                <div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div>
                             </div>
                         </div>
                     )}
 
-                    {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("封面已優化"); }} onCancel={() => setIsCropping(false)} />}
+                    {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
                     {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold italic">{String(deleteGameTarget.name)}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定</button></div></div></div>
                     )}
                     {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase tracking-widest">警告：清空全部數據</h4><p className="text-xs text-white/40 mb-8 px-2">確定要清空所有內容嗎？此操作不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><p className="text-xs text-white/40 mb-8">不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
                     )}
                 </div>
             );
