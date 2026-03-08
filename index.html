@@ -425,16 +425,20 @@
 
             const [isFocused, setIsFocused] = useState(false);
 
-            const highlights = useMemo(() => {
-                if (!value) return [];
+            const { highlights, overlappingGames } = useMemo(() => {
+                if (!value) return { highlights: [], overlappingGames: [] };
                 const overlapCount = new Array(value.length).fill(0);
                 const cleanStr = (s) => tsNormalize((s||"").toLowerCase());
+                const overlappingMap = new Map();
                 
                 for (const g of games) {
                     if (g.id === editingId) continue;
+                    const exNameOriginal = g.name;
                     const exName = cleanStr(g.name);
                     if (!exName) continue;
                     const currClean = cleanStr(value);
+                    
+                    let gameMaxLen = 0;
                     
                     for (let i = 0; i < currClean.length; i++) {
                         for (let len = 1; i + len <= currClean.length; len++) {
@@ -443,6 +447,7 @@
                             if (/^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/.test(sub)) continue;
                             
                             if (exName.includes(sub)) {
+                                if (len > gameMaxLen) gameMaxLen = len;
                                 for (let k = i; k < i + len; k++) {
                                     // 確保不會高亮標點符號本身
                                     if (!/^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/.test(value[k])) {
@@ -452,56 +457,86 @@
                             }
                         }
                     }
+                    if (gameMaxLen > 0) {
+                        overlappingMap.set(exNameOriginal, Math.max(overlappingMap.get(exNameOriginal) || 0, gameMaxLen));
+                    }
                 }
                 
                 const segments = [];
-                if (value.length === 0) return segments;
-                
-                let curStr = value[0];
-                let curState = overlapCount[0] >= 2 ? 'red' : (overlapCount[0] === 1 ? 'blue' : 'none');
-                
-                for (let i = 1; i < value.length; i++) {
-                    let state = overlapCount[i] >= 2 ? 'red' : (overlapCount[i] === 1 ? 'blue' : 'none');
-                    if (state === curState) {
-                        curStr += value[i];
-                    } else {
-                        segments.push({ text: curStr, state: curState });
-                        curStr = value[i];
-                        curState = state;
+                if (value.length > 0) {
+                    let curStr = value[0];
+                    let curState = overlapCount[0] >= 2 ? 'red' : (overlapCount[0] === 1 ? 'blue' : 'none');
+                    
+                    for (let i = 1; i < value.length; i++) {
+                        let state = overlapCount[i] >= 2 ? 'red' : (overlapCount[i] === 1 ? 'blue' : 'none');
+                        if (state === curState) {
+                            curStr += value[i];
+                        } else {
+                            segments.push({ text: curStr, state: curState });
+                            curStr = value[i];
+                            curState = state;
+                        }
                     }
+                    segments.push({ text: curStr, state: curState });
                 }
-                segments.push({ text: curStr, state: curState });
-                return segments;
+
+                // 排序重疊項目並取前 10 筆顯示在清單中
+                const sortedOverlaps = Array.from(overlappingMap.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(entry => ({ name: entry[0], score: entry[1] }))
+                    .slice(0, 10);
+                    
+                return { highlights: segments, overlappingGames: sortedOverlaps };
             }, [value, games, editingId]);
 
             return (
-                <div className={`relative modal-input-base w-full !p-0 ${isFocused ? '!border-b-[#ffbae9] !bg-[rgba(0,0,0,0.7)] shadow-[0_4px_12px_rgba(255,186,233,0.1)]' : ''} ${isError ? '!border-red-500 ring-2 ring-red-500/20' : ''}`}>
-                    {/* 高亮底色層 */}
-                    <div 
-                        className="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap break-all font-black text-lg overflow-hidden"
-                        style={{ padding: '0.5rem 0.75rem', color: 'transparent', wordBreak: 'break-all' }}
-                    >
-                        {highlights.map((seg, i) => (
-                            <span key={i} className={
-                                seg.state === 'red' ? 'bg-red-500/50 rounded-[2px]' :
-                                seg.state === 'blue' ? 'bg-cyan-500/40 rounded-[2px]' :
-                                ''
-                            }>{seg.text}</span>
-                        ))}
+                <div className="relative w-full">
+                    <div className={`relative modal-input-base w-full !p-0 ${isFocused ? '!border-b-[#ffbae9] !bg-[rgba(0,0,0,0.7)] shadow-[0_4px_12px_rgba(255,186,233,0.1)]' : ''} ${isError ? '!border-red-500 ring-2 ring-red-500/20' : ''}`}>
+                        {/* 高亮底色層 */}
+                        <div 
+                            className="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap break-all font-black text-lg overflow-hidden"
+                            style={{ padding: '0.5rem 0.75rem', color: 'transparent', wordBreak: 'break-all' }}
+                        >
+                            {highlights.map((seg, i) => (
+                                <span key={i} className={
+                                    seg.state === 'red' ? 'bg-red-500/50 rounded-[2px]' :
+                                    seg.state === 'blue' ? 'bg-cyan-500/40 rounded-[2px]' :
+                                    ''
+                                }>{seg.text}</span>
+                            ))}
+                        </div>
+                        {/* 實際輸入層 */}
+                        <textarea
+                            ref={textareaRef}
+                            rows="1"
+                            className="w-full bg-transparent border-none outline-none resize-none m-0 block font-black text-white text-lg relative z-10"
+                            style={{ padding: '0.5rem 0.75rem', wordBreak: 'break-all' }}
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
+                            placeholder={placeholder}
+                            required={true}
+                        />
                     </div>
-                    {/* 實際輸入層 */}
-                    <textarea
-                        ref={textareaRef}
-                        rows="1"
-                        className="w-full bg-transparent border-none outline-none resize-none m-0 block font-black text-white text-lg relative z-10"
-                        style={{ padding: '0.5rem 0.75rem', wordBreak: 'break-all' }}
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
-                        placeholder={placeholder}
-                        required={true}
-                    />
+                    {/* 重疊資料下拉清單 */}
+                    {isFocused && overlappingGames.length > 0 && (
+                        <div 
+                            className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] max-h-[160px] overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-1 animate-slide-down-fade"
+                            onMouseDown={(e) => e.preventDefault()}
+                        >
+                            {overlappingGames.map((g, idx) => (
+                                <div key={idx} className="text-[12px] text-white/90 font-black px-2.5 py-1.5 bg-black/20 hover:bg-black/40 rounded truncate transition-colors flex justify-between items-center group">
+                                    <span className="truncate group-hover:text-[#ffbae9] transition-colors">{g.name}</span>
+                                    {g.score >= 2 ? (
+                                        <span className="text-[9px] bg-red-500/20 border border-red-500/30 text-red-300 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">重疊 {g.score} 字</span>
+                                    ) : (
+                                        <span className="text-[9px] bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">重疊 1 字</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         };
