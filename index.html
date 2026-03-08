@@ -509,10 +509,10 @@
                     segments.push({ text: curStr, state: curState });
                 }
 
-                // 排序重疊項目並取前 20 筆顯示在清單中 (原為 10 筆)
+                // 排序重疊項目並取前 10 筆顯示在清單中
                 const sortedOverlaps = overlappingList
                     .sort((a, b) => b.score - a.score)
-                    .slice(0, 20); 
+                    .slice(0, 10); 
                     
                 return { highlights: segments, overlappingGames: sortedOverlaps };
             }, [value, games, editingId]);
@@ -547,10 +547,10 @@
                             required={true}
                         />
                     </div>
-                    {/* 重疊資料下拉清單 (高度放寬，顯示重疊高亮) */}
+                    {/* 重疊資料下拉清單 (不限制高度，直接完整顯示全部 10 筆) */}
                     {isFocused && overlappingGames.length > 0 && (
                         <div 
-                            className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-1 animate-slide-down-fade"
+                            className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] p-1.5 flex flex-col gap-1 animate-slide-down-fade"
                             onMouseDown={(e) => e.preventDefault()}
                         >
                             {overlappingGames.map((g, idx) => (
