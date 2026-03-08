@@ -19,59 +19,25 @@
         .animate-text-shimmer { background: linear-gradient(to right, #ffffff, #ffbae9, #818cf8, #ffffff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmer 4s linear infinite; }
         @keyframes shimmer { to { background-position: 200% center; } }
         
+        @keyframes slideDownFade {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-down-fade { animation: slideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-origin: top right; }
+
         .tab-content { width: 100%; margin-top: 1rem; }
         .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1.5rem; gap: 0.75rem; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
         .tab { 
-            font-weight: 900; 
-            color: rgba(255,255,255,0.8); 
-            cursor: pointer; 
-            font-size: 0.85rem; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            text-transform: uppercase; 
-            background: rgba(255, 255, 255, 0.05); 
-            padding: 8px 20px; 
-            border-radius: 9999px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            white-space: nowrap; 
-            flex-shrink: 0; 
-            border: 1px solid rgba(255,255,255,0.1); 
-            position: relative; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
+            font-weight: 900; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 0.85rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-transform: uppercase; background: rgba(255, 255, 255, 0.05); padding: 8px 20px; border-radius: 9999px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); position: relative; display: flex; align-items: center; gap: 10px; 
         }
         .tab:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-1px); }
-        .tab.active { 
-            background: #ffbae9; 
-            color: #3f5968; 
-            border-color: #ffffff; 
-            box-shadow: 0 6px 12px rgba(255, 186, 233, 0.3); 
-        }
+        .tab.active { background: #ffbae9; color: #3f5968; border-color: #ffffff; box-shadow: 0 6px 12px rgba(255, 186, 233, 0.3); }
         
-        .tab-action-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            border-left: 1px solid rgba(63, 89, 104, 0.15); 
-            padding-left: 8px; 
-            margin-left: 2px; 
-            transition: all 0.2s;
-        }
+        .tab-action-group { display: flex; align-items: center; gap: 8px; border-left: 1px solid rgba(63, 89, 104, 0.15); padding-left: 8px; margin-left: 2px; transition: all 0.2s; }
         .tab.active .tab-action-group { border-left-color: rgba(63, 89, 104, 0.3); }
         
-        .tab-icon-btn { 
-            width: 22px; 
-            height: 22px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 50%;
-            transition: all 0.2s; 
-            cursor: pointer; 
-            color: inherit;
-            opacity: 0.6;
-        }
+        .tab-icon-btn { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; cursor: pointer; color: inherit; opacity: 0.6; }
         .tab-icon-btn:hover { opacity: 1; background: rgba(0,0,0,0.05); transform: scale(1.15); }
         .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
@@ -80,11 +46,11 @@
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(500px, 1fr)); } }
         .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
         .component-view li:hover { background: rgba(0, 0, 0, 0.3); border-color: #ffbae9; transform: translateY(-2px); }
+        
         .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.75rem 1.25rem 1rem 1.25rem; }
         .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
-        /* 更新：字體大小縮小約 1px (1.4rem -> 1.33rem) */
         .desc .title-link { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; font-size: 1.33rem; font-weight: 900; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: #fff; text-decoration: none; transition: color 0.2s; cursor: pointer; line-height: 1.2; letter-spacing: -0.01em; word-break: break-all; }
         .desc .title-link:hover { color: #ffbae9; }
         .id-label { background: rgba(254, 249, 195, 0.15); color: #fef9c3; border: 1px solid rgba(254, 249, 195, 0.4); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 900; margin-right: 8px; vertical-align: 2px; box-shadow: 0 0 10px rgba(254, 249, 195, 0.1); display: inline-block; }
@@ -163,6 +129,7 @@
         const db = getFirestore(app);
         const appId = 'video-library-v1';
 
+        // 加入 isMobileDevice 定義
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         const extractFirstNumber = (val) => {
@@ -191,8 +158,7 @@
         };
 
         const formatDate = (ts, dateOnly = false) => { 
-            if (!ts) return ""; 
-            if (typeof ts === 'string') return ts;
+            if (!ts) return ""; if (typeof ts === 'string') return ts;
             let date;
             try {
                 if (ts?.toDate) date = ts.toDate();
@@ -208,26 +174,22 @@
         const tsNormalize = (str) => {
             if (!str) return "";
             const tradStr = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃劃畫對對進進導導燈導燈門門問問開開蘭蘭慶慶國國層層陸錄劇電視飛觀藥優葉";
-            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开蘭蘭慶慶国国层层陸錄劇電視飛觀藥優葉";
+            const simpStr = "体国会爱万与实鸟范机战边里里广阳书划划画对对进进导导灯导灯门门问问开开兰兰庆庆国国层层陆录剧电视飞观药优叶";
             let res = str.toLowerCase();
-            for(let i=0; i<tradStr.length; i++) {
-                res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]);
-            }
+            for(let i=0; i<tradStr.length; i++) { res = res.replace(new RegExp(tradStr[i], 'g'), simpStr[i]); }
             return res;
         };
 
         const compressImage = (dataUrl, maxWidth = 800) => {
             return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onerror = reject;
+                const img = new Image(); img.onerror = reject;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
                     if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
+                    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', 0.7)); 
                 };
@@ -239,19 +201,13 @@
             if (depth > 12) return null;
             if (obj === null || obj === undefined) return "";
             if (obj && typeof obj === 'object') {
-                if (obj.hasOwnProperty('_methodName') || (obj.constructor && obj.constructor.name === 'FieldValueImpl')) {
-                    return obj;
-                }
+                if (obj.hasOwnProperty('_methodName') || (obj.constructor && obj.constructor.name === 'FieldValueImpl')) { return obj; }
                 if (obj instanceof Date) return obj;
             }
-            if (Array.isArray(obj)) {
-                return obj.map(v => sanitizePayload(v, depth + 1));
-            }
+            if (Array.isArray(obj)) { return obj.map(v => sanitizePayload(v, depth + 1)); }
             if (typeof obj === 'object' && obj.constructor === Object) {
                 const cleaned = {};
-                Object.keys(obj).forEach(key => {
-                    cleaned[key] = sanitizePayload(obj[key], depth + 1);
-                });
+                Object.keys(obj).forEach(key => { cleaned[key] = sanitizePayload(obj[key], depth + 1); });
                 return cleaned;
             }
             return obj;
@@ -263,14 +219,21 @@
             );
         });
 
+        const WatchOrderInput = memo(({ value, onChange, disabled }) => {
+            const [val, setVal] = useState(value || '');
+            useEffect(() => { setVal(value || ''); }, [value]);
+            const handleBlur = () => { if (val !== (value || '')) { onChange(val); } };
+            const handleKeyDown = (e) => { if (e.key === 'Enter') e.target.blur(); };
+            return (
+                <input type="number" disabled={disabled} className="w-full bg-black/40 border border-white/10 rounded px-1 py-1.5 text-center font-black text-[#ffbae9] text-[13px] focus:border-[#ffbae9] outline-none disabled:opacity-50 transition-colors" value={val} onChange={(e) => setVal(e.target.value)} onBlur={handleBlur} onKeyDown={handleKeyDown} placeholder="-" />
+            );
+        });
+
         const ImageCropperModal = memo(({ imageSrc, onCrop, onCancel }) => {
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [scale, setScale] = useState(1);
-            const containerRef = useRef(null);
-            const imgRef = useRef(null);
-            const isDragging = useRef(false);
-            const lastPos = useRef({ x: 0, y: 0 });
-
+            const containerRef = useRef(null); const imgRef = useRef(null);
+            const isDragging = useRef(false); const lastPos = useRef({ x: 0, y: 0 });
             const handleMouseDown = (e) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY }; };
             const handleMouseMove = (e) => {
                 if (!isDragging.current) return;
@@ -279,22 +242,14 @@
                 lastPos.current = { x: e.clientX, y: e.clientY };
             };
             const handleMouseUp = () => { isDragging.current = false; };
-            const handleWheel = (e) => {
-                const step = 0.005; 
-                setScale(prev => Math.max(0.01, Math.min(10, prev + (e.deltaY > 0 ? -step : step))));
-            };
-
+            const handleWheel = (e) => { const step = 0.005; setScale(prev => Math.max(0.01, Math.min(10, prev + (e.deltaY > 0 ? -step : step)))); };
             const handleConfirm = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 800; canvas.height = 1066;
-                ctx.fillStyle = "#3f5968";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                canvas.width = 800; canvas.height = 1066; ctx.fillStyle = "#3f5968"; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 const img = imgRef.current, holeSize = { w: 300, h: 400 };
                 const centerX = containerRef.current.offsetWidth / 2, centerY = containerRef.current.offsetHeight / 2;
                 const resRatio = canvas.width / holeSize.w;
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                 const displayRatio = img.offsetWidth / img.naturalWidth;
                 const drawW = img.naturalWidth * displayRatio * scale;
                 const drawH = img.naturalHeight * displayRatio * scale;
@@ -303,18 +258,15 @@
                 ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
                 onCrop(canvas.toDataURL('image/jpeg', 0.7)); 
             };
-
             return (
                 <div className="fixed inset-0 z-[500] bg-[#3f5968] flex flex-col">
                     <div className="flex-1 relative overflow-hidden bg-[#3f5968] cursor-move" ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
                         <img ref={imgRef} src={imageSrc} style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${scale})`, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none' }} />
-                        <div className="crop-overlay">
-                            <div className="crop-hole" style={{ width: '300px', height: '400px' }}></div>
-                        </div>
+                        <div className="crop-overlay"><div className="crop-hole" style={{ width: '300px', height: '400px' }}></div></div>
                     </div>
                     <div className="p-6 bg-[#0b0e14] border-t border-white/10 flex flex-col md:flex-row gap-6 justify-between items-center">
                         <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精密縮放控制 (步進 0.005)</span>
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">精密縮放控制</span>
                             <div className="flex items-center gap-4">
                                 <Icon name="minus" className="w-3 h-3 text-white/20" />
                                 <input type="range" min="0.01" max="5" step="0.001" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full md:w-64 accent-[#ffbae9]" />
@@ -346,130 +298,68 @@
             </svg>
         );
 
-        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources }) => {
+        const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources, className }) => {
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             const sourceInfo = allSources.find(s => s.name === g.source);
-
             const getMemberProgress = (name) => {
-                const wp = g.watchedProgress;
-                if (!wp) return { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
+                const wp = g.watchedProgress; if (!wp) return { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
                 if (wp.v1 !== undefined) { return watchingByList[0] === name ? wp : { v1: '0', u1: '集', v2: '0', u2: '分鐘' }; }
                 return wp[name] || { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
             };
-
             const seriesCompletionPct = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
-
             return (
-                <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
+                <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''} ${className || ''}`} onClick={() => !isEditLocked && onOpenEdit(g)}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
                         {g.year && <span className="year-badge">{g.year}</span>}
                         {g.airingStatus && <span className={`status-badge ${g.airingStatus === "連載中" ? "badge-airing" : g.airingStatus === "已完結" ? "badge-completed" : "badge-waiting"}`}>{g.airingStatus}</span>}
                         {g.cover ? <div className="image" style={{ backgroundImage: `url(${g.cover})` }}></div> : <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/10"><Icon name="image" className="w-8 h-8" /></div>}
                     </div> 
                     <div className="desc">
-                        <div className="circle-progress-stack">
-                            {watchingByList.map(name => {
-                                const prog = getMemberProgress(name);
-                                const pct = calculateDualProgress(prog, g.totalEpisodes, g.updatedEpisodes);
+                        <div className="circle-progress-stack">{watchingByList.map(name => {
+                                const prog = getMemberProgress(name); const pct = calculateDualProgress(prog, g.totalEpisodes, g.updatedEpisodes);
                                 const color = nameColorMap[name] || '#ffbae9';
                                 return (
-                                    <div key={name} className="update-progress-circle" 
-                                        style={{ backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)` }} 
-                                        title={`${name}: ${pct}%`}>
-                                        <span style={{ color: color }}>{pct}%</span>
-                                    </div>
+                                    <div key={name} className="update-progress-circle" style={{ backgroundImage: `linear-gradient(#0b0e14, #0b0e14), conic-gradient(${color} ${pct}%, rgba(255,255,255,0.08) 0)` }} title={`${name}: ${pct}%`}><span style={{ color: color }}>{pct}%</span></div>
                                 );
-                            })}
-                        </div>
+                            })}</div>
                         <div className="title-container">
-                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                {/* 更新：移除 # 號 */}
-                                <span className="id-label">{g.order || 0}</span>{g.name}
-                            </div> 
+                            <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}><span className="id-label">{g.order || 0}</span>{g.name}</div> 
                             <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
                             <div className="text-[11px] opacity-90">
-                                <strong>更新進度：</strong> 
-                                <span className="text-white/95">更新至 {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
-                                {g.paidProgress && extractFirstNumber(g.paidProgress) > 0 && (
-                                    <span className="ml-2 text-yellow-400 font-black border-l border-white/20 pl-2">已付費至 {formatProgressText(g.paidProgress)}</span>
-                                )}
-                                {( (g.updateDay && g.updateDay.length > 0) || g.updateTime) && (
-                                    <span className="ml-2 text-[#ffbae9] font-black border-l border-white/20 pl-2">
-                                        每周{g.updateDay && g.updateDay.length > 0 ? `(${Array.isArray(g.updateDay) ? g.updateDay.join(', ') : g.updateDay})` : ''} {g.updateTime ? (g.updateTime.split(':')[0] >= 12 ? '下午 ' + (g.updateTime.split(':')[0] % 12 || 12) : '上午 ' + (g.updateTime.split(':')[0] || 12)) + ':' + g.updateTime.split(':')[1] : ''}
-                                    </span>
-                                )}
+                                <strong>更新：</strong> <span className="text-white/95">{formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
+                                {g.paidProgress && extractFirstNumber(g.paidProgress) > 0 && (<span className="ml-2 text-yellow-400 font-black border-l border-white/20 pl-2">付費至 {formatProgressText(g.paidProgress)}</span>)}
                             </div>
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <strong className="text-[11px]">觀看進度：</strong>
-                                        <div className="flex items-baseline gap-1 text-[11px] font-black">
-                                            {watchingByList.map((name, idx) => (
-                                                <span key={name}>
-                                                    <span style={{ color: nameColorMap[name] || '#fff' }}>{formatProgressText(getMemberProgress(name))}</span>
-                                                    {idx < watchingByList.length - 1 && <span className="mx-1 opacity-30">/</span>}
-                                                </span>
-                                            ))}
-                                            {watchingByList.length === 0 && <span className="opacity-40">--</span>}
-                                        </div>
-                                    </div>
-                                    {watchingByList.length > 0 && (
-                                        <div className="flex flex-wrap items-center justify-end gap-1 flex-1">
-                                            <strong className="text-[10px] text-cyan-400 whitespace-nowrap">誰在看：</strong>
-                                            <div className="flex flex-wrap justify-end gap-1">
-                                                {watchingByList.map(name => {
-                                                    const c = nameColorMap?.[name] || '#ffffff';
-                                                    return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>;
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-1.5 flex-shrink-0"><strong className="text-[11px]">進度：</strong><div className="flex items-baseline gap-1 text-[11px] font-black">{watchingByList.map((name, idx) => (<span key={name}><span style={{ color: nameColorMap[name] || '#fff' }}>{formatProgressText(getMemberProgress(name))}</span>{idx < watchingByList.length - 1 && <span className="mx-1 opacity-30">/</span>}</span>))}{watchingByList.length === 0 && <span className="opacity-40">--</span>}</div></div>
+                                    {watchingByList.length > 0 && (<div className="flex flex-wrap items-center justify-end gap-1 flex-1"><div className="flex flex-wrap justify-end gap-1">{watchingByList.map(name => { const c = nameColorMap?.[name] || '#ffffff'; return <span key={name} className="member-badge" style={{ color: c, backgroundColor: c + '15', borderColor: c + '30' }}>{name}</span>; })}</div></div>)}
                                 </div>
-                                <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
-                                    <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
-                                    {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
-                                </div>
-                                <div className="progress-container">
-                                    <div className="progress-fill" style={{ width: `${seriesCompletionPct}%` }}></div>
-                                    <div className="progress-text-overlay">{seriesCompletionPct}%</div>
-                                </div>
+                                <div className="progress-container"><div className="progress-fill" style={{ width: `${seriesCompletionPct}%` }}></div><div className="progress-text-overlay">{seriesCompletionPct}%</div></div>
                             </div>
                         </div>
-                        {!isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
+                        {onDelete && !isEditLocked && <button onClick={(e) => { e.stopPropagation(); onDelete(g); }} className="btn-delete-bottom"><Icon name="trash-2" className="w-3 h-3" /> 移除資料</button>}
                     </div>
                 </li>
             );
         });
 
         const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, labelStyle, containerClass }) => {
-            const [isExpanded, setIsExpanded] = useState(!!value.v2);
-            const [activeDropdown, setActiveDropdown] = useState(null); 
+            const [isExpanded, setIsExpanded] = useState(!!value.v2); const [activeDropdown, setActiveDropdown] = useState(null); 
             const handleChange = (field, val) => onChange({ ...value, [field]: val });
-            
             const getDynamicWidth = (val, isNumber = false, isSpecial = false) => {
-                const str = val ? val.toString() : "";
-                let base = isNumber ? 52 : 42;
-                if (isSpecial) base += 2; 
-                if (isNumber) return Math.max(base, str.length * 12 + 24) + 'px';
-                return Math.max(base, str.length * 14 + 20) + 'px';
+                const str = val ? val.toString() : ""; let base = isNumber ? 52 : 42; if (isSpecial) base += 2; 
+                if (isNumber) return Math.max(base, str.length * 12 + 24) + 'px'; return Math.max(base, str.length * 14 + 20) + 'px';
             };
-
             const dropdownRef = useRef(null);
             useEffect(() => {
                 const handleClickOutside = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setActiveDropdown(null); };
-                document.addEventListener("mousedown", handleClickOutside);
-                return () => document.removeEventListener("mousedown", handleClickOutside);
+                document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
             }, []);
-
-            const expandRow = () => {
-                setIsExpanded(true);
-                if (!value.u2) onChange({ ...value, v2: value.v2 || '', u2: '分鐘' });
-            };
-
+            const expandRow = () => { setIsExpanded(true); if (!value.u2) onChange({ ...value, v2: value.v2 || '', u2: '分鐘' }); };
             return (
                 <div className={`w-full ${containerClass || ''}`}>
                     <label className={`block text-[11px] font-black uppercase mb-2 ${labelClass || 'text-white/40'}`} style={labelStyle}>-{label}-</label>
@@ -477,35 +367,22 @@
                         <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v1, true, true) }} value={value.v1} onChange={e=>handleChange('v1', e.target.value)} />
                         <div className="relative" ref={activeDropdown === 'u1' ? dropdownRef : null}>
                             <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u1) }} value={value.u1} onFocus={(e) => { e.target.select(); setActiveDropdown('u1'); }} onChange={e=>handleChange('u1', e.target.value)} />
-                            {activeDropdown === 'u1' && (
-                                <div className="custom-unit-dropdown custom-scrollbar">
-                                    {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>)}
-                                </div>
-                            )}
+                            {activeDropdown === 'u1' && (<div className="custom-unit-dropdown custom-scrollbar">{unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u1', u); setActiveDropdown(null); }}>{u}</div>)}</div>)}
                         </div>
-                        {isExpanded ? (
-                            <>
+                        {isExpanded ? (<>
                                 <input type="number" className="modal-input-base font-black text-sm p-1.5 text-center flex-shrink-0" style={{ width: getDynamicWidth(value.v2, true) }} value={value.v2} onChange={e=>handleChange('v2', e.target.value)} />
                                 <div className="relative" ref={activeDropdown === 'u2' ? dropdownRef : null}>
                                     <input className="modal-input-base font-black text-[10px] p-1 text-center" style={{ width: getDynamicWidth(value.u2, false, true) }} value={value.u2} onFocus={(e) => { e.target.select(); setActiveDropdown('u2'); }} onChange={e=>handleChange('u2', e.target.value)} />
-                                    {activeDropdown === 'u2' && (
-                                        <div className="custom-unit-dropdown custom-scrollbar">
-                                            {unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>)}
-                                        </div>
-                                    )}
+                                    {activeDropdown === 'u2' && (<div className="custom-unit-dropdown custom-scrollbar">{unitSuggestions.map(u => <div key={u} onMouseDown={() => { handleChange('u2', u); setActiveDropdown(null); }}>{u}</div>)}</div>)}
                                 </div>
-                            </>
-                        ) : (
-                            <div className="flex justify-center ml-1"><div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={expandRow}><Icon name="plus" className="w-4 h-4" /></div></div>
-                        )}
+                            </>) : (<div className="flex justify-center ml-1"><div className="plus-toggle-btn w-[36px] !h-[36px]" onClick={expandRow}><Icon name="plus" className="w-4 h-4" /></div></div>)}
                     </div>
                 </div>
             );
         });
 
         const AutoResizeTextarea = ({ value, onChange, className, isError, placeholder, required = false }) => {
-            const textareaRef = useRef(null);
-            const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
+            const textareaRef = useRef(null); const adjustHeight = () => { const t = textareaRef.current; if (t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; } };
             useEffect(() => { adjustHeight(); }, [value]);
             return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />;
         };
@@ -514,8 +391,7 @@
             if (!value) return <div onClick={() => onChange("18:00")} className="plus-toggle-btn"><Icon name="plus" className="w-4 h-4" /></div>;
             const h = parseInt(value.split(':')[0]) || 0, m = parseInt(value.split(':')[1]) || 0;
             const updateTime = (nP, nH, nM) => {
-                let fH = parseInt(nH);
-                if (nP === '下午' && fH !== 12) fH += 12; else if (nP === '上午' && fH === 12) fH = 0;
+                let fH = parseInt(nH); if (nP === '下午' && fH !== 12) fH += 12; else if (nP === '上午' && fH === 12) fH = 0;
                 onChange(`${String(fH).padStart(2, '0')}:${String(nM).padStart(2, '0')}`);
             };
             return (
@@ -535,73 +411,46 @@
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9');
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null);
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null), [showTimeSettings, setShowTimeSettings] = useState(false), [showManualUpdateInput, setShowManualUpdateInput] = useState(false), [statMode, setStatMode] = useState('progress'), [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
+            const [showWatchOrderList, setShowWatchOrderList] = useState(false); const watchOrderDropdownRef = useRef(null);
+            
+            // 觀看順序列表的搜尋與狀態
+            const [watchOrderSearchQuery, setWatchOrderSearchQuery] = useState(""); 
+            const [isWatchOrderSearchFocused, setIsWatchOrderSearchFocused] = useState(false);
+            const dragItem = useRef(null); const dragOverItem = useRef(null);
+            
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
-            
-            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null);
-            const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
-            const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-            const [newCategoryName, setNewCategoryName] = useState("");
-            
-            const [renameCategoryTarget, setRenameCategoryTarget] = useState(null);
-            const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
-
+            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null); const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
+            const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); const [newCategoryName, setNewCategoryName] = useState("");
+            const [renameCategoryTarget, setRenameCategoryTarget] = useState(null); const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
             const displayMembers = ["糖糖", "雲雲"];
-
             const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
-
             const unitSuggestions = useMemo(() => { 
-                const freq = {};
-                const baseUnits = ['集', '話', '章', '季', '卷', '冊', '分鐘']; 
-                baseUnits.forEach(u => freq[u] = 0);
+                const freq = {}; const baseUnits = ['集', '話', '章', '季', '卷', '冊', '分鐘']; baseUnits.forEach(u => freq[u] = 0);
                 games.forEach(g => { 
-                    ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { 
-                        const p = g[k]; 
-                        if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; 
-                        if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; 
-                    });
-                    if (g.watchedProgress) { 
-                        Object.values(g.watchedProgress).forEach(p => { 
-                            if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; 
-                            if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; 
-                        }); 
-                    }
+                    ['totalEpisodes', 'updatedEpisodes', 'paidProgress'].forEach(k => { const p = g[k]; if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; });
+                    if (g.watchedProgress) { Object.values(g.watchedProgress).forEach(p => { if (p?.u1) freq[p.u1.trim()] = (freq[p.u1.trim()] || 0) + 1; if (p?.u2) freq[p.u2.trim()] = (freq[p.u2.trim()] || 0) + 1; }); }
                 }); 
                 return Object.keys(freq).sort((a, b) => freq[b] - freq[a]); 
             }, [games]);
-
             const sortedSourcesByUsage = useMemo(() => {
-                const freq = {};
-                games.forEach(g => { if (g.source) freq[g.source] = (freq[g.source] || 0) + 1; });
+                const freq = {}; games.forEach(g => { if (g.source) freq[g.source] = (freq[g.source] || 0) + 1; });
                 return customSources.filter(s => s.name !== "未知來源").sort((a, b) => (freq[b.name] || 0) - (freq[a.name] || 0));
             }, [games, customSources]);
-
-            const isNameDuplicate = useMemo(() => {
-                const currentName = formData.name.trim();
-                if (!currentName) return false;
-                return games.some(g => g.name.trim() === currentName && g.id !== editingId);
-            }, [formData.name, games, editingId]);
-
+            const isNameDuplicate = useMemo(() => { const currentName = formData.name.trim(); if (!currentName) return false; return games.some(g => g.name.trim() === currentName && g.id !== editingId); }, [formData.name, games, editingId]);
             const recentStatuses = useMemo(() => {
-                const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
+                const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
             }, [games]);
-
             const recentCategories = useMemo(() => {
-                const seen = new Set(); const result = [];
-                const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-                for(const g of sorted) { 
-                    if(g.category && g.category !== "未分類" && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } 
-                    if(result.length >= 3) break; 
-                }
+                const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                for(const g of sorted) { if(g.category && g.category !== "未分類" && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
-
             useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
             useEffect(() => {
                 if (!user) return;
@@ -612,79 +461,59 @@
                 const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
                 return () => { ug(); ul(); us(); up(); upro(); };
             }, [user]);
-
-            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput]);
-
+            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput, showWatchOrderList, isWatchOrderSearchFocused]);
+            useEffect(() => {
+                const handleClickOutside = (e) => { if (watchOrderDropdownRef.current && !watchOrderDropdownRef.current.contains(e.target)) { setShowWatchOrderList(false); } };
+                document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, []);
             useEffect(() => {
                 const handlePaste = async (e) => {
-                    if (!isModalOpen) return;
-                    const items = e.clipboardData?.items;
+                    if (!isModalOpen) return; const items = e.clipboardData?.items;
                     if (items) {
                         for (const item of items) {
                             if (item.type.indexOf("image") !== -1) {
-                                const file = item.getAsFile();
-                                const reader = new FileReader();
+                                const file = item.getAsFile(); const reader = new FileReader();
                                 reader.onload = async (event) => {
-                                    const isCover = lastSelectedImgZone === 'cover';
-                                    const compressed = await compressImage(event.target.result, isCover ? 800 : 100);
-                                    if(isCover) { setFormData(prev => ({ ...prev, cover: compressed })); setRawImageData(compressed); } 
-                                    else { setFormData(prev => ({ ...prev, sourceIcon: compressed })); }
+                                    const isCover = lastSelectedImgZone === 'cover'; const compressed = await compressImage(event.target.result, isCover ? 800 : 100);
+                                    if(isCover) { setFormData(prev => ({ ...prev, cover: compressed })); setRawImageData(compressed); } else { setFormData(prev => ({ ...prev, sourceIcon: compressed })); }
                                     showNotify(isCover ? "封面已貼上" : "來源圖標已貼上");
                                 };
-                                reader.readAsDataURL(file);
-                                return;
+                                reader.readAsDataURL(file); return;
                             }
                         }
                     }
                     const textData = e.clipboardData.getData('text/plain');
                     if (textData) {
-                        const trimmed = textData.trim();
-                        const isImageUrl = trimmed.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed);
+                        const trimmed = textData.trim(); const isImageUrl = trimmed.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed);
                         if (isImageUrl) {
                             const isCover = lastSelectedImgZone === 'cover';
-                            if(isCover) { setFormData(prev => ({ ...prev, cover: trimmed })); setRawImageData(trimmed); } 
-                            else { setFormData(prev => ({ ...prev, sourceIcon: trimmed })); }
+                            if(isCover) { setFormData(prev => ({ ...prev, cover: trimmed })); setRawImageData(trimmed); } else { setFormData(prev => ({ ...prev, sourceIcon: trimmed })); }
                             showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
                         }
                     }
                 };
-                window.addEventListener('paste', handlePaste);
-                return () => window.removeEventListener('paste', handlePaste);
+                window.addEventListener('paste', handlePaste); return () => window.removeEventListener('paste', handlePaste);
             }, [isModalOpen, lastSelectedImgZone]);
-
             const logActivity = useCallback(async (action, gameName, gameOrder) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) {} }, [user, userName]);
-            
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
                 setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' }); 
                 setShowTimeSettings(false); setShowManualUpdateInput(false); setIsModalOpen(true); 
             }, [userName, games.length]);
-
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
-                let wp = item.watchedProgress || {};
-                let normalizedWp = {};
-                if (wp.v1 !== undefined) { normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) }; } 
-                else { Object.keys(wp).forEach(name => { normalizedWp[name] = ensureP(wp[name]); }); }
-                const globalSource = customSources.find(s => s.name === item.source);
-                const initialSourceIcon = globalSource ? globalSource.icon : '';
+                let wp = item.watchedProgress || {}; let normalizedWp = {};
+                if (wp.v1 !== undefined) { normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) }; } else { Object.keys(wp).forEach(name => { normalizedWp[name] = ensureP(wp[name]); }); }
+                const globalSource = customSources.find(s => s.name === item.source); const initialSourceIcon = globalSource ? globalSource.icon : '';
                 const currentUpdateDay = item.updateDay ? (Array.isArray(item.updateDay) ? item.updateDay : [item.updateDay]) : [];
-                setFormData({ 
-                    ...item, sourceIcon: initialSourceIcon, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: normalizedWp, 
-                    updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', 
-                    manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers, updateDay: currentUpdateDay
-                }); 
-                setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); 
-                setShowManualUpdateInput(!!item.manualUpdatedAt); 
-                setIsModalOpen(true); 
+                setFormData({ ...item, sourceIcon: initialSourceIcon, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: normalizedWp, updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers, updateDay: currentUpdateDay }); 
+                setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
             }, [customSources]);
-
             const proceedSave = async () => {
                 setShowDuplicateConfirm(false); 
                 try {
-                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b);
-                    let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
+                    const orders = games.map(g => extractFirstNumber(g.order)).sort((a,b) => a-b); let to = formData.order === "" ? 1 : extractFirstNumber(formData.order);
                     if(formData.order === "") while(orders.includes(to)) to++;
                     if(games.find(g => extractFirstNumber(g.order) === to && g.id !== editingId)) {
                         let chain = [], check = to; while(true) { let item = games.find(g => extractFirstNumber(g.order) === check && g.id !== editingId); if(item) { chain.push(item); check++; } else break; }
@@ -692,416 +521,243 @@
                     }
                     if(formData.source.trim()) { 
                         let sources = [...customSources]; const idx = sources.findIndex(s => s.name === formData.source.trim()); 
-                        if(idx === -1) { sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); } 
-                        else if (formData.sourceIcon) { sources[idx].icon = formData.sourceIcon; }
+                        if(idx === -1) { sources.push({ name: formData.source.trim(), icon: formData.sourceIcon || '' }); } else if (formData.sourceIcon) { sources[idx].icon = formData.sourceIcon; }
                         await setDoc(doc(getPublicCol('settings'), 'config'), { sources, categories: customCategories }, { merge: true }); 
                     }
-                    const rawPayload = {
-                        name: formData.name || "", notes: formData.notes || "", addedBy: String(formData.addedBy || userName || "系統"),
-                        year: formData.year || "", order: to, url: formData.url || "", cover: formData.cover || null,
-                        totalEpisodes: formData.totalEpisodes || { ...emptyProgress }, updatedEpisodes: formData.updatedEpisodes || { ...emptyProgress },
-                        paidProgress: formData.paidProgress || { ...emptyProgress }, watchedProgress: formData.watchedProgress || {},
-                        airingStatus: formData.airingStatus || "連載中", source: formData.source.trim() || "未知來源",
-                        category: formData.category || "未分類", manualUpdatedAt: formData.manualUpdatedAt || "",
-                        watchingBy: formData.watchingBy || [], updateDay: formData.updateDay || [], updateTime: formData.updateTime || "", updatedAt: serverTimestamp() 
-                    };
+                    const rawPayload = { name: formData.name || "", notes: formData.notes || "", addedBy: String(formData.addedBy || userName || "系統"), year: formData.year || "", order: to, url: formData.url || "", cover: formData.cover || null, totalEpisodes: formData.totalEpisodes || { ...emptyProgress }, updatedEpisodes: formData.updatedEpisodes || { ...emptyProgress }, paidProgress: formData.paidProgress || { ...emptyProgress }, watchedProgress: formData.watchedProgress || {}, airingStatus: formData.airingStatus || "連載中", source: formData.source.trim() || "未知來源", category: formData.category || "未分類", manualUpdatedAt: formData.manualUpdatedAt || "", watchingBy: formData.watchingBy || [], updateDay: formData.updateDay || [], updateTime: formData.updateTime || "", updatedAt: serverTimestamp() };
+                    if (editingId) { const existingGame = games.find(g => g.id === editingId); if (existingGame && existingGame.watchOrder !== undefined) { rawPayload.watchOrder = existingGame.watchOrder; } }
                     const finalData = sanitizePayload(rawPayload);
-                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", finalData.name, to); } 
-                    else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", finalData.name, to); }
-                    
+                    if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", finalData.name, to); } else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", finalData.name, to); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch(e) { showNotify(`操作失敗：${e.message}`); }
             };
+            const handleUpdateWatchOrder = async (id, val) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); } catch(e) { showNotify("更新順序失敗"); } };
+            const watchListGames = useMemo(() => { return [...games].filter(g => g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "").sort((a, b) => parseFloat(a.watchOrder) - parseFloat(b.watchOrder)); }, [games]);
+            
+            // 計算搜尋建議 (模糊搜尋標題或精確比對編號，且未加入順序列表)
+            const watchOrderSuggestions = useMemo(() => {
+                if (!watchOrderSearchQuery.trim()) return [];
+                const qNorm = tsNormalize(watchOrderSearchQuery).toLowerCase();
+                return games.filter(g => {
+                    if (g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "") return false; // 已在列表中
+                    const matchId = String(extractFirstNumber(g.order)) === watchOrderSearchQuery.trim();
+                    const matchName = tsNormalize(g.name || "").toLowerCase().includes(qNorm);
+                    return matchId || matchName;
+                }).slice(0, 10);
+            }, [games, watchOrderSearchQuery]);
 
-            const handleAddCategory = async () => {
-                if(!newCategoryName.trim() || !user) return;
-                if(customCategories.includes(newCategoryName.trim())) { showNotify("該分類已存在"); return; }
-                const nextCats = [...customCategories, newCategoryName.trim()];
-                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                showNotify("分組已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
+            const handleAddWatchOrder = async (gameOrIdStr) => {
+                if (!user) return;
+                let targetGame = null;
+                
+                if (gameOrIdStr && typeof gameOrIdStr === 'object') {
+                    targetGame = gameOrIdStr;
+                } else {
+                    const query = watchOrderSearchQuery.trim();
+                    if (!query) return;
+                    const targetNum = parseInt(query.replace(/[^0-9]/g, ''));
+                    if (!isNaN(targetNum) && String(targetNum) === query) {
+                        targetGame = games.find(g => extractFirstNumber(g.order) === targetNum && (!g.watchOrder));
+                    }
+                    if (!targetGame && watchOrderSuggestions.length > 0) {
+                        targetGame = watchOrderSuggestions[0];
+                    }
+                }
+
+                if (!targetGame) { showNotify("找不到符合的影片，或已在列表中"); return; }
+                if (targetGame.watchOrder !== undefined && targetGame.watchOrder !== null && targetGame.watchOrder !== "") { showNotify("已在列表中"); return; }
+                
+                const nextOrder = watchListGames.length > 0 ? Math.max(...watchListGames.map(g => parseFloat(g.watchOrder))) + 1 : 1;
+                try { 
+                    await setDoc(doc(getPublicCol('games'), targetGame.id), { watchOrder: nextOrder }, { merge: true }); 
+                    setWatchOrderSearchQuery(""); 
+                    setIsWatchOrderSearchFocused(false);
+                    showNotify("已加入"); 
+                } catch(e) { showNotify("加入失敗"); }
             };
 
+            const handleRemoveWatchOrder = async (id) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: "" }, { merge: true }); } catch(e) { showNotify("移除失敗"); } };
+            const handleSortDrop = async () => {
+                if (dragItem.current === null || dragOverItem.current === null || !user) return;
+                const _watchList = [...watchListGames]; const draggedItemContent = _watchList.splice(dragItem.current, 1)[0]; _watchList.splice(dragOverItem.current, 0, draggedItemContent);
+                dragItem.current = null; dragOverItem.current = null;
+                try {
+                    const updates = _watchList.map((g, idx) => { if (parseFloat(g.watchOrder) !== idx + 1) { return setDoc(doc(getPublicCol('games'), g.id), { watchOrder: idx + 1 }, { merge: true }); } return null; }).filter(p => p !== null);
+                    if (updates.length > 0) await Promise.all(updates);
+                } catch (e) { showNotify("排序失敗"); }
+            };
+            const handleAddCategory = async () => {
+                if(!newCategoryName.trim() || !user) return; if(customCategories.includes(newCategoryName.trim())) { showNotify("已存在"); return; }
+                const nextCats = [...customCategories, newCategoryName.trim()]; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                showNotify("已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
+            };
             const handleRenameCategory = async () => {
                 if(!renameCategoryTarget || !renameCategoryNewValue.trim() || !user) return;
-                const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c);
-                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                showNotify("分組名稱已更新");
-                setRenameCategoryTarget(null); setRenameCategoryNewValue("");
+                const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                showNotify("已更新"); setRenameCategoryTarget(null); setRenameCategoryNewValue("");
             };
-
-            const handleDeleteCategory = async (cat) => {
-                if(!cat || !user) return;
-                const nextCats = customCategories.filter(c => c !== cat);
-                await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                showNotify("分組已刪除");
-            };
-
+            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             const handleRepairData = async () => {
-                if(!user) return; showNotify("正在啟動修復程序...");
+                if(!user) return; showNotify("啟動修復...");
                 try {
-                    const snapshot = await getDocs(getPublicCol('games'));
-                    let count = 0;
-                    for(const d of snapshot.docs) {
-                        const data = d.data();
-                        const updateObj = sanitizePayload({ totalEpisodes: ensureP(data.totalEpisodes), updatedEpisodes: ensureP(data.updatedEpisodes), paidProgress: ensureP(data.paidProgress) });
-                        await updateDoc(d.ref, updateObj); count++;
-                    }
-                    showNotify(`修復完成！共更新 ${count} 筆檔案`);
-                } catch(e) { showNotify("修復失敗"); }
+                    const snapshot = await getDocs(getPublicCol('games')); let count = 0;
+                    for(const d of snapshot.docs) { const data = d.data(); const updateObj = sanitizePayload({ totalEpisodes: ensureP(data.totalEpisodes), updatedEpisodes: ensureP(data.updatedEpisodes), paidProgress: ensureP(data.paidProgress) }); await updateDoc(d.ref, updateObj); count++; }
+                    showNotify(`完成！更新 ${count} 筆`);
+                } catch(e) { showNotify("失敗"); }
             };
-
             const handleReorderIndices = async () => {
-                if (!user) return; showNotify("正在重新排列編號...");
+                if (!user) return; showNotify("排列中...");
                 try {
                     const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                    const updates = sorted.map((g, index) => {
-                        const newOrder = index + 1;
-                        if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true });
-                        return null;
-                    }).filter(p => p !== null);
-                    if (updates.length > 0) { await Promise.all(updates); showNotify(`重新排列完成！`); } 
-                    else { showNotify("編號已整齊"); }
-                } catch (e) { showNotify("重排失敗"); }
+                    const updates = sorted.map((g, index) => { const newOrder = index + 1; if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }); return null; }).filter(p => p !== null);
+                    if (updates.length > 0) { await Promise.all(updates); showNotify(`完成！`); } else { showNotify("編號已整齊"); }
+                } catch (e) { showNotify("失敗"); }
             };
-
-            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("刪除失敗"); } };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("來源已移除"); };
-            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("數據已清空"); } catch(e) { showNotify("操作失敗"); } };
-
+            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("失敗"); } };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
+            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
             const memberStats = useMemo(() => {
-                const sm = {}; 
-                games.forEach(g => { 
+                const sm = {}; games.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
                     w.forEach(n => { 
-                        if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
-                        sm[n].total++; 
-                        const wp = g.watchedProgress?.[n] || { v1: 0 };
-                        const p = calculateDualProgress(wp, g.totalEpisodes, g.updatedEpisodes); 
+                        if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; sm[n].total++; 
+                        const wp = g.watchedProgress?.[n] || { v1: 0 }; const p = calculateDualProgress(wp, g.totalEpisodes, g.updatedEpisodes); 
                         if(p === 0) sm[n].unstarted++; else if(p >= 100) sm[n].completed++; else sm[n].watching++; 
-                        const c = g.category || "未分類"; sm[n].cats[c] = (sm[n].cats[c] || 0) + 1;
-                        const s = g.source || "未知來源"; sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
+                        const c = g.category || "未分類"; sm[n].cats[c] = (sm[n].cats[c] || 0) + 1; const s = g.source || "未知來源"; sm[n].sources[s] = (sm[n].sources[s] || 0) + 1;
                     }); 
-                }); 
-                return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
+                }); return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
-
-            const activeCategoriesInUse = useMemo(() => {
-                const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.cats).forEach(([cat, count]) => { sums[cat] = (sums[cat] || 0) + count; }); });
-                return Object.keys(sums).sort((a, b) => sums[b] - sums[a]);
-            }, [memberStats]);
-
-            const activeSourcesInUse = useMemo(() => {
-                const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.sources).forEach(([src, count]) => { sums[src] = (sums[src] || 0) + count; }); });
-                return Object.keys(sums).sort((a, b) => sums[b] - sums[a]);
-            }, [memberStats]);
-
-            const toggleMemberFilter = useCallback((name, type, value) => {
-                setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value });
-            }, []);
-
-            const toggleGlobalFilter = useCallback((type, value) => {
-                setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value });
-            }, []);
-
+            const activeCategoriesInUse = useMemo(() => { const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.cats).forEach(([cat, count]) => { sums[cat] = (sums[cat] || 0) + count; }); }); return Object.keys(sums).sort((a, b) => sums[b] - sums[a]); }, [memberStats]);
+            const activeSourcesInUse = useMemo(() => { const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.sources).forEach(([src, count]) => { sums[src] = (sums[src] || 0) + count; }); }); return Object.keys(sums).sort((a, b) => sums[b] - sums[a]); }, [memberStats]);
+            const toggleMemberFilter = useCallback((name, type, value) => { setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value }); }, []);
+            const toggleGlobalFilter = useCallback((type, value) => { setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value }); }, []);
             const filteredGames = useMemo(() => {
                 let l = [...games]; const q = searchQuery.toLowerCase().trim(); 
                 if(q) {
-                    const qNorm = tsNormalize(q); const isNumSearch = /^\d+$/.test(q);
-                    const numToSearch = isNumSearch ? parseInt(q) : null;
-                    l = l.filter(g => 
-                        (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) || 
-                        tsNormalize(g.name || "").toLowerCase().includes(qNorm) || 
-                        tsNormalize(g.category || "").toLowerCase().includes(qNorm) ||
-                        tsNormalize(g.notes || "").toLowerCase().includes(qNorm) // 新增：支援備註搜尋
-                    );
+                    const qNorm = tsNormalize(q); const isNumSearch = /^\d+$/.test(q); const numToSearch = isNumSearch ? parseInt(q) : null;
+                    l = l.filter(g => (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) || tsNormalize(g.name || "").toLowerCase().includes(qNorm) || tsNormalize(g.category || "").toLowerCase().includes(qNorm) || tsNormalize(g.notes || "").toLowerCase().includes(qNorm));
                 }
                 if (memberFilter) {
                     const { name, type, value } = memberFilter;
                     l = l.filter(g => {
                         const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
-                        if (name) {
-                            if (!watchers.includes(name)) return false;
-                            if (type === 'progress') {
-                                const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes, g.updatedEpisodes);
-                                if (value === 'unstarted') return p === 0;
-                                if (value === 'watching') return p > 0 && p < 100;
-                                if (value === 'completed') return p >= 100;
-                                return true;
-                            }
-                        } else {
-                            if (type === 'progress') {
-                                return watchers.some(wName => {
-                                    const p = calculateDualProgress(g.watchedProgress?.[wName], g.totalEpisodes, g.updatedEpisodes);
-                                    if (value === 'unstarted') return p === 0;
-                                    if (value === 'watching') return p > 0 && p < 100;
-                                    if (value === 'completed') return p >= 100;
-                                    return false;
-                                });
-                            }
-                        }
-                        if (type === 'category') return (g.category || "未分類") === value;
-                        if (type === 'source') return (g.source || "未知來源") === value;
-                        return true;
+                        if (name) { if (!watchers.includes(name)) return false; if (type === 'progress') { const p = calculateDualProgress(g.watchedProgress?.[name], g.totalEpisodes, g.updatedEpisodes); if (value === 'unstarted') return p === 0; if (value === 'watching') return p > 0 && p < 100; if (value === 'completed') return p >= 100; return true; } } 
+                        else { if (type === 'progress') { return watchers.some(wName => { const p = calculateDualProgress(g.watchedProgress?.[wName], g.totalEpisodes, g.updatedEpisodes); if (value === 'unstarted') return p === 0; if (value === 'watching') return p > 0 && p < 100; if (value === 'completed') return p >= 100; return false; }); } }
+                        if (type === 'category') return (g.category || "未分類") === value; if (type === 'source') return (g.source || "未知來源") === value; return true;
                     });
                 }
-                if(activeTab === "最新入庫") l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0));
-                else { if(activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a,b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
+                if (activeTab === "最新入庫") { l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0)); } 
+                else { if (activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a, b) => { const wa = parseFloat(a.watchOrder); const wb = parseFloat(b.watchOrder); const hasWa = !isNaN(wa) && wa > 0; const hasWb = !isNaN(wb) && wb > 0; if (hasWa && hasWb) return wa - wb; if (hasWa && !hasWb) return -1; if (!hasWa && hasWb) return 1; return extractFirstNumber(a.order) - extractFirstNumber(b.order); }); }
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
-
-            const handleExportData = () => { 
-                const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); 
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); 
-            };
-            
+            const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
             const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader();
-                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()})); })); showNotify("導入成功"); } catch(e) { showNotify("導入失敗"); } }; 
-                r.readAsText(f);
+                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader(); r.readAsText(f);
+                r.onload = async (ev) => { try { const d = JSON.parse(ev.target.result); if(d.games) await Promise.all(d.games.map(g => { const {id, ...rest} = g; return addDoc(getPublicCol('games'), sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()})); })); showNotify("導入成功"); } catch(e) { showNotify("失敗"); } }; 
             };
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
-                    
                     <div className="max-w-[1800px] mx-auto">
-                        <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400]">
                             <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center justify-end gap-3 relative">
                                 <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
-                                {!isEditLocked && (
-                                    <div className="flex gap-2">
-                                        <button onClick={handleRepairData} className="flex items-center gap-2 px-4 py-2 bg-blue-900/40 border border-blue-500/30 text-xs font-black rounded hover:bg-blue-600 uppercase transition-all shadow-lg"><Icon name="wrench" className="w-4 h-4" /> 數據修復</button>
-                                        <button onClick={handleReorderIndices} className="flex items-center gap-2 px-4 py-2 bg-amber-900/40 border border-amber-500/30 text-xs font-black rounded hover:bg-amber-600 uppercase transition-all shadow-lg"><Icon name="list-ordered" className="w-4 h-4" /> 編號重排</button>
-                                        <button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button>
-                                    </div>
-                                )}
+                                <div className="relative" ref={watchOrderDropdownRef}>
+                                    <button onClick={() => setShowWatchOrderList(!showWatchOrderList)} className="flex items-center gap-2 px-4 py-2 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-xs font-black rounded hover:bg-[#ffbae9]/20 uppercase transition-all shadow-lg"><Icon name="list" className="w-4 h-4" /> 觀看順序</button>
+                                    {showWatchOrderList && (<div className="absolute right-0 top-full mt-3 w-[360px] md:w-[460px] bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[600] flex flex-col overflow-hidden max-h-[85vh] animate-slide-down-fade">
+                                            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#ffbae9]/15 to-transparent"><h2 className="text-[14px] font-black text-[#ffbae9] uppercase tracking-widest flex items-center gap-2"><Icon name="list-ordered" className="w-5 h-5" /> 觀看順序設定</h2><button onClick={() => setShowWatchOrderList(false)} className="text-white/50 hover:text-white transition-colors bg-black/40 p-1.5 rounded-full"><Icon name="x" className="w-4 h-4" /></button></div>
+                                            
+                                            <div className="p-4 border-b border-white/10 bg-white/5 flex gap-2 relative">
+                                                <div className="flex-1 relative">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="輸入編號或名稱搜尋..." 
+                                                        className="modal-input-base w-full !min-h-[36px] text-[13px] font-black px-3" 
+                                                        value={watchOrderSearchQuery} 
+                                                        onChange={(e) => setWatchOrderSearchQuery(e.target.value)} 
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddWatchOrder()} 
+                                                        onFocus={() => setIsWatchOrderSearchFocused(true)} 
+                                                        onBlur={() => setIsWatchOrderSearchFocused(false)} 
+                                                    />
+                                                    {isWatchOrderSearchFocused && watchOrderSuggestions.length > 0 && (
+                                                        <div className="absolute top-full left-0 w-full mt-1 bg-[#1a2332] border border-[#ffbae9]/30 rounded shadow-2xl z-[700] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                                            {watchOrderSuggestions.map(sg => (
+                                                                <div 
+                                                                    key={sg.id} 
+                                                                    onMouseDown={(e) => { e.preventDefault(); handleAddWatchOrder(sg); }} 
+                                                                    className="px-3 py-2 border-b border-white/5 hover:bg-[#ffbae9]/20 cursor-pointer flex justify-between items-center transition-colors"
+                                                                >
+                                                                    <span className="font-black text-[12px] truncate text-white">{sg.name}</span>
+                                                                    <span className="text-[10px] text-[#ffbae9] ml-2 flex-shrink-0">#{sg.order || 0}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <button onClick={() => handleAddWatchOrder()} className="bg-[#ffbae9] text-[#3f5968] px-6 py-2 rounded font-black text-[13px] transition-colors hover:bg-white shadow-lg flex-shrink-0">加入</button>
+                                            </div>
+
+                                            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-black/30">
+                                                {watchListGames.length === 0 ? (<div className="text-center text-white/30 text-[12px] font-black py-10 leading-relaxed uppercase tracking-widest">目前列表為空<br/>請從上方輸入名稱或編號加入</div>) : (watchListGames.map((g, idx) => (
+                                                        <div key={g.id} draggable={true} onDragStart={(e) => { dragItem.current = idx; }} onDragEnter={(e) => { dragOverItem.current = idx; }} onDragEnd={handleSortDrop} onDragOver={(e) => e.preventDefault()} className="bg-[#2a3b4c]/80 border border-white/10 rounded-md p-2.5 flex gap-3 relative hover:border-[#ffbae9]/50 transition-colors cursor-grab active:cursor-grabbing shadow-sm">
+                                                            <div className="flex items-center text-white/30 flex-shrink-0 hover:text-[#ffbae9] transition-colors"><Icon name="grip-vertical" className="w-5 h-5" /></div>
+                                                            <div className="flex flex-col items-center justify-center w-[46px] flex-shrink-0">
+                                                                <label className="text-[9px] text-[#ffbae9]/80 font-black uppercase mb-1">排序</label>
+                                                                <WatchOrderInput disabled={false} value={g.watchOrder} onChange={(val) => handleUpdateWatchOrder(g.id, val)} />
+                                                            </div>
+                                                            <div className="flex-1 flex flex-col justify-center min-w-0 cursor-pointer group/item py-1" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}>
+                                                                <div className="font-black text-[14px] text-white leading-tight group-hover/item:text-[#ffbae9] truncate transition-colors">{g.name}</div>
+                                                                <div className="text-[10px] text-white/80 font-bold bg-black/40 w-fit px-2 py-0.5 rounded border border-white/10 mt-1.5">集數: {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</div>
+                                                            </div>
+                                                            <div className="flex flex-col gap-1.5 items-end justify-center flex-shrink-0 pr-7">
+                                                                {g.watchingBy && g.watchingBy.length > 0 ? g.watchingBy.map(w => {
+                                                                    const prog = g.watchedProgress?.[w]; const c = nameColorMap[w] || '#ffffff';
+                                                                    return (<div key={w} className="text-[11px] font-black flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border shadow-sm" style={{ borderColor: c + '50' }}><span className="w-2 h-2 rounded-full" style={{ backgroundColor: c }}></span><span style={{color: c}}>{w}</span><span className="text-white/60 ml-1 text-[10px]">{formatProgressText(prog) || '未開始'}</span></div>)
+                                                                }) : (<span className="text-[11px] text-white/30 italic">無人觀看</span>)}
+                                                            </div>
+                                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                                                                <button onClick={(e) => { e.stopPropagation(); handleRemoveWatchOrder(g.id); }} className="text-red-400/50 hover:text-red-400 transition-colors p-1.5 bg-black/30 rounded-full hover:bg-red-500/20"><Icon name="x" className="w-4 h-4" /></button>
+                                                            </div>
+                                                        </div>
+                                                    )))}
+                                            </div>
+                                        </div>)}
+                                </div>
+                                {!isEditLocked && (<div className="flex gap-2"><button onClick={handleRepairData} className="flex items-center gap-2 px-4 py-2 bg-blue-900/40 border border-blue-500/30 text-xs font-black rounded hover:bg-blue-600 uppercase transition-all shadow-lg"><Icon name="wrench" className="w-4 h-4" /> 數據修復</button><button onClick={handleReorderIndices} className="flex items-center gap-2 px-4 py-2 bg-amber-900/40 border border-amber-500/30 text-xs font-black rounded hover:bg-amber-600 uppercase transition-all shadow-lg"><Icon name="list-ordered" className="w-4 h-4" /> 編號重排</button><button onClick={() => setShowClearConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-900/40 border border-red-500/30 text-red-100 text-xs font-black rounded hover:bg-red-600 uppercase transition-all shadow-lg"><Icon name="trash-2" className="w-4 h-4" /> 清除</button></div>)}
                             </div>
                         </header>
-                        
                         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
-                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
-                                {activityLogs.map(l => (
-                                    <div key={l.id} className="border-b border-white/5 pb-0.5">
-                                        <span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
-                                        <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> 
-                                        {/* 更新：日誌中移除 # */}
-                                        <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span>
-                                    </div>
-                                ))}
-                            </div></div>
+                            <div className="lg:col-span-4 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span></div>))}</div></div>
                             <div className="lg:col-span-1 dashboard-panel h-[180px] flex flex-col gap-3"><div className="flex justify-between items-center text-xs font-black text-white/50 uppercase"><span>在線</span><span className="text-xl font-black text-white">{onlineUsers.length}</span></div><div className="bg-black/20 border border-white/5 p-2 flex-1 overflow-y-auto custom-scrollbar text-[11px] rounded flex flex-wrap gap-2">{onlineUsers.map(u => <span key={u.uid} style={{ color: u.color }} className="font-black">● {u.name}</span>)}</div></div>
-                            
-                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse">
-                                {statMode === 'progress' ? (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center px-0.5">總計</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead>
-                                    <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.completed}</td></tr>
-                                    ))}</tbody></>
-                                ) : statMode === 'category' ? (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead>
-                                    <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-0.5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>
-                                    ))}</tbody></>
-                                ) : (
-                                    <><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeSourcesInUse.map(s => <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{s}</th>)}</tr></thead>
-                                    <tbody>{memberStats.map(m => (
-                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-0.5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>
-                                    ))}</tbody></>
-                                )}
-                            </table></div></div>
+                            <div className="lg:col-span-5 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[11px] font-black border-collapse">{statMode === 'progress' ? (<><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th><th className="text-center px-0.5">總計</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-0.5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-0.5" style={{ color: m.color }}>{m.stats.completed}</td></tr>))}</tbody></>) : statMode === 'category' ? (<><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-0.5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody></>) : (<><thead><tr className="text-left opacity-30 border-b border-white/5"><th className="whitespace-nowrap pr-4">成員</th>{activeSourcesInUse.map(s => <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-0.5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{s}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td style={{ color: m.color }} className="whitespace-nowrap pr-4">{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-0.5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>))}</tbody></>)}</table></div></div>
                         </div>
-
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
                             {!isEditLocked && <button onClick={handleOpenAddModal} className="px-10 py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                            {/* 更新：搜尋框提示移除 # */}
                             <div className="flex-grow flex items-center px-8 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4" /><input type="text" placeholder="搜尋標題、編號(如1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                             {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
-                            <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3">
-                                <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button>
-                            </div>
+                            <div className="px-8 flex items-center justify-end py-4 md:py-0 gap-3"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
                         </div>
-
                         <article className="tab-content bg-black/10 border-x border-b border-white/10 p-6 rounded-b-lg shadow-2xl">
-                            <nav className="tab-bar">
-                                {customCategories.map((cat, idx) => (
-                                    <div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
-                                        <span>{cat}</span>
-                                        {!isEditLocked && (
-                                            <div className="tab-action-group">
-                                                <div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div>
-                                                <div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                {!isEditLocked && (
-                                    <div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類分組"><Icon name="plus" className="w-5 h-5" /></div>
-                                )}
-                            </nav> 
-                            <div className="component-view">
-                                <ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.map(g => (
-                                    <GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={setDeleteGameTarget} />
-                                ))}</ul>
-                            </div> 
+                            <nav className="tab-bar">{customCategories.map((cat, idx) => (<div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}><span>{cat}</span>{!isEditLocked && (<div className="tab-action-group"><div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div><div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div></div>)}</div>))}{!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類分組"><Icon name="plus" className="w-5 h-5" /></div>)}</nav> 
+                            <div className="component-view"><ul>{isLoadingGames ? <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div> : filteredGames.map(g => (<GameCard key={g.id} g={g} nameColorMap={nameColorMap} allSources={customSources} isEditLocked={isEditLocked} onOpenEdit={handleOpenEdit} onDelete={setDeleteGameTarget} />))}</ul></div> 
                         </article>
                     </div>
-
-                    {showAddCategoryModal && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl">
-                                <h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4>
-                                <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} />
-                                <div className="flex gap-4">
-                                    <button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
-                                    <button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {renameCategoryTarget && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl">
-                                <h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4>
-                                <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} />
-                                <div className="flex gap-4">
-                                    <button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
-                                    <button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">儲存修改</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {deleteCategoryTarget && (
-                        <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4>
-                                <p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p>
-                                <div className="flex gap-4">
-                                    <button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button>
-                                    <button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="fab-btn-container">
-                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>
-                        {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
-                        <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>
-                            {isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}
-                        </div>
-                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div>
-                    </div>
-
-                    {isModalOpen && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-                            <div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div>
-                                <button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button>
-                                <div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1">
-                                    <h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3>
-                                    <form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
-                                            <div className="md:col-span-4 flex flex-col gap-3 md:gap-4 items-start">
-                                                <div className="flex flex-row items-end gap-3 w-full">
-                                                    <div className="flex-shrink-0 mb-1"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div>
-                                                    <div className="flex-grow flex flex-col items-center">
-                                                        <div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>
-                                                            {formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}
-                                                        </div>
-                                                        {formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-4 w-full">
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div>
-                                                        <div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div>
-                                                        <div className="col-span-2 flex flex-wrap gap-1 mt-1">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label>
-                                                        <select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select>
-                                                        <div className="flex flex-wrap gap-1 mt-1">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label>
-                                                        <div className="flex flex-col gap-2">
-                                                            <div className="flex w-full gap-2 items-center">
-                                                                <div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div>
-                                                                <div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div>
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByUsage.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} />
-                                            </div>
-                                            <div className="md:col-span-8 border-l border-white/5 md:pl-8">
-                                                <div className="space-y-2">
-                                                    <div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div>
-                                                    <div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div>
-                                                </div>
-                                                <div className="mt-4 grid grid-cols-2 gap-4">
-                                                    <ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} />
-                                                    <ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} />
-                                                </div>
-                                                <div className="mt-4 flex flex-row gap-6 items-end">
-                                                    <div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div>
-                                                    <div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div>
-                                                </div>
-                                                <div className="mt-4 grid grid-cols-2 gap-4">
-                                                    <div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div>
-                                                    <div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} /></div>
-                                                </div>
-                                                <div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start">
-                                                    <div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div>
-                                                    <div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5 max-w-[160px]"><input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/20 hover:text-red-400 mr-0.5"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[160px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div>
-                                                </div>
-                                                <div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div>
-                                                <div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] bg-[#ffbae9] text-[#3f5968]`}>確認提交</button></div>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {deleteSourceTarget && (
-                        <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><p className="text-sm text-slate-300 mb-8 font-bold">移除 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p>
-                                <div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div>
-                            </div>
-                        </div>
-                    )}
-
-                    {showDuplicateConfirm && (
-                        <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p>
-                                <div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div>
-                            </div>
-                        </div>
-                    )}
-
+                    {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
+                    {renameCategoryTarget && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} /><div className="flex gap-4"><button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">儲存修改</button></div></div></div>)}
+                    {deleteCategoryTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4><p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button></div></div></div>)}
+                    <div className="fab-btn-container"><div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>{!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}<div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div><div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div></div>
+                    {isModalOpen && (<div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-3xl my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col"><div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div><button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button><div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1"><h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3><form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2"><div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8"><div className="md:col-span-4 flex flex-col gap-3 md:gap-4 items-start"><div className="flex flex-row items-end gap-3 w-full"><div className="flex-shrink-0 mb-1"><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[52px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div><div className="flex-grow flex flex-col items-center"><div onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>{formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}</div>{formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}</div></div><div className="flex flex-col gap-4 w-full"><div className="grid grid-cols-2 gap-2"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">年份</label><input type="text" className="modal-input-base w-full text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div><div className="col-span-2 flex flex-wrap gap-1 mt-1">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select><div className="flex flex-wrap gap-1 mt-1">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label><div className="flex flex-col gap-2"><div className="flex w-full gap-2 items-center"><div className={`source-icon-preview-box !w-8 !h-8 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div></div><div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByUsage.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div></div></div></div><input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} /></div><div className="md:col-span-8 border-l border-white/5 md:pl-8"><div className="space-y-2"><div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-white text-lg" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} isError={isNameDuplicate} placeholder="" required={true} /></div><div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div></div><div className="mt-4 grid grid-cols-2 gap-4"><ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, totalEpisodes: v })} /><ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, updatedEpisodes: v })} /></div><div className="mt-4 flex flex-row gap-6 items-end"><div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div></div><div className="mt-4 grid grid-cols-2 gap-4"><div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div><div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, paidProgress: v })} /></div></div><div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start"><div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div><div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5 max-w-[160px]"><input className="bg-transparent outline-none flex-1 font-black text-[11px] px-1" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/20 hover:text-red-400 mr-0.5"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[160px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div></div><div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div><div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] bg-[#ffbae9] text-[#3f5968]`}>確認提交</button></div></div></div></form></div></div></div>)}
+                    {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><p className="text-sm text-slate-300 mb-8 font-bold">移除 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
-                    {deleteGameTarget && (
-                        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>
-                    )}
-                    {showClearConfirm && (
-                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><p className="text-xs text-white/40 mb-8">不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>
-                    )}
+                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><p className="text-xs text-white/40 mb-8">不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
         }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
     </script>
 </body>
 </html>
