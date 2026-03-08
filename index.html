@@ -428,37 +428,66 @@
             const { highlights, overlappingGames } = useMemo(() => {
                 if (!value) return { highlights: [], overlappingGames: [] };
                 const overlapCount = new Array(value.length).fill(0);
-                const cleanStr = (s) => tsNormalize((s||"").toLowerCase());
-                const overlappingMap = new Map();
+                const valLower = tsNormalize(value.toLowerCase());
+                
+                const overlappingList = [];
                 
                 for (const g of games) {
                     if (g.id === editingId) continue;
-                    const exNameOriginal = g.name;
-                    const exName = cleanStr(g.name);
-                    if (!exName) continue;
-                    const currClean = cleanStr(value);
+                    const exNameOriginal = g.name || "";
+                    if (!exNameOriginal) continue;
+                    const origLower = tsNormalize(exNameOriginal.toLowerCase());
                     
                     let gameMaxLen = 0;
+                    const itemOverlapFlags = new Array(exNameOriginal.length).fill(0);
                     
-                    for (let i = 0; i < currClean.length; i++) {
-                        for (let len = 1; i + len <= currClean.length; len++) {
-                            const sub = currClean.substring(i, i + len);
+                    for (let i = 0; i < valLower.length; i++) {
+                        for (let len = 1; i + len <= valLower.length; len++) {
+                            const sub = valLower.substring(i, i + len);
                             // 忽略純空白或純標點符號的重疊
                             if (/^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/.test(sub)) continue;
                             
-                            if (exName.includes(sub)) {
+                            // 檢查原始名稱是否包含此子字串
+                            let searchIdx = 0;
+                            while ((searchIdx = origLower.indexOf(sub, searchIdx)) !== -1) {
                                 if (len > gameMaxLen) gameMaxLen = len;
+                                // 更新目標項目的高亮 (用於下拉選單)
+                                for (let k = searchIdx; k < searchIdx + len; k++) {
+                                    if (!/^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/.test(exNameOriginal[k])) {
+                                        itemOverlapFlags[k] = Math.max(itemOverlapFlags[k], len);
+                                    }
+                                }
+                                // 更新輸入框本身的高亮
                                 for (let k = i; k < i + len; k++) {
-                                    // 確保不會高亮標點符號本身
                                     if (!/^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/.test(value[k])) {
                                         overlapCount[k] = Math.max(overlapCount[k], len);
                                     }
                                 }
+                                searchIdx += 1;
                             }
                         }
                     }
+                    
                     if (gameMaxLen > 0) {
-                        overlappingMap.set(exNameOriginal, Math.max(overlappingMap.get(exNameOriginal) || 0, gameMaxLen));
+                        const segs = [];
+                        if (exNameOriginal.length > 0) {
+                            let curStr = exNameOriginal[0];
+                            let curState = itemOverlapFlags[0] >= 2 ? 'red' : (itemOverlapFlags[0] === 1 ? 'blue' : 'none');
+                            
+                            for (let i = 1; i < exNameOriginal.length; i++) {
+                                let state = itemOverlapFlags[i] >= 2 ? 'red' : (itemOverlapFlags[i] === 1 ? 'blue' : 'none');
+                                if (state === curState) {
+                                    curStr += exNameOriginal[i];
+                                } else {
+                                    segs.push({ text: curStr, state: curState });
+                                    curStr = exNameOriginal[i];
+                                    curState = state;
+                                }
+                            }
+                            segs.push({ text: curStr, state: curState });
+                        }
+                        
+                        overlappingList.push({ id: g.id, name: exNameOriginal, score: gameMaxLen, segments: segs });
                     }
                 }
                 
@@ -480,11 +509,10 @@
                     segments.push({ text: curStr, state: curState });
                 }
 
-                // 排序重疊項目並取前 10 筆顯示在清單中
-                const sortedOverlaps = Array.from(overlappingMap.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .map(entry => ({ name: entry[0], score: entry[1] }))
-                    .slice(0, 10);
+                // 排序重疊項目並取前 20 筆顯示在清單中 (原為 10 筆)
+                const sortedOverlaps = overlappingList
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 20); 
                     
                 return { highlights: segments, overlappingGames: sortedOverlaps };
             }, [value, games, editingId]);
@@ -519,20 +547,31 @@
                             required={true}
                         />
                     </div>
-                    {/* 重疊資料下拉清單 */}
+                    {/* 重疊資料下拉清單 (高度放寬，顯示重疊高亮) */}
                     {isFocused && overlappingGames.length > 0 && (
                         <div 
-                            className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] max-h-[160px] overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-1 animate-slide-down-fade"
+                            className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-1 animate-slide-down-fade"
                             onMouseDown={(e) => e.preventDefault()}
                         >
                             {overlappingGames.map((g, idx) => (
-                                <div key={idx} className="text-[12px] text-white/90 font-black px-2.5 py-1.5 bg-black/20 hover:bg-black/40 rounded truncate transition-colors flex justify-between items-center group">
-                                    <span className="truncate group-hover:text-[#ffbae9] transition-colors">{g.name}</span>
-                                    {g.score >= 2 ? (
-                                        <span className="text-[9px] bg-red-500/20 border border-red-500/30 text-red-300 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">重疊 {g.score} 字</span>
-                                    ) : (
-                                        <span className="text-[9px] bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">重疊 1 字</span>
-                                    )}
+                                <div key={g.id || idx} className="text-[12px] text-white/90 font-black px-2.5 py-1.5 bg-black/20 hover:bg-black/40 rounded transition-all flex justify-between items-start group">
+                                    <span className="block truncate group-hover:whitespace-normal group-hover:break-words group-hover:scale-[1.02] origin-left transition-all duration-200 flex-1 mr-2 leading-relaxed mt-[1px]">
+                                        {/* 在下拉清單內渲染高亮的重疊字眼 */}
+                                        {g.segments.map((seg, i) => (
+                                            <span key={i} className={
+                                                seg.state === 'red' ? 'bg-red-500/50 text-white rounded-[2px]' :
+                                                seg.state === 'blue' ? 'bg-cyan-500/40 text-cyan-50 rounded-[2px]' :
+                                                'group-hover:text-[#ffbae9] transition-colors'
+                                            }>{seg.text}</span>
+                                        ))}
+                                    </span>
+                                    <div className="flex-shrink-0 mt-[2px]">
+                                        {g.score >= 2 ? (
+                                            <span className="text-[9px] bg-red-500/20 border border-red-500/30 text-red-300 px-1.5 py-0.5 rounded">重疊 {g.score} 字</span>
+                                        ) : (
+                                            <span className="text-[9px] bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-1.5 py-0.5 rounded">重疊 1 字</span>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
