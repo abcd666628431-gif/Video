@@ -409,7 +409,12 @@
             const [customCategories, setCustomCategories] = useState([]), [customSources, setCustomSources] = useState([]), [activeTab, setActiveTab] = useState(null);
             const [isModalOpen, setIsModalOpen] = useState(false), [editingId, setEditingId] = useState(null), [showTimeSettings, setShowTimeSettings] = useState(false), [showManualUpdateInput, setShowManualUpdateInput] = useState(false), [statMode, setStatMode] = useState('progress'), [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
             const [showWatchOrderList, setShowWatchOrderList] = useState(false); const watchOrderDropdownRef = useRef(null);
-            const [addWatchOrderId, setAddWatchOrderId] = useState(""); const dragItem = useRef(null); const dragOverItem = useRef(null);
+            
+            // 觀看順序列表的搜尋與狀態
+            const [watchOrderSearchQuery, setWatchOrderSearchQuery] = useState(""); 
+            const [isWatchOrderSearchFocused, setIsWatchOrderSearchFocused] = useState(false);
+            const dragItem = useRef(null); const dragOverItem = useRef(null);
+            
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
@@ -453,7 +458,7 @@
                 const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
                 return () => { ug(); ul(); us(); up(); upro(); };
             }, [user]);
-            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput, showWatchOrderList]);
+            useEffect(() => { if (window.lucide) { const tid = setTimeout(() => window.lucide.createIcons(), 32); return () => clearTimeout(tid); } }, [games, isEditLocked, isModalOpen, activeTab, memberFilter, searchQuery, statMode, showManualUpdateInput, showWatchOrderList, isWatchOrderSearchFocused]);
             useEffect(() => {
                 const handleClickOutside = (e) => { if (watchOrderDropdownRef.current && !watchOrderDropdownRef.current.contains(e.target)) { setShowWatchOrderList(false); } };
                 document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -525,14 +530,49 @@
             };
             const handleUpdateWatchOrder = async (id, val) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); } catch(e) { showNotify("更新順序失敗"); } };
             const watchListGames = useMemo(() => { return [...games].filter(g => g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "").sort((a, b) => parseFloat(a.watchOrder) - parseFloat(b.watchOrder)); }, [games]);
-            const handleAddWatchOrder = async () => {
-                if (!addWatchOrderId || !user) return; const targetNum = parseInt(addWatchOrderId.replace(/[^0-9]/g, '')); if (isNaN(targetNum)) { showNotify("請輸入有效數字"); return; }
-                const game = games.find(g => extractFirstNumber(g.order) === targetNum);
-                if (!game) { showNotify("找不到該影片"); return; }
-                if (game.watchOrder !== undefined && game.watchOrder !== null && game.watchOrder !== "") { showNotify("已在列表中"); return; }
+            
+            // 計算搜尋建議 (模糊搜尋標題或精確比對編號，且未加入順序列表)
+            const watchOrderSuggestions = useMemo(() => {
+                if (!watchOrderSearchQuery.trim()) return [];
+                const qNorm = tsNormalize(watchOrderSearchQuery).toLowerCase();
+                return games.filter(g => {
+                    if (g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "") return false; // 已在列表中
+                    const matchId = String(extractFirstNumber(g.order)) === watchOrderSearchQuery.trim();
+                    const matchName = tsNormalize(g.name || "").toLowerCase().includes(qNorm);
+                    return matchId || matchName;
+                }).slice(0, 10);
+            }, [games, watchOrderSearchQuery]);
+
+            const handleAddWatchOrder = async (gameOrIdStr) => {
+                if (!user) return;
+                let targetGame = null;
+                
+                if (gameOrIdStr && typeof gameOrIdStr === 'object') {
+                    targetGame = gameOrIdStr;
+                } else {
+                    const query = watchOrderSearchQuery.trim();
+                    if (!query) return;
+                    const targetNum = parseInt(query.replace(/[^0-9]/g, ''));
+                    if (!isNaN(targetNum) && String(targetNum) === query) {
+                        targetGame = games.find(g => extractFirstNumber(g.order) === targetNum && (!g.watchOrder));
+                    }
+                    if (!targetGame && watchOrderSuggestions.length > 0) {
+                        targetGame = watchOrderSuggestions[0];
+                    }
+                }
+
+                if (!targetGame) { showNotify("找不到符合的影片，或已在列表中"); return; }
+                if (targetGame.watchOrder !== undefined && targetGame.watchOrder !== null && targetGame.watchOrder !== "") { showNotify("已在列表中"); return; }
+                
                 const nextOrder = watchListGames.length > 0 ? Math.max(...watchListGames.map(g => parseFloat(g.watchOrder))) + 1 : 1;
-                try { await setDoc(doc(getPublicCol('games'), game.id), { watchOrder: nextOrder }, { merge: true }); setAddWatchOrderId(""); showNotify("已加入"); } catch(e) { showNotify("加入失敗"); }
+                try { 
+                    await setDoc(doc(getPublicCol('games'), targetGame.id), { watchOrder: nextOrder }, { merge: true }); 
+                    setWatchOrderSearchQuery(""); 
+                    setIsWatchOrderSearchFocused(false);
+                    showNotify("已加入"); 
+                } catch(e) { showNotify("加入失敗"); }
             };
+
             const handleRemoveWatchOrder = async (id) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: "" }, { merge: true }); } catch(e) { showNotify("移除失敗"); } };
             const handleSortDrop = async () => {
                 if (dragItem.current === null || dragOverItem.current === null || !user) return;
@@ -623,22 +663,47 @@
                                 <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
                                 <div className="relative" ref={watchOrderDropdownRef}>
                                     <button onClick={() => setShowWatchOrderList(!showWatchOrderList)} className="flex items-center gap-2 px-4 py-2 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-xs font-black rounded hover:bg-[#ffbae9]/20 uppercase transition-all shadow-lg"><Icon name="list" className="w-4 h-4" /> 觀看順序</button>
-                                    {showWatchOrderList && (<div className="absolute right-0 top-full mt-3 w-[360px] md:w-[460px] bg-[#1a2332] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[600] flex flex-col overflow-hidden max-h-[85vh] animate-slide-down-fade">
+                                    {showWatchOrderList && (<div className="absolute right-0 top-full mt-3 w-[360px] md:w-[460px] bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[600] flex flex-col overflow-hidden max-h-[85vh] animate-slide-down-fade">
                                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#ffbae9]/15 to-transparent"><h2 className="text-[14px] font-black text-[#ffbae9] uppercase tracking-widest flex items-center gap-2"><Icon name="list-ordered" className="w-5 h-5" /> 觀看順序設定</h2><button onClick={() => setShowWatchOrderList(false)} className="text-white/50 hover:text-white transition-colors bg-black/40 p-1.5 rounded-full"><Icon name="x" className="w-4 h-4" /></button></div>
-                                            <div className="p-4 border-b border-white/10 bg-white/5 flex gap-2">
-                                                <input type="number" placeholder="輸入影片編號 (如: 1)..." className="modal-input-base flex-1 !min-h-[36px] text-[13px] font-black px-3" value={addWatchOrderId} onChange={(e) => setAddWatchOrderId(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddWatchOrder()} />
-                                                <button onClick={handleAddWatchOrder} className="bg-[#ffbae9] text-[#3f5968] px-6 py-2 rounded font-black text-[13px] transition-colors hover:bg-white shadow-lg">加入</button>
+                                            
+                                            {/* 新增：支援名稱模糊搜尋輸入與建議選單 */}
+                                            <div className="p-4 border-b border-white/10 bg-white/5 flex gap-2 relative">
+                                                <div className="flex-1 relative">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="輸入編號或名稱搜尋..." 
+                                                        className="modal-input-base w-full !min-h-[36px] text-[13px] font-black px-3" 
+                                                        value={watchOrderSearchQuery} 
+                                                        onChange={(e) => setWatchOrderSearchQuery(e.target.value)} 
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddWatchOrder()} 
+                                                        onFocus={() => setIsWatchOrderSearchFocused(true)} 
+                                                        onBlur={() => setIsWatchOrderSearchFocused(false)} 
+                                                    />
+                                                    {isWatchOrderSearchFocused && watchOrderSuggestions.length > 0 && (
+                                                        <div className="absolute top-full left-0 w-full mt-1 bg-[#1a2332] border border-[#ffbae9]/30 rounded shadow-2xl z-[700] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                                            {watchOrderSuggestions.map(sg => (
+                                                                <div 
+                                                                    key={sg.id} 
+                                                                    onMouseDown={(e) => { e.preventDefault(); handleAddWatchOrder(sg); }} 
+                                                                    className="px-3 py-2 border-b border-white/5 hover:bg-[#ffbae9]/20 cursor-pointer flex justify-between items-center transition-colors"
+                                                                >
+                                                                    <span className="font-black text-[12px] truncate text-white">{sg.name}</span>
+                                                                    <span className="text-[10px] text-[#ffbae9] ml-2 flex-shrink-0">#{sg.order || 0}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <button onClick={() => handleAddWatchOrder()} className="bg-[#ffbae9] text-[#3f5968] px-6 py-2 rounded font-black text-[13px] transition-colors hover:bg-white shadow-lg flex-shrink-0">加入</button>
                                             </div>
+
                                             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-black/30">
-                                                {watchListGames.length === 0 ? (<div className="text-center text-white/30 text-[12px] font-black py-10 leading-relaxed uppercase tracking-widest">目前列表為空<br/>請從上方輸入編號並點擊加入</div>) : (watchListGames.map((g, idx) => (
+                                                {watchListGames.length === 0 ? (<div className="text-center text-white/30 text-[12px] font-black py-10 leading-relaxed uppercase tracking-widest">目前列表為空<br/>請從上方輸入名稱或編號加入</div>) : (watchListGames.map((g, idx) => (
                                                         <div key={g.id} draggable={true} onDragStart={(e) => { dragItem.current = idx; }} onDragEnter={(e) => { dragOverItem.current = idx; }} onDragEnd={handleSortDrop} onDragOver={(e) => e.preventDefault()} className="bg-[#2a3b4c]/80 border border-white/10 rounded-md p-2.5 flex gap-3 relative hover:border-[#ffbae9]/50 transition-colors cursor-grab active:cursor-grabbing shadow-sm">
                                                             <div className="flex items-center text-white/30 flex-shrink-0 hover:text-[#ffbae9] transition-colors"><Icon name="grip-vertical" className="w-5 h-5" /></div>
                                                             <div className="flex flex-col items-center justify-center w-[46px] flex-shrink-0">
                                                                 <label className="text-[9px] text-[#ffbae9]/80 font-black uppercase mb-1">排序</label>
                                                                 <WatchOrderInput disabled={false} value={g.watchOrder} onChange={(val) => handleUpdateWatchOrder(g.id, val)} />
-                                                            </div>
-                                                            <div className="w-[48px] h-[64px] flex-shrink-0 bg-black/40 rounded border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}>
-                                                                {g.cover ? <img src={g.cover} className="w-full h-full object-cover" alt="cover" /> : <Icon name="image" className="w-5 h-5 text-white/20" />}
                                                             </div>
                                                             <div className="flex-1 flex flex-col justify-center min-w-0 cursor-pointer group/item py-1" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}>
                                                                 <div className="font-black text-[14px] text-white leading-tight group-hover/item:text-[#ffbae9] truncate transition-colors">{g.name}</div>
