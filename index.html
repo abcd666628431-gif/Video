@@ -646,8 +646,14 @@
                         if (type === 'category') return (g.category || "未分類") === value; if (type === 'source') return (g.source || "未知來源") === value; return true;
                     });
                 }
-                if (activeTab === "最新入庫") { l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0)); } 
-                else { if (activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a, b) => { const wa = parseFloat(a.watchOrder); const wb = parseFloat(b.watchOrder); const hasWa = !isNaN(wa) && wa > 0; const hasWb = !isNaN(wb) && wb > 0; if (hasWa && hasWb) return wa - wb; if (hasWa && !hasWb) return -1; if (!hasWa && hasWb) return 1; return extractFirstNumber(a.order) - extractFirstNumber(b.order); }); }
+                if (activeTab === "最新入庫") { 
+                    l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0)); 
+                } 
+                else { 
+                    if (activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); 
+                    // 恢復為主頁面獨立排序，不受觀看順序(watchOrder)的影響
+                    l.sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); 
+                }
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
             const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
