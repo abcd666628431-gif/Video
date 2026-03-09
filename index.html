@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 新增：引入業界標準 OpenCC (專業精準繁簡轉換引擎) -->
+    <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
     <style>
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; background-color: #3f5968; color: #fff; margin: 0; overflow-x: hidden; font-size: 16px; user-select: text; }
@@ -174,20 +176,13 @@
             return `${Y}-${M}-${D} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; 
         };
 
-        // 建立雙向繁簡字典引擎
-        const TRAD_CHARS = "體國會愛萬與實鳥範機戰邊裡裏廣陽書劃畫對進導燈門問開蘭慶層陸錄劇電視飛觀藥優葉";
-        const SIMP_CHARS = "体国会爱万与实鸟范机战边里里广阳书划画对进导灯门问开兰庆层陆录剧电视飞观药优叶";
-        const TO_SIMP_MAP = {}; 
-        const TO_TRAD_MAP = {};
-        for(let i = 0; i < TRAD_CHARS.length; i++) {
-            TO_SIMP_MAP[TRAD_CHARS[i]] = SIMP_CHARS[i];
-            TO_TRAD_MAP[SIMP_CHARS[i]] = TRAD_CHARS[i];
-        }
-        const TO_SIMP_REGEX = new RegExp(`[${TRAD_CHARS}]`, 'g');
-        const TO_TRAD_REGEX = new RegExp(`[${SIMP_CHARS}]`, 'g');
+        // 建立 OpenCC 專業繁簡轉換引擎 (具備語意與詞彙精準分析)
+        const converterT2S = window.OpenCC ? window.OpenCC.Converter({ from: 'tw', to: 'cn' }) : (s) => s;
+        const converterS2T = window.OpenCC ? window.OpenCC.Converter({ from: 'cn', to: 'tw' }) : (s) => s;
 
-        const toSimplified = (str) => str ? str.replace(TO_SIMP_REGEX, m => TO_SIMP_MAP[m]) : "";
-        const toTraditional = (str) => str ? str.replace(TO_TRAD_REGEX, m => TO_TRAD_MAP[m]) : "";
+        const toSimplified = (str) => str ? converterT2S(str) : "";
+        const toTraditional = (str) => str ? converterS2T(str) : "";
+        const tsNormalize = (str) => str ? converterT2S(str) : "";
 
         const compressImage = (dataUrl, maxWidth = 800) => {
             return new Promise((resolve, reject) => {
@@ -433,6 +428,7 @@
             useEffect(() => { adjustHeight(); }, [value]);
 
             const [isFocused, setIsFocused] = useState(false);
+            const [isHovered, setIsHovered] = useState(false); // 新增 hover 狀態
 
             const { highlights, overlappingGames } = useMemo(() => {
                 if (!value) return { highlights: [], overlappingGames: [] };
@@ -526,7 +522,9 @@
             }, [value, games, editingId]);
 
             return (
-                <div className="relative w-full">
+                <div className="relative w-full" 
+                     onMouseEnter={() => setIsHovered(true)} 
+                     onMouseLeave={() => setIsHovered(false)}>
                     <div className={`relative modal-input-base w-full !p-0 ${isFocused ? '!border-b-[#ffbae9] !bg-[rgba(0,0,0,0.7)] shadow-[0_4px_12px_rgba(255,186,233,0.1)]' : ''} ${isError ? '!border-red-500 ring-2 ring-red-500/20' : ''}`}>
                         <div 
                             className="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap break-all font-black text-lg overflow-hidden"
@@ -557,6 +555,19 @@
                             required={true}
                         />
                     </div>
+                    
+                    {/* 新增：滑鼠懸停顯示雙語轉換結果 */}
+                    {isHovered && value && !isFocused && (
+                        <div className="absolute top-full left-0 mt-1 flex flex-col gap-0.5 z-[600] pointer-events-none opacity-60 transition-opacity">
+                            <div className="text-[9px] font-mono text-cyan-200 bg-black/40 px-1.5 py-0.5 rounded border border-white/5 shadow-sm">
+                                簡: {toSimplified(value)}
+                            </div>
+                            <div className="text-[9px] font-mono text-[#ffbae9] bg-black/40 px-1.5 py-0.5 rounded border border-white/5 shadow-sm">
+                                繁: {toTraditional(value)}
+                            </div>
+                        </div>
+                    )}
+
                     {isFocused && overlappingGames.length > 0 && (
                         <div 
                             className="absolute top-full left-0 w-full mt-2 bg-[#1c2533] border border-[#ffbae9]/40 rounded-lg shadow-2xl z-[700] p-1.5 flex flex-col gap-1 animate-slide-down-fade"
