@@ -643,7 +643,20 @@
             const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); const [newCategoryName, setNewCategoryName] = useState("");
             const [renameCategoryTarget, setRenameCategoryTarget] = useState(null); const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-            const nameColorMap = useMemo(() => { const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; return m; }, [onlineUsers, userProfiles, userName, userColor]);
+            
+            // 【效能核彈級修復】：過濾掉無意義的 timestamp，只比對「名字」與「顏色」
+            // 這樣就算背景在線時間一直跳，只要名字和顏色沒變，下面的 useMemo 就不會被打破，遊戲卡片就不會無限重繪！
+            const onlineUsersSignature = JSON.stringify(onlineUsers.map(u => ({ n: u.name, c: u.color })));
+            const userProfilesSignature = JSON.stringify(userProfiles.map(u => ({ n: u.name, c: u.color })));
+
+            const nameColorMap = useMemo(() => { 
+                const m = {}; 
+                userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); 
+                onlineUsers.forEach(u => { if(u.name) m[u.name] = u.color; }); 
+                m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; 
+                return m; 
+            }, [onlineUsersSignature, userProfilesSignature, userName, userColor]); // 依賴項改為乾淨的 Signature
+
             const displayMembers = ["糖糖", "雲雲"];
             const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
             const unitSuggestions = useMemo(() => { 
