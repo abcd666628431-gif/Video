@@ -1173,7 +1173,11 @@
                                                         <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setShowClearMembershipsConfirm(true)} title="清空追蹤列表">
                                                             <Icon name="trash-2" className="w-4 h-4 text-red-400/50 group-hover:text-red-400 transition-colors" />
                                                         </div>
-                                                        <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setShowAddMembershipModal(true)} title="新增追蹤平台">
+                                                        <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { 
+                                                            const available = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name));
+                                                            setNewMembershipName(available.length > 0 ? available[0].name : ""); 
+                                                            setShowAddMembershipModal(true); 
+                                                        }} title="新增追蹤平台">
                                                             <Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
                                                         </div>
                                                     </>
@@ -1260,8 +1264,29 @@
                     </div>
                     {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
                     
-                    {/* 手動新增追蹤(獨立)的對話框 */}
-                    {showAddMembershipModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">新增時限追蹤</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入平台名稱..." value={newMembershipName} onChange={e=>setNewMembershipName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /><div className="flex gap-4"><button onClick={() => setShowAddMembershipModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddMembership} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">新增追蹤</button></div></div></div>)}
+                    {/* 手動新增追蹤(獨立)的對話框：改為從現有來源下拉選擇 */}
+                    {showAddMembershipModal && (() => {
+                        const availableSources = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name));
+                        return (
+                            <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                                <div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl">
+                                    <h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">新增時限追蹤</h4>
+                                    {availableSources.length > 0 ? (
+                                        <select autoFocus className="modal-input-base w-full mb-6 text-center font-black cursor-pointer" value={newMembershipName} onChange={e=>setNewMembershipName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()}>
+                                            <option value="" disabled>-- 請選擇平台來源 --</option>
+                                            {availableSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                                        </select>
+                                    ) : (
+                                        <div className="text-center text-white/50 text-[11px] mb-6 font-black leading-relaxed">沒有可新增的平台來源<br/>(所有來源皆已追蹤，或尚未建立)</div>
+                                    )}
+                                    <div className="flex gap-4">
+                                        <button onClick={() => setShowAddMembershipModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
+                                        <button onClick={handleAddMembership} disabled={!newMembershipName || availableSources.length === 0} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName || availableSources.length === 0 ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                     
                     {/* 單一移除追蹤對話框 */}
                     {deleteMembershipTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">移除時限追蹤？</h4><p className="text-sm text-slate-300 mb-8 font-bold">不再追蹤 <span className="text-red-400">"{deleteMembershipTarget}"</span> 的到期日？<br/><span className="text-[10px] opacity-60">(不會影響卡片的圖標與來源)</span></p><div className="flex gap-4"><button onClick={() => setDeleteMembershipTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteMembership(deleteMembershipTarget)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定移除</button></div></div></div>)}
