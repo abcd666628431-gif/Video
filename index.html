@@ -660,6 +660,8 @@
             // 【完全獨立】的手動加入與清空「會員時限」狀態
             const [showAddMembershipModal, setShowAddMembershipModal] = useState(false);
             const [newMembershipName, setNewMembershipName] = useState("");
+            const [newMembershipIcon, setNewMembershipIcon] = useState(""); // 新增：支援圖標輸入
+            const membershipFileInputRef = useRef(null); // 新增：支援圖標上傳
             const [showClearMembershipsConfirm, setShowClearMembershipsConfirm] = useState(false);
             const [deleteMembershipTarget, setDeleteMembershipTarget] = useState(null);
 
@@ -746,6 +748,26 @@
             
             useEffect(() => {
                 const handlePaste = async (e) => {
+                    // 新增：會員時限 Modal 開啟時的剪貼簿攔截
+                    if (showAddMembershipModal) {
+                        const items = e.clipboardData?.items;
+                        if (items) {
+                            for (const item of items) {
+                                if (item.type.indexOf("image") !== -1) {
+                                    const file = item.getAsFile(); const reader = new FileReader();
+                                    reader.onload = async (event) => { const compressed = await compressImage(event.target.result, 100); setNewMembershipIcon(compressed); showNotify("平台圖標已貼上"); };
+                                    reader.readAsDataURL(file); return;
+                                }
+                            }
+                        }
+                        const textData = e.clipboardData.getData('text/plain');
+                        if (textData) {
+                            const trimmed = textData.trim(); const isImageUrl = trimmed.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed);
+                            if (isImageUrl) { setNewMembershipIcon(trimmed); showNotify("圖標連結已貼上"); }
+                        }
+                        return;
+                    }
+
                     if (!isModalOpen) return; const items = e.clipboardData?.items;
                     if (items) {
                         for (const item of items) {
@@ -877,14 +899,25 @@
             };
             const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             
-            // 【獨立操作】處理手動新增時限追蹤，只影響 memberships，不會污染卡片來源
+            // 【進化版】處理手動新增時限追蹤：允許輸入名稱與圖案，並同步註冊到全域來源
             const handleAddMembership = async () => {
                 const name = newMembershipName.trim();
                 if(!name || !user) return; 
                 if(customMemberships.some(m => m.name === name)) { showNotify("此平台已在追蹤中"); return; }
+                
                 const nextMemberships = [...customMemberships, { name, expiryDate: '' }];
-                await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                showNotify("已新增時限追蹤"); setShowAddMembershipModal(false); setNewMembershipName("");
+                
+                // 同步更新 customSources，讓卡片也能用這個新平台與圖案
+                let nextSources = [...customSources];
+                const existingSourceIdx = nextSources.findIndex(s => s.name === name);
+                if (existingSourceIdx === -1) {
+                    nextSources.push({ name, icon: newMembershipIcon || '' });
+                } else if (newMembershipIcon) {
+                    nextSources[existingSourceIdx].icon = newMembershipIcon;
+                }
+
+                await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships, sources: nextSources }, { merge: true });
+                showNotify("已新增時限追蹤與平台"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon("");
             };
 
             // 【獨立操作】移除單一時限追蹤
@@ -1146,13 +1179,13 @@
                         <div className="flex flex-col lg:flex-row gap-6 mb-8">
                             
                             {/* 操作日誌：佔比 4.5/12 (37.5%) */}
-                            <div className="dashboard-panel h-[180px] overflow-hidden flex flex-col w-full lg:w-[37.5%] flex-shrink-0">
+                            <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[37.5%] flex-shrink-0">
                                 <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span></div>))}</div>
                             </div>
                             
                             {/* 會員時限：展開時佔比 1.5/12 (12.5%)，收起時固定 44px 寬度 */}
-                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[180px] lg:w-[44px]' : 'w-full h-[180px] lg:w-[12.5%]'}`}>
+                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] lg:w-[44px]' : 'w-full h-[220px] lg:w-[12.5%]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                                 
                                 {isExpiryCollapsed ? (
@@ -1174,8 +1207,8 @@
                                                             <Icon name="trash-2" className="w-4 h-4 text-red-400/50 group-hover:text-red-400 transition-colors" />
                                                         </div>
                                                         <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { 
-                                                            const available = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name));
-                                                            setNewMembershipName(available.length > 0 ? available[0].name : ""); 
+                                                            setNewMembershipName("");
+                                                            setNewMembershipIcon("");
                                                             setShowAddMembershipModal(true); 
                                                         }} title="新增追蹤平台">
                                                             <Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
@@ -1187,7 +1220,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-0.5 pr-1">
                                             {/* 【隔離渲染】這裡改為只渲染 customMemberships，不再遍歷所有來源 */}
                                             {customMemberships.map(m => {
                                                 const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
@@ -1195,7 +1228,7 @@
                                                 // 聰明關聯：透過名稱去匹配並取得卡片那邊的圖標
                                                 const sourceInfo = customSources.find(s => s.name === m.name);
                                                 return (
-                                                    <div key={m.name} className="flex justify-between items-center bg-black/20 p-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
+                                                    <div key={m.name} className="flex justify-between items-center bg-black/20 py-1 px-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
                                                         <div className="flex items-center gap-1.5 overflow-hidden flex-1">
                                                             {sourceInfo?.icon ? <img src={sourceInfo.icon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
                                                             <span className="truncate font-black text-white/80 text-[11px]">{m.name}</span>
@@ -1235,7 +1268,7 @@
                             </div>
 
                             {/* 成員統計：自動填滿剩餘空間 (flex-1) */}
-                            <div className="dashboard-panel h-[180px] relative flex flex-col w-full flex-1 min-w-0">
+                            <div className="dashboard-panel h-[220px] relative flex flex-col w-full flex-1 min-w-0">
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
                                 <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[12px] font-black border-collapse">{statMode === 'progress' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th><th className="text-center px-2 py-1 border-l border-white/5">總計</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.completed}</td></tr>))}</tbody></>) : statMode === 'category' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody></>) : (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeSourcesInUse.map(s => {
                                     const srcInfo = customSources.find(cs => cs.name === s);
@@ -1264,29 +1297,53 @@
                     </div>
                     {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
                     
-                    {/* 手動新增追蹤(獨立)的對話框：改為從現有來源下拉選擇 */}
-                    {showAddMembershipModal && (() => {
-                        const availableSources = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name));
-                        return (
-                            <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                                <div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl">
-                                    <h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">新增時限追蹤</h4>
-                                    {availableSources.length > 0 ? (
-                                        <select autoFocus className="modal-input-base w-full mb-6 text-center font-black cursor-pointer" value={newMembershipName} onChange={e=>setNewMembershipName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()}>
-                                            <option value="" disabled>-- 請選擇平台來源 --</option>
-                                            {availableSources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                                        </select>
-                                    ) : (
-                                        <div className="text-center text-white/50 text-[11px] mb-6 font-black leading-relaxed">沒有可新增的平台來源<br/>(所有來源皆已追蹤，或尚未建立)</div>
-                                    )}
-                                    <div className="flex gap-4">
-                                        <button onClick={() => setShowAddMembershipModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
-                                        <button onClick={handleAddMembership} disabled={!newMembershipName || availableSources.length === 0} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName || availableSources.length === 0 ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button>
+                    {/* 手動新增追蹤(獨立)的對話框：支援手動輸入名稱與上傳圖案，並提供現有來源快速選擇 */}
+                    {showAddMembershipModal && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl">
+                                <h4 className="text-cyan-400 font-black mb-6 uppercase text-center tracking-widest italic">新增時限追蹤與平台</h4>
+                                
+                                <div className="flex w-full gap-3 items-center mb-4">
+                                    <div className="source-icon-preview-box !w-12 !h-12 active bg-black/40" onClick={() => membershipFileInputRef.current?.click()} title="點擊上傳圖標，或直接在此畫面貼上圖片 (Ctrl+V)">
+                                        {newMembershipIcon ? <img src={newMembershipIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-5 h-5 text-white/20" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <input type="text" autoFocus className="modal-input-base w-full text-center font-black !text-[13px] !px-2" placeholder="輸入平台名稱..." value={newMembershipName} 
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setNewMembershipName(val);
+                                                const existSource = customSources.find(s => s.name === val);
+                                                if (existSource && existSource.icon && !newMembershipIcon) setNewMembershipIcon(existSource.icon);
+                                            }} 
+                                            onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} 
+                                        />
                                     </div>
                                 </div>
+                                
+                                {/* 快速選取現有未追蹤來源 */}
+                                {(() => {
+                                    const availableSources = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name));
+                                    if (availableSources.length > 0) {
+                                        return (
+                                            <div className="flex flex-wrap justify-center gap-1.5 mb-6">
+                                                {availableSources.map(s => (
+                                                    <button key={s.name} type="button" className="quick-fill-btn text-[10px] !px-2" onClick={() => { setNewMembershipName(s.name); setNewMembershipIcon(s.icon || ""); }}>{s.name}</button>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+                                    return <div className="mb-6"></div>;
+                                })()}
+
+                                <div className="flex gap-4">
+                                    <button onClick={() => setShowAddMembershipModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
+                                    <button onClick={handleAddMembership} disabled={!newMembershipName.trim()} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName.trim() ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button>
+                                </div>
+                                
+                                <input type="file" ref={membershipFileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setNewMembershipIcon(c); e.target.value=""; } }} />
                             </div>
-                        );
-                    })()}
+                        </div>
+                    )}
                     
                     {/* 單一移除追蹤對話框 */}
                     {deleteMembershipTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">移除時限追蹤？</h4><p className="text-sm text-slate-300 mb-8 font-bold">不再追蹤 <span className="text-red-400">"{deleteMembershipTarget}"</span> 的到期日？<br/><span className="text-[10px] opacity-60">(不會影響卡片的圖標與來源)</span></p><div className="flex gap-4"><button onClick={() => setDeleteMembershipTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteMembership(deleteMembershipTarget)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定移除</button></div></div></div>)}
