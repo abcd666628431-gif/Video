@@ -72,7 +72,11 @@
         .update-progress-circle span { font-size: 11px; font-weight: 900; letter-spacing: -0.05em; position: relative; z-index: 2; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
         
         .dashboard-panel { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem; }
-        .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; }
+        
+        /* 新增：將所有輸入框與多行文本框的游標改為專屬粉紅色 */
+        input, textarea { caret-color: #ffbae9; }
+        
+        .modal-input-base { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid #2d3748; padding: 0.5rem 0.75rem; transition: all 0.3s ease; color: #fff; border-radius: 4px; min-height: 40px; caret-color: #ffbae9; }
         .modal-input-base:focus { border-bottom-color: #ffbae9; background: rgba(0,0,0,0.7); outline: none; box-shadow: 0 4px 12px rgba(255, 186, 233, 0.1); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .btn-delete-bottom { position: absolute; bottom: 12px; right: 12px; opacity: 0; transition: all 0.2s; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.3); z-index: 5; }
@@ -649,6 +653,11 @@
             const [editingExpirySource, setEditingExpirySource] = useState(null);
             const [expiryInputValue, setExpiryInputValue] = useState("");
             const [isExpiryCollapsed, setIsExpiryCollapsed] = useState(false);
+            
+            // 新增：手動加入來源/平台的狀態 與 清空面板確認狀態
+            const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+            const [newSourceName, setNewSourceName] = useState("");
+            const [showClearSourcesConfirm, setShowClearSourcesConfirm] = useState(false);
 
             const calculateDaysLeft = useCallback((dateStr) => {
                 if (!dateStr) return null;
@@ -857,6 +866,16 @@
             };
             const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             
+            // 新增：處理手動新增來源的函數
+            const handleAddSource = async () => {
+                const name = newSourceName.trim();
+                if(!name || !user) return; 
+                if(customSources.some(s => s.name === name)) { showNotify("此平台/來源已存在"); return; }
+                const nextSources = [...customSources, { name, icon: '' }];
+                await setDoc(doc(getPublicCol('settings'), 'config'), { sources: nextSources }, { merge: true });
+                showNotify("已新增平台"); setShowAddSourceModal(false); setNewSourceName("");
+            };
+
             // 【重點升級】點擊修復數據按鈕，會自動為舊資料補上翻譯與搜尋字串
             const handleRepairData = async () => {
                 if(!user) return; showNotify("啟動修復與編譯名稱補全中...");
@@ -1050,8 +1069,20 @@
                                             <div className="flex items-center">
                                                 <Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限
                                             </div>
-                                            <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起面板">
-                                                <Icon name="chevron-left" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
+                                            <div className="flex items-center gap-1">
+                                                {!isEditLocked && (
+                                                    <>
+                                                        <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setShowClearSourcesConfirm(true)} title="清空/重置項目">
+                                                            <Icon name="trash-2" className="w-4 h-4 text-white/30 group-hover:text-red-400 transition-colors" />
+                                                        </div>
+                                                        <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setShowAddSourceModal(true)} title="手動新增平台">
+                                                            <Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
+                                                        </div>
+                                                    </>
+                                                )}
+                                                <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起面板">
+                                                    <Icon name="chevron-left" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
@@ -1064,7 +1095,7 @@
                                                             {s.icon ? <img src={s.icon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
                                                             <span className="truncate font-black text-white/80 text-[11px]">{s.name}</span>
                                                         </div>
-                                                        <div className="flex-shrink-0 ml-2">
+                                                        <div className="flex items-center flex-shrink-0 ml-2">
                                                             {isEditing && !isEditLocked ? (
                                                                 <input 
                                                                     type="date" 
@@ -1082,6 +1113,11 @@
                                                                     title={!isEditLocked ? "點擊設定到期日" : "需開啟管理模式才能修改"}
                                                                 >
                                                                     {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日到期" : `剩 ${daysLeft} 天`}
+                                                                </div>
+                                                            )}
+                                                            {!isEditLocked && (
+                                                                <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1.5">
+                                                                    <Icon name="trash-2" className="w-3 h-3 text-red-400/50 hover:text-red-400 cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }} title="刪除此平台" />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1122,6 +1158,13 @@
                         </article>
                     </div>
                     {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
+                    
+                    {/* 新增：手動新增平台(來源)的對話框 */}
+                    {showAddSourceModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">新增平台 / 來源</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入平台名稱..." value={newSourceName} onChange={e=>setNewSourceName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddSource()} /><div className="flex gap-4"><button onClick={() => setShowAddSourceModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddSource} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
+                    
+                    {/* 新增：清空/重置會員時限的對話框 */}
+                    {showClearSourcesConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-8 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">清理會員時限</h4><p className="text-sm text-slate-300 mb-6 font-bold">請選擇您要執行的操作：</p><div className="flex flex-col gap-3"><button onClick={async () => { const cleared = customSources.map(s => ({...s, expiryDate: ""})); await setDoc(doc(getPublicCol('settings'), 'config'), { sources: cleared }, { merge: true }); setShowClearSourcesConfirm(false); showNotify("已重置所有到期日"); }} className="w-full py-3 bg-orange-600/80 hover:bg-orange-500 text-white text-[12px] font-black rounded uppercase transition-colors">僅重置所有到期日</button><button onClick={async () => { await setDoc(doc(getPublicCol('settings'), 'config'), { sources: [] }, { merge: true }); setShowClearSourcesConfirm(false); showNotify("已刪除所有平台"); }} className="w-full py-3 bg-red-600 hover:bg-red-500 text-white text-[12px] font-black rounded uppercase transition-colors">刪除所有平台項目</button><button onClick={() => setShowClearSourcesConfirm(false)} className="w-full py-3 bg-white/5 hover:bg-white/10 text-[12px] font-black rounded uppercase transition-colors mt-2">取消</button></div></div></div>)}
+                    
                     {renameCategoryTarget && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} /><div className="flex gap-4"><button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">儲存修改</button></div></div></div>)}
                     {deleteCategoryTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4><p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button></div></div></div>)}
                     <div className="fab-btn-container"><div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>{!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}<div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div><div className="fab-btn-sub" onClick={() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'})}><Icon name="chevron-down" className="w-6 h-6" /></div></div>
