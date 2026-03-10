@@ -1030,19 +1030,38 @@
                 ));
             }, [isLoadingGames, filteredGames, nameColorMap, customSources, isEditLocked, handleOpenEdit]);
 
-            const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
+            // 【新增】：將最新的 memberships 也加入導出備份中
+            const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources, memberships: customMemberships }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
             
-            // 【修復】：加入「智慧提取與合併」邏輯，確保不管備份檔多舊，來源設定與會員時限都能完美還原！
+            // 【修復】：完美兼容舊版備份檔，修復時間戳報錯，並加入 memberships 備份還原
             const handleImportData = async (e) => {
-                const f = e.target.files[0]; if(!f || !user) return; const r = new FileReader(); r.readAsText(f);
+                const f = e.target.files[0]; 
+                e.target.value = ""; // 先清空，確保就算中途失敗，下次也能重新點擊同一個檔案
+                if(!f || !user) return; 
+                const r = new FileReader(); r.readAsText(f);
                 r.onload = async (ev) => { 
                     try { 
                         showNotify("導入與覆蓋資料中...");
                         const d = JSON.parse(ev.target.result); 
-                        if(d.games) {
-                            await Promise.all(d.games.map(g => { 
+                        
+                        // 兼容舊版備份檔 (舊版直接是陣列，新版是帶有 games 的物件)
+                        let gamesToImport = [];
+                        if (Array.isArray(d)) {
+                            gamesToImport = d;
+                        } else if (d.games) {
+                            gamesToImport = d.games;
+                        }
+
+                        if(gamesToImport.length > 0) {
+                            await Promise.all(gamesToImport.map(g => { 
                                 const {id, ...rest} = g; 
-                                const payload = sanitizePayload({...rest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp()});
+                                const cleanRest = sanitizePayload(rest);
+                                // 將時間戳提取到外部賦值，避免被過濾機制破壞而遭資料庫拒絕
+                                const payload = {
+                                    ...cleanRest, 
+                                    createdAt: rest.createdAt || serverTimestamp(), 
+                                    updatedAt: serverTimestamp()
+                                };
                                 if (id) {
                                     return setDoc(doc(getPublicCol('games'), id), payload);
                                 } else {
@@ -1051,27 +1070,23 @@
                             })); 
                         }
                         
-                        // 智慧合併分類與來源 (保留現有 + 備份檔內的設定 + 自動從影片中提取未知的來源)
                         let mergedCats = [...customCategories];
                         if (d.categories) d.categories.forEach(c => { if (!mergedCats.includes(c)) mergedCats.push(c); });
 
                         let mergedSources = [...customSources];
-                        // 1. 若備份檔自帶專屬來源設定，進行覆蓋與合併
                         if (d.sources) {
                             d.sources.forEach(bs => {
                                 const existing = mergedSources.find(s => s.name === bs.name);
                                 if (existing) {
                                     if (bs.icon) existing.icon = bs.icon;
-                                    if (bs.expiryDate) existing.expiryDate = bs.expiryDate;
                                 } else {
                                     mergedSources.push(bs);
                                 }
                             });
                         }
 
-                        // 2. 從導入的影片資料中自動反向提取來源 (預防舊備份檔沒有導出 sources 陣列的問題)
-                        if (d.games) {
-                            d.games.forEach(g => {
+                        if (gamesToImport.length > 0) {
+                            gamesToImport.forEach(g => {
                                 if (g.category && g.category !== "未分類" && !mergedCats.includes(g.category)) {
                                     mergedCats.push(g.category);
                                 }
@@ -1084,11 +1099,25 @@
                         if (mergedCats.length > 0 || mergedSources.length > 0) {
                             await setDoc(doc(getPublicCol('settings'), 'config'), { categories: mergedCats, sources: mergedSources }, { merge: true });
                         }
+
+                        // 新功能保護：若備份檔內有 memberships 追蹤清單，也一併合併還原
+                        if (d.memberships) {
+                            let mergedMemberships = [...customMemberships];
+                            d.memberships.forEach(bm => {
+                                const existing = mergedMemberships.find(m => m.name === bm.name);
+                                if (existing) {
+                                    if (bm.expiryDate) existing.expiryDate = bm.expiryDate;
+                                } else {
+                                    mergedMemberships.push(bm);
+                                }
+                            });
+                            await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: mergedMemberships }, { merge: true });
+                        }
                         
                         showNotify("導入並取代成功"); 
-                        e.target.value = ""; // 清空上傳欄位，讓下次可以重複選擇同一個檔案
-                    } catch(e) { 
-                        showNotify("導入失敗"); 
+                    } catch(error) { 
+                        console.error("導入失敗", error);
+                        showNotify("導入失敗，請確認資料庫權限或檔案格式"); 
                     } 
                 }; 
             };
