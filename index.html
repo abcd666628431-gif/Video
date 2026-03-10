@@ -645,9 +645,10 @@
             const [renameCategoryTarget, setRenameCategoryTarget] = useState(null); const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             
-            // 新增：會員時限相關狀態與函數
+            // 新增：會員時限與收合相關狀態
             const [editingExpirySource, setEditingExpirySource] = useState(null);
             const [expiryInputValue, setExpiryInputValue] = useState("");
+            const [isExpiryCollapsed, setIsExpiryCollapsed] = useState(false);
 
             const calculateDaysLeft = useCallback((dateStr) => {
                 if (!dateStr) return null;
@@ -665,7 +666,6 @@
                 setEditingExpirySource(null);
             };
 
-            // 清理依賴：移除 onlineUsersSignature
             const userProfilesSignature = JSON.stringify(userProfiles.map(u => ({ n: u.name, c: u.color })));
 
             const nameColorMap = useMemo(() => { 
@@ -1025,66 +1025,89 @@
                             </div>
                         </header>
                         
-                        {/* 將上方面板切分為 12 格，配置為：操作日誌(3) / 會員時限(2) / 成員統計(7) */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                        {/* 將上方面板由 Grid 改為 Flex 佈局，實現精準比例與平滑動畫。配置：日誌(37.5%) / 會員時限(12.5% 或 縮起) / 成員統計(自動填滿剩餘) */}
+                        <div className="flex flex-col lg:flex-row gap-6 mb-8">
                             
-                            <div className="lg:col-span-3 dashboard-panel h-[180px] overflow-hidden flex flex-col"><div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div><div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span></div>))}</div></div>
+                            {/* 操作日誌：佔比 4.5/12 (37.5%) */}
+                            <div className="dashboard-panel h-[180px] overflow-hidden flex flex-col w-full lg:w-[37.5%] flex-shrink-0">
+                                <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span></div>))}</div>
+                            </div>
                             
-                            {/* 移到中間的：會員時限列表 (縮小為 lg:col-span-2) */}
-                            <div className="lg:col-span-2 dashboard-panel h-[180px] overflow-hidden flex flex-col relative">
+                            {/* 會員時限：展開時佔比 1.5/12 (12.5%)，收起時固定 44px 寬度 */}
+                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[180px] lg:w-[44px]' : 'w-full h-[180px] lg:w-[12.5%]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
-                                <div className="flex items-center mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase">
-                                    <Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限
-                                </div>
-                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
-                                    {customSources.filter(s => s.name !== "未知來源").map(s => {
-                                        const daysLeft = s.expiryDate ? calculateDaysLeft(s.expiryDate) : null;
-                                        const isEditing = editingExpirySource === s.name;
-                                        return (
-                                            <div key={s.name} className="flex justify-between items-center bg-black/20 p-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
-                                                <div className="flex items-center gap-1.5 overflow-hidden flex-1">
-                                                    {s.icon ? <img src={s.icon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
-                                                    <span className="truncate font-black text-white/80 text-[11px]">{s.name}</span>
-                                                </div>
-                                                <div className="flex-shrink-0 ml-2">
-                                                    {isEditing && !isEditLocked ? (
-                                                        <input 
-                                                            type="date" 
-                                                            autoFocus
-                                                            className="bg-[#0b0e14] border border-cyan-400/50 rounded px-1 py-0.5 text-[10px] text-cyan-400 outline-none w-[90px]"
-                                                            value={expiryInputValue}
-                                                            onChange={(e) => setExpiryInputValue(e.target.value)}
-                                                            onBlur={() => handleUpdateExpiry(s.name)}
-                                                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateExpiry(s.name)}
-                                                        />
-                                                    ) : (
-                                                        <div 
-                                                            className={`cursor-pointer text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30 border-transparent hover:border-white/20' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} ${!isEditLocked ? 'hover:bg-white/10' : ''}`}
-                                                            onClick={() => { if(!isEditLocked) { setEditingExpirySource(s.name); setExpiryInputValue(s.expiryDate || ""); } }}
-                                                            title={!isEditLocked ? "點擊設定到期日" : "需開啟管理模式才能修改"}
-                                                        >
-                                                            {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日到期" : `剩 ${daysLeft} 天`}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                
+                                {isExpiryCollapsed ? (
+                                    <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開會員時限">
+                                        <Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" />
+                                        <span className="hidden lg:block text-[11px] font-black text-cyan-400/80 tracking-[0.2em] whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>會員時限</span>
+                                        <span className="block lg:hidden text-[11px] font-black text-cyan-400/80 tracking-widest whitespace-nowrap">會員時限 (點擊展開)</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase">
+                                            <div className="flex items-center">
+                                                <Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                            <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起面板">
+                                                <Icon name="chevron-left" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
+                                            {customSources.filter(s => s.name !== "未知來源").map(s => {
+                                                const daysLeft = s.expiryDate ? calculateDaysLeft(s.expiryDate) : null;
+                                                const isEditing = editingExpirySource === s.name;
+                                                return (
+                                                    <div key={s.name} className="flex justify-between items-center bg-black/20 p-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
+                                                        <div className="flex items-center gap-1.5 overflow-hidden flex-1">
+                                                            {s.icon ? <img src={s.icon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
+                                                            <span className="truncate font-black text-white/80 text-[11px]">{s.name}</span>
+                                                        </div>
+                                                        <div className="flex-shrink-0 ml-2">
+                                                            {isEditing && !isEditLocked ? (
+                                                                <input 
+                                                                    type="date" 
+                                                                    autoFocus
+                                                                    className="bg-[#0b0e14] border border-cyan-400/50 rounded px-1 py-0.5 text-[10px] text-cyan-400 outline-none w-[90px]"
+                                                                    value={expiryInputValue}
+                                                                    onChange={(e) => setExpiryInputValue(e.target.value)}
+                                                                    onBlur={() => handleUpdateExpiry(s.name)}
+                                                                    onKeyDown={(e) => e.key === 'Enter' && handleUpdateExpiry(s.name)}
+                                                                />
+                                                            ) : (
+                                                                <div 
+                                                                    className={`cursor-pointer text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30 border-transparent hover:border-white/20' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} ${!isEditLocked ? 'hover:bg-white/10' : ''}`}
+                                                                    onClick={() => { if(!isEditLocked) { setEditingExpirySource(s.name); setExpiryInputValue(s.expiryDate || ""); } }}
+                                                                    title={!isEditLocked ? "點擊設定到期日" : "需開啟管理模式才能修改"}
+                                                                >
+                                                                    {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日到期" : `剩 ${daysLeft} 天`}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
-                            {/* 移到右側的：成員統計 (放大為 lg:col-span-7) */}
-                            <div className="lg:col-span-7 dashboard-panel h-[180px] relative flex flex-col"><div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div><div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[12px] font-black border-collapse">{statMode === 'progress' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th><th className="text-center px-2 py-1 border-l border-white/5">總計</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.completed}</td></tr>))}</tbody></>) : statMode === 'category' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody></>) : (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeSourcesInUse.map(s => {
-                                const srcInfo = customSources.find(cs => cs.name === s);
-                                return (
-                                    <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">
-                                        <div className="flex items-center justify-center gap-1.5">
-                                            {srcInfo?.icon && <img src={srcInfo.icon} className="w-3.5 h-3.5 object-contain" alt={s} />}
-                                            <span>{s}</span>
-                                        </div>
-                                    </th>
-                                );
-                            })}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>))}</tbody></>)}</table></div></div>
+                            {/* 成員統計：自動填滿剩餘空間 (flex-1) */}
+                            <div className="dashboard-panel h-[180px] relative flex flex-col w-full flex-1 min-w-0">
+                                <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
+                                <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[12px] font-black border-collapse">{statMode === 'progress' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th><th className="text-center px-2 py-1 border-l border-white/5">總計</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.completed}</td></tr>))}</tbody></>) : statMode === 'category' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody></>) : (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeSourcesInUse.map(s => {
+                                    const srcInfo = customSources.find(cs => cs.name === s);
+                                    return (
+                                        <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                                {srcInfo?.icon && <img src={srcInfo.icon} className="w-3.5 h-3.5 object-contain" alt={s} />}
+                                                <span>{s}</span>
+                                            </div>
+                                        </th>
+                                    );
+                                })}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>))}</tbody></>)}</table></div>
+                            </div>
                         </div>
                         
                         <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border border-white/10 rounded-t-lg overflow-hidden shadow-xl">
