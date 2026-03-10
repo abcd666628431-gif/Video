@@ -897,7 +897,7 @@
                 const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
                 showNotify("已更新"); setRenameCategoryTarget(null); setRenameCategoryNewValue("");
             };
-            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
+            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); logActivity("刪除", `分類: ${cat}`, ""); showNotify("已刪除"); };
             
             // 【進化版】處理手動新增時限追蹤：允許輸入名稱與圖案，並同步註冊到全域來源
             const handleAddMembership = async () => {
@@ -926,6 +926,7 @@
                 const nextMemberships = customMemberships.filter(m => m.name !== name);
                 await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
                 setDeleteMembershipTarget(null);
+                logActivity("刪除", `時限追蹤: ${name}`, "");
                 showNotify("已移除追蹤 (不影響卡片)");
             };
 
@@ -935,6 +936,7 @@
                 setShowClearMembershipsConfirm(false);
                 try {
                     await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: [] }, { merge: true });
+                    logActivity("清空", "所有時限追蹤", "");
                     showNotify("已清空時限面板 (卡片來源不受影響)");
                 } catch(e) {
                     showNotify("操作失敗");
@@ -980,8 +982,8 @@
                 } catch (e) { showNotify("失敗"); }
             };
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("失敗"); } };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
-            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); logActivity("刪除", `來源平台: ${sn}`, ""); showNotify("移除"); };
+            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", ""); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
             const memberStats = useMemo(() => {
                 const sm = {}; games.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
@@ -1114,6 +1116,7 @@
                             await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: mergedMemberships }, { merge: true });
                         }
                         
+                        logActivity("匯入", "系統備份資料", "");
                         showNotify("導入並取代成功"); 
                     } catch(error) { 
                         console.error("導入失敗", error);
