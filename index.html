@@ -1184,8 +1184,8 @@
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5"><span className="text-white/30 text-[10px] mr-2">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> <span className="mx-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-1">[{l.gameOrder}]</span>}"{l.gameName}"</span></div>))}</div>
                             </div>
                             
-                            {/* 會員時限：展開時佔比 1.5/12 (12.5%)，收起時固定 44px 寬度 */}
-                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] lg:w-[44px]' : 'w-full h-[220px] lg:w-[12.5%]'}`}>
+                            {/* 會員時限：展開時佔比 15%，收起時固定 44px 寬度 */}
+                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] lg:w-[44px]' : 'w-full h-[220px] lg:w-[15%]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                                 
                                 {isExpiryCollapsed ? (
