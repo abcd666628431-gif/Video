@@ -560,7 +560,7 @@
         });
 
         function App() {
-            const CURRENT_APP_VERSION = 1177; 
+            const CURRENT_APP_VERSION = 1181; 
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 5000); }, []);
             const [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
@@ -1110,7 +1110,7 @@
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
                     <div className="w-full mx-auto">
                         <header className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
-                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.17</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
+                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.21</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
                             <div className="flex flex-wrap items-center justify-end gap-3 relative">
                                 <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
                                 <div className="relative" ref={watchOrderDropdownRef}>
@@ -1149,7 +1149,8 @@
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center"><span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> {l.action === "系統" ? <span className="font-black text-green-400">{l.gameName}</span> : <><span className="mr-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"</span></>}</div>))}</div>
                             </div>
                             
-                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] lg:w-[44px]' : 'w-full h-[220px] lg:w-[25%]'}`}>
+                            {/* 將寬度改為絕對固定：展開時 w-[280px]，收起時 w-[44px] */}
+                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[280px]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                                 {isExpiryCollapsed ? (
                                     <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開會員時限"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /><span className="hidden lg:block text-[11px] font-black text-cyan-400/80 tracking-[0.2em] whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>會員時限</span><span className="block lg:hidden text-[11px] font-black text-cyan-400/80 tracking-widest whitespace-nowrap">會員時限 (點擊展開)</span></div>
@@ -1262,8 +1263,10 @@
                                             </>
                                         ) : statMode === 'category' ? (
                                             <>
-                                                <thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-2 md:pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-1.5 md:px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead>
-                                                <tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-2 md:pr-4 py-1 md:py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-1.5 md:px-3 md:py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody>
+                                                {/* 縮小此處的分類表頭間距與字體大小 */}
+                                                <thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-2 md:pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-1 md:px-1.5 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors text-[9px] md:text-[11px] tracking-tighter">{c}</th>)}</tr></thead>
+                                                {/* 縮小此處的分類資料欄位間距 */}
+                                                <tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-2 md:pr-4 py-1 md:py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all">{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-1 md:px-1.5 md:py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody>
                                             </>
                                         ) : (
                                             <>
