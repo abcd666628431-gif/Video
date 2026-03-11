@@ -1047,10 +1047,31 @@
                 ));
             }, [isLoadingGames, filteredGames, nameColorMap, customSources, isEditLocked, handleOpenEdit]);
 
-            // 【新增】：將最新的 memberships 也加入導出備份中
-            const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources, memberships: customMemberships }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
+            // 【終極進化】：完全無版本限制的「通用動態備份與還原引擎」
+            const handleExportData = async () => {
+                if (!user) return;
+                showNotify("準備導出資料...");
+                try {
+                    // 直接抓取資料庫最原始的設定檔，確保未來新增任何設定都能一併導出，徹底解決版本斷層
+                    const configSnap = await getDoc(doc(getPublicCol('settings'), 'config'));
+                    const fullConfig = configSnap.exists() ? configSnap.data() : { categories: customCategories, sources: customSources, memberships: customMemberships };
+
+                    const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+                    const exportPayload = {
+                        _meta: { version: "3.0", exportDate: new Date().toISOString() },
+                        config: fullConfig,
+                        games: sorted
+                    };
+
+                    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `AnimeMatrix_Backup_${Date.now()}.json`; a.click();
+                    logActivity("導出", "系統備份資料", "");
+                } catch (e) {
+                    showNotify("導出失敗");
+                }
+            };
             
-            // 【終極修復】：相容舊版來源設定、轉移舊版會員時限，並強制精準覆蓋
+            // 【終極修復】：無懼任何版本更新的動態合併匯入引擎
             const handleImportData = async (e) => {
                 const f = e.target.files[0]; 
                 e.target.value = ""; // 先清空，確保就算中途失敗，下次也能重新點擊同一個檔案
@@ -1058,24 +1079,92 @@
                 const r = new FileReader(); r.readAsText(f);
                 r.onload = async (ev) => { 
                     try { 
-                        showNotify("導入與覆蓋資料中...");
+                        showNotify("導入與精準覆蓋資料中...");
                         const d = JSON.parse(ev.target.result); 
                         
-                        // 兼容舊版備份檔 (舊版直接是陣列，新版是帶有 games 的物件)
+                        // 1. 遊戲資料提取 (兼容 V1 純陣列, V2 根目錄物件, V3 封裝物件)
                         let gamesToImport = [];
-                        if (Array.isArray(d)) {
-                            gamesToImport = d;
-                        } else if (d.games) {
-                            gamesToImport = d.games;
+                        if (Array.isArray(d)) gamesToImport = d;
+                        else if (d.games) gamesToImport = d.games;
+
+                        // 2. 全域設定提取 (相容未來所有未知的設定欄位)
+                        let importedConfig = d.config || {};
+                        if (!d.config && !Array.isArray(d)) {
+                            // 相容 V2 備份檔 (直接放在根目錄的格式)
+                            importedConfig = { categories: d.categories || [], sources: d.sources || [], memberships: d.memberships || [] };
                         }
 
+                        // 3. 通用動態合併引擎 (Dynamic Merging Engine) - 解決所有版本更新問題的核心
+                        const currentConfigSnap = await getDoc(doc(getPublicCol('settings'), 'config'));
+                        let nextConfig = currentConfigSnap.exists() ? currentConfigSnap.data() : { categories: [...customCategories], sources: [...customSources], memberships: [...customMemberships] };
+
+                        // 遍歷備份檔中的所有設定，自動比對並合併 (未來若新增任何標籤、設定，此處都會自動生效，無需再改程式碼)
+                        Object.keys(importedConfig).forEach(key => {
+                            if (Array.isArray(importedConfig[key])) {
+                                if (!nextConfig[key]) nextConfig[key] = [];
+                                importedConfig[key].forEach(importedItem => {
+                                    if (typeof importedItem === 'string') {
+                                        // 單純字串陣列 (如分類)
+                                        if (!nextConfig[key].includes(importedItem)) nextConfig[key].push(importedItem);
+                                    } else if (typeof importedItem === 'object' && importedItem.name) {
+                                        // 物件陣列 (如來源、時限，皆帶有 name 屬性)
+                                        const existingIdx = nextConfig[key].findIndex(ex => ex.name === importedItem.name);
+                                        if (existingIdx !== -1) {
+                                            nextConfig[key][existingIdx] = { ...nextConfig[key][existingIdx], ...importedItem };
+                                        } else {
+                                            nextConfig[key].push(importedItem);
+                                        }
+                                    }
+                                });
+                            } else {
+                                // 非陣列的普通設定 (直接覆蓋)
+                                nextConfig[key] = importedConfig[key];
+                            }
+                        });
+
+                        // 4. 極端舊版救援：(V1->V2) 如果舊版備份的 source 裡包著 expiryDate，自動分離轉移給「會員時限」
+                        if (nextConfig.sources) {
+                            if (!nextConfig.memberships) nextConfig.memberships = [];
+                            nextConfig.sources.forEach(s => {
+                                if (s.expiryDate) {
+                                    const mIdx = nextConfig.memberships.findIndex(m => m.name === s.name);
+                                    if (mIdx !== -1) nextConfig.memberships[mIdx].expiryDate = s.expiryDate;
+                                    else nextConfig.memberships.push({ name: s.name, expiryDate: s.expiryDate });
+                                }
+                            });
+                        }
+
+                        // 5. 防呆救援提取：檢查剛匯入的影片，如果分類或來源不在清單上，自動補全
+                        if (gamesToImport.length > 0) {
+                            if (!nextConfig.categories) nextConfig.categories = [];
+                            if (!nextConfig.sources) nextConfig.sources = [];
+                            gamesToImport.forEach(g => {
+                                if (g.category && g.category !== "未分類" && !nextConfig.categories.includes(g.category)) {
+                                    nextConfig.categories.push(g.category);
+                                }
+                                if (g.source && g.source !== "未知來源") {
+                                    const exist = nextConfig.sources.find(s => s.name === g.source);
+                                    if (!exist) {
+                                        nextConfig.sources.push({ name: g.source, icon: g.sourceIcon || '' });
+                                    } else if (!exist.icon && g.sourceIcon) {
+                                        exist.icon = g.sourceIcon;
+                                    }
+                                }
+                            });
+                        }
+
+                        // 一次性寫入所有整合完畢的設定到資料庫
+                        await setDoc(doc(getPublicCol('settings'), 'config'), nextConfig, { merge: true });
+
+                        // 寫入影片資料
                         if(gamesToImport.length > 0) {
-                            await Promise.all(gamesToImport.map(g => { 
-                                const {id, ...rest} = g; 
+                            await Promise.all(gamesToImport.map(g => {
+                                const {id, ...rest} = g;
                                 const cleanRest = sanitizePayload(rest);
+                                // 將時間戳提取到外部，確保傳入任何舊版或未來的未知欄位都不會遺失
                                 const payload = {
-                                    ...cleanRest, 
-                                    createdAt: rest.createdAt || serverTimestamp(), 
+                                    ...cleanRest,
+                                    createdAt: rest.createdAt || serverTimestamp(),
                                     updatedAt: serverTimestamp()
                                 };
                                 if (id) {
@@ -1085,78 +1174,9 @@
                                 }
                             })); 
                         }
-                        
-                        // 1. 分類還原：保留備份檔的順序，加上現有的防呆
-                        let nextCats = [...customCategories];
-                        if (d.categories) {
-                            const backupCats = d.categories;
-                            const currentOnly = nextCats.filter(c => !backupCats.includes(c));
-                            nextCats = [...backupCats, ...currentOnly];
-                        }
 
-                        let nextSources = [...customSources];
-                        let nextMemberships = [...customMemberships];
-
-                        // 2. 來源設定還原：強制使用備份檔的圖標覆蓋現狀
-                        if (d.sources) {
-                            d.sources.forEach(bs => {
-                                const idx = nextSources.findIndex(s => s.name === bs.name);
-                                if (idx !== -1) {
-                                    nextSources[idx].icon = bs.icon !== undefined ? bs.icon : nextSources[idx].icon;
-                                } else {
-                                    nextSources.push({ name: bs.name, icon: bs.icon || '' });
-                                }
-
-                                // 【關鍵舊版相容】如果舊備份的 source 裡包著 expiryDate，自動轉移給「會員時限」
-                                if (bs.expiryDate) {
-                                    const mIdx = nextMemberships.findIndex(m => m.name === bs.name);
-                                    if (mIdx !== -1) {
-                                        nextMemberships[mIdx].expiryDate = bs.expiryDate;
-                                    } else {
-                                        nextMemberships.push({ name: bs.name, expiryDate: bs.expiryDate });
-                                    }
-                                }
-                            });
-                        }
-
-                        // 3. 新版會員時限還原
-                        if (d.memberships) {
-                            d.memberships.forEach(bm => {
-                                const idx = nextMemberships.findIndex(m => m.name === bm.name);
-                                if (idx !== -1) {
-                                    nextMemberships[idx].expiryDate = bm.expiryDate !== undefined ? bm.expiryDate : nextMemberships[idx].expiryDate;
-                                } else {
-                                    nextMemberships.push(bm);
-                                }
-                            });
-                        }
-
-                        // 4. 防呆提取：檢查剛匯入的影片，如果分類或來源不在清單上，自動補全
-                        if (gamesToImport.length > 0) {
-                            gamesToImport.forEach(g => {
-                                if (g.category && g.category !== "未分類" && !nextCats.includes(g.category)) {
-                                    nextCats.push(g.category);
-                                }
-                                if (g.source && g.source !== "未知來源") {
-                                    const exist = nextSources.find(s => s.name === g.source);
-                                    if (!exist) {
-                                        nextSources.push({ name: g.source, icon: g.sourceIcon || '' });
-                                    } else if (!exist.icon && g.sourceIcon) {
-                                        exist.icon = g.sourceIcon;
-                                    }
-                                }
-                            });
-                        }
-
-                        // 寫入資料庫
-                        await setDoc(doc(getPublicCol('settings'), 'config'), { 
-                            categories: nextCats, 
-                            sources: nextSources, 
-                            memberships: nextMemberships 
-                        }, { merge: true });
-                        
                         logActivity("匯入", "系統備份資料", "");
-                        showNotify("導入並精準還原成功"); 
+                        showNotify("導入並精準還原成功！"); 
                     } catch(error) { 
                         console.error("導入失敗", error);
                         showNotify("導入失敗，請確認資料庫權限或檔案格式"); 
