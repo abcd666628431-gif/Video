@@ -556,8 +556,8 @@
         });
 
         function App() {
-            // 【自動廣播版本號】：更新至 1169，上傳後即會觸發亮綠色日誌
-            const CURRENT_APP_VERSION = 1169; 
+            // 【自動廣播版本號】：更新至 1170 (v11.6.10)
+            const CURRENT_APP_VERSION = 1170; 
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
             const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 5000); }, []);
             const [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
@@ -814,11 +814,37 @@
                 const nextCats = [...customCategories, newCategoryName.trim()]; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
                 showNotify("已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
             };
+
+            // 【終極修復】：深度關聯修改分類名稱，自動同步更新底下所有關聯卡片
             const handleRenameCategory = async () => {
                 if(!renameCategoryTarget || !renameCategoryNewValue.trim() || !user) return;
-                const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                showNotify("已更新"); setRenameCategoryTarget(null); setRenameCategoryNewValue("");
+                const oldName = renameCategoryTarget;
+                const newName = renameCategoryNewValue.trim();
+                
+                if (oldName === newName) { setRenameCategoryTarget(null); setRenameCategoryNewValue(""); return; }
+                if (customCategories.includes(newName)) { showNotify("分類名稱已存在"); return; }
+
+                showNotify("正在更新分類與關聯影片...");
+                try {
+                    // 1. 更新全域導覽列的分類設定
+                    const nextCats = customCategories.map(c => c === oldName ? newName : c); 
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                    
+                    // 2. 批次深度更新所有屬於舊分類的卡片
+                    const gamesToUpdate = games.filter(g => g.category === oldName);
+                    if (gamesToUpdate.length > 0) {
+                        await Promise.all(gamesToUpdate.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName })));
+                    }
+                    
+                    logActivity("修改分類", `[${oldName}] 變更為 [${newName}]`, "");
+                    showNotify("分類與關聯卡片已全面更新！");
+                } catch(e) {
+                    showNotify("修改失敗");
+                } finally {
+                    setRenameCategoryTarget(null); setRenameCategoryNewValue("");
+                }
             };
+
             const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             
             const handleAddMembership = async () => {
@@ -1043,7 +1069,7 @@
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400]">
-                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.9</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
+                            <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.10</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
                             <div className="flex flex-wrap items-center justify-end gap-3 relative">
                                 <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
                                 <div className="relative" ref={watchOrderDropdownRef}>
