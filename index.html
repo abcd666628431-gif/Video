@@ -1361,17 +1361,80 @@
                             {/* 成員統計：自動填滿剩餘空間 (修復手機版高度坍塌) */}
                             <div className="dashboard-panel h-[220px] relative flex flex-col w-full lg:flex-1 flex-shrink-0 min-w-0">
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
-                                <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div><div className="flex-1 overflow-x-auto custom-scrollbar"><table className="w-full text-[12px] font-black border-collapse">{statMode === 'progress' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th><th className="text-center px-2 py-1 border-l border-white/5">總計</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th><th className="text-center px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th></tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.total}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.unstarted}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.watching}</td><td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-2 py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.completed}</td></tr>))}</tbody></>) : statMode === 'category' ? (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}</tr>))}</tbody></>) : (<><thead><tr className="text-left opacity-[85%] border-b border-white/5"><th className="whitespace-nowrap pr-4 py-1">成員</th>{activeSourcesInUse.map(s => {
-                                    const srcInfo = customSources.find(cs => cs.name === s);
-                                    return (
-                                        <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                {srcInfo?.icon && <img src={srcInfo.icon} className="w-3.5 h-3.5 object-contain" alt={s} />}
-                                                <span>{s}</span>
-                                            </div>
-                                        </th>
-                                    );
-                                })}</tr></thead><tbody>{memberStats.map(m => (<tr key={m.name} className="border-b border-white/5 hover:bg-white/5"><td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-4 py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>{activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-3 py-1.5 border-l border-white/5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}</tr>))}</tbody></>)}</table></div>
+                                <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest"><div className="flex items-center gap-3"><span>成員統計</span><Icon name="download" className="w-3.5 h-3.5 hover:text-white" onClick={handleExportData} /><Icon name="upload" className="w-3.5 h-3.5 hover:text-white" onClick={() => importInputRef.current.click()} /><input type="file" ref={importInputRef} className="hidden" accept=".json" onChange={handleImportData} /></div><div className="flex items-center gap-2"><Icon name="shuffle" className={`w-3.5 h-3.5 cursor-pointer transition-colors ${statMode !== 'progress' ? 'text-[#ffbae9]' : 'text-white/40'}`} onClick={() => setStatMode(prev => prev === 'progress' ? 'category' : prev === 'category' ? 'source' : 'progress')} /><div className="text-[10px] opacity-40">總存檔數: {games.length}</div></div></div>
+                                
+                                <div className="flex-1 overflow-x-auto custom-scrollbar">
+                                    <table className="w-full text-[10px] md:text-[12px] font-black border-collapse">
+                                        {statMode === 'progress' ? (
+                                            <>
+                                                <thead>
+                                                    <tr className="text-left opacity-[85%] border-b border-white/5">
+                                                        <th className="whitespace-nowrap pr-2 md:pr-4 py-1">成員</th>
+                                                        <th className="text-center px-1 md:px-2 py-1 border-l border-white/5">總計</th>
+                                                        <th className="text-center px-1 md:px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'unstarted')}>還在看</th>
+                                                        <th className="text-center px-1 md:px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'watching')}>觀看中</th>
+                                                        <th className="text-center px-1 md:px-2 py-1 border-l border-white/5 cursor-pointer hover:text-white transition-colors uppercase tracking-tighter" onClick={() => toggleGlobalFilter('progress', 'completed')}>已看完</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {memberStats.map(m => (
+                                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-2 md:pr-4 py-1 md:py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} className="text-center cursor-pointer px-1 md:px-2 py-1 md:py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.total}</td>
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'unstarted')} className="text-center cursor-pointer px-1 md:px-2 py-1 md:py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.unstarted}</td>
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'watching')} className="text-center cursor-pointer px-1 md:px-2 py-1 md:py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.watching}</td>
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'completed')} className="text-center cursor-pointer px-1 md:px-2 py-1 md:py-1.5 border-l border-white/5" style={{ color: m.color }}>{m.stats.completed}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </>
+                                        ) : statMode === 'category' ? (
+                                            <>
+                                                <thead>
+                                                    <tr className="text-left opacity-[85%] border-b border-white/5">
+                                                        <th className="whitespace-nowrap pr-2 md:pr-4 py-1">成員</th>
+                                                        {activeCategoriesInUse.map(c => <th key={c} onClick={() => toggleGlobalFilter('category', c)} className="text-center px-1.5 md:px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">{c}</th>)}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {memberStats.map(m => (
+                                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-2 md:pr-4 py-1 md:py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>
+                                                            {activeCategoriesInUse.map(c => <td key={c} onClick={() => m.stats.cats[c] > 0 && toggleMemberFilter(m.name, 'category', c)} className={`text-center cursor-pointer px-1.5 md:px-3 py-1 md:py-1.5 border-l border-white/5 ${m.stats.cats[c] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.cats[c] > 0 ? m.color : 'inherit' }}>{m.stats.cats[c] || 0}</td>)}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <thead>
+                                                    <tr className="text-left opacity-[85%] border-b border-white/5">
+                                                        <th className="whitespace-nowrap pr-2 md:pr-4 py-1">成員</th>
+                                                        {activeSourcesInUse.map(s => {
+                                                            const srcInfo = customSources.find(cs => cs.name === s);
+                                                            return (
+                                                                <th key={s} onClick={() => toggleGlobalFilter('source', s)} className="text-center px-1.5 md:px-3 py-1 border-l border-white/5 whitespace-nowrap cursor-pointer hover:text-white transition-colors">
+                                                                    <div className="flex items-center justify-center gap-0.5 md:gap-1.5">
+                                                                        {srcInfo?.icon && <img src={srcInfo.icon} className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 object-contain" alt={s} />}
+                                                                        <span>{s}</span>
+                                                                    </div>
+                                                                </th>
+                                                            );
+                                                        })}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {memberStats.map(m => (
+                                                        <tr key={m.name} className="border-b border-white/5 hover:bg-white/5">
+                                                            <td onClick={() => toggleMemberFilter(m.name, 'progress', 'total')} style={{ color: m.color }} className="whitespace-nowrap pr-2 md:pr-4 py-1 md:py-1.5 cursor-pointer hover:opacity-70 hover:underline transition-all" title={`篩選 ${m.name} 的所有資料`}>{m.name}</td>
+                                                            {activeSourcesInUse.map(s => <td key={s} onClick={() => m.stats.sources[s] > 0 && toggleMemberFilter(m.name, 'source', s)} className={`text-center cursor-pointer px-1.5 md:px-3 py-1 md:py-1.5 border-l border-white/5 ${m.stats.sources[s] > 0 ? '' : 'opacity-20'}`} style={{ color: m.stats.sources[s] > 0 ? m.color : 'inherit' }}>{m.stats.sources[s] || 0}</td>)}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </>
+                                        )}
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         
