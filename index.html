@@ -310,6 +310,7 @@
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
             const watchingByList = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []);
             const sourceInfo = allSources.find(s => s.name === g.source);
+            const displayIcon = sourceInfo?.icon || g.sourceIcon;
             const getMemberProgress = (name) => {
                 const wp = g.watchedProgress; if (!wp) return { v1: '0', u1: '集', v2: '0', u2: '分鐘' };
                 if (wp.v1 !== undefined) { return watchingByList[0] === name ? wp : { v1: '0', u1: '集', v2: '0', u2: '分鐘' }; }
@@ -336,7 +337,7 @@
                             <div className="text-[13px] text-slate-400 mt-0.5 line-clamp-1 h-5 font-bold">{g.notes || ""}</div>
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
-                            <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{sourceInfo?.icon && <img src={sourceInfo.icon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
+                            <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{displayIcon && <img src={displayIcon} className="source-icon-small" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
                             
                             <div className="text-[11px] opacity-90">
                                 <strong>更新進度：</strong> 
@@ -805,7 +806,7 @@
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
                 let wp = item.watchedProgress || {}; let normalizedWp = {};
                 if (wp.v1 !== undefined) { normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) }; } else { Object.keys(wp).forEach(name => { normalizedWp[name] = ensureP(wp[name]); }); }
-                const globalSource = customSources.find(s => s.name === item.source); const initialSourceIcon = globalSource ? globalSource.icon : '';
+                const globalSource = customSources.find(s => s.name === item.source); const initialSourceIcon = globalSource?.icon || item.sourceIcon || '';
                 const currentUpdateDay = item.updateDay ? (Array.isArray(item.updateDay) ? item.updateDay : [item.updateDay]) : [];
                 setFormData({ ...item, sourceIcon: initialSourceIcon, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: normalizedWp, updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers, updateDay: currentUpdateDay }); 
                 setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
@@ -897,7 +898,7 @@
                 const nextCats = customCategories.map(c => c === renameCategoryTarget ? renameCategoryNewValue.trim() : c); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
                 showNotify("已更新"); setRenameCategoryTarget(null); setRenameCategoryNewValue("");
             };
-            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); logActivity("刪除", `分類: ${cat}`, ""); showNotify("已刪除"); };
+            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             
             // 【進化版】處理手動新增時限追蹤：允許輸入名稱與圖案，並同步註冊到全域來源
             const handleAddMembership = async () => {
@@ -926,7 +927,6 @@
                 const nextMemberships = customMemberships.filter(m => m.name !== name);
                 await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
                 setDeleteMembershipTarget(null);
-                logActivity("刪除", `時限追蹤: ${name}`, "");
                 showNotify("已移除追蹤 (不影響卡片)");
             };
 
@@ -936,7 +936,6 @@
                 setShowClearMembershipsConfirm(false);
                 try {
                     await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: [] }, { merge: true });
-                    logActivity("清空", "所有時限追蹤", "");
                     showNotify("已清空時限面板 (卡片來源不受影響)");
                 } catch(e) {
                     showNotify("操作失敗");
@@ -962,8 +961,13 @@
                         await updateDoc(d.ref, updateObj); count++; 
                         
                         // 救援邏輯：如果影片有來源，但全域設定遺失了，自動補回來
-                        if (data.source && data.source !== "未知來源" && !mergedSources.find(s => s.name === data.source)) {
-                            mergedSources.push({ name: data.source, icon: '' });
+                        if (data.source && data.source !== "未知來源") {
+                            const exist = mergedSources.find(s => s.name === data.source);
+                            if (!exist) {
+                                mergedSources.push({ name: data.source, icon: data.sourceIcon || '' });
+                            } else if (!exist.icon && data.sourceIcon) {
+                                exist.icon = data.sourceIcon;
+                            }
                         }
                     }
                     if (mergedSources.length > customSources.length) {
@@ -982,8 +986,19 @@
                 } catch (e) { showNotify("失敗"); }
             };
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("失敗"); } };
-            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); logActivity("刪除", `來源平台: ${sn}`, ""); showNotify("移除"); };
-            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", ""); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
+            const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
+            const handleClearAllData = async () => { 
+                if(!user) return; 
+                setShowClearConfirm(false); 
+                try { 
+                    const s = await getDocs(getPublicCol('games')); 
+                    await Promise.all(s.docs.map(d => deleteDoc(d.ref))); 
+                    logActivity("清空", "全部影片資料", "-"); // 加入清空日誌記錄
+                    showNotify("已清空"); 
+                } catch(e) { 
+                    showNotify("失敗"); 
+                } 
+            };
             const memberStats = useMemo(() => {
                 const sm = {}; games.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
@@ -1035,7 +1050,7 @@
             // 【新增】：將最新的 memberships 也加入導出備份中
             const handleExportData = () => { const sorted = [...games].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); const blob = new Blob([JSON.stringify({ games: sorted, categories: customCategories, sources: customSources, memberships: customMemberships }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${Date.now()}.json`; a.click(); };
             
-            // 【修復】：完美兼容舊版備份檔，修復時間戳報錯，並加入 memberships 備份還原
+            // 【終極修復】：相容舊版來源設定、轉移舊版會員時限，並強制精準覆蓋
             const handleImportData = async (e) => {
                 const f = e.target.files[0]; 
                 e.target.value = ""; // 先清空，確保就算中途失敗，下次也能重新點擊同一個檔案
@@ -1058,7 +1073,6 @@
                             await Promise.all(gamesToImport.map(g => { 
                                 const {id, ...rest} = g; 
                                 const cleanRest = sanitizePayload(rest);
-                                // 將時間戳提取到外部賦值，避免被過濾機制破壞而遭資料庫拒絕
                                 const payload = {
                                     ...cleanRest, 
                                     createdAt: rest.createdAt || serverTimestamp(), 
@@ -1072,52 +1086,77 @@
                             })); 
                         }
                         
-                        let mergedCats = [...customCategories];
-                        if (d.categories) d.categories.forEach(c => { if (!mergedCats.includes(c)) mergedCats.push(c); });
+                        // 1. 分類還原：保留備份檔的順序，加上現有的防呆
+                        let nextCats = [...customCategories];
+                        if (d.categories) {
+                            const backupCats = d.categories;
+                            const currentOnly = nextCats.filter(c => !backupCats.includes(c));
+                            nextCats = [...backupCats, ...currentOnly];
+                        }
 
-                        let mergedSources = [...customSources];
+                        let nextSources = [...customSources];
+                        let nextMemberships = [...customMemberships];
+
+                        // 2. 來源設定還原：強制使用備份檔的圖標覆蓋現狀
                         if (d.sources) {
                             d.sources.forEach(bs => {
-                                const existing = mergedSources.find(s => s.name === bs.name);
-                                if (existing) {
-                                    if (bs.icon) existing.icon = bs.icon;
+                                const idx = nextSources.findIndex(s => s.name === bs.name);
+                                if (idx !== -1) {
+                                    nextSources[idx].icon = bs.icon !== undefined ? bs.icon : nextSources[idx].icon;
                                 } else {
-                                    mergedSources.push(bs);
+                                    nextSources.push({ name: bs.name, icon: bs.icon || '' });
+                                }
+
+                                // 【關鍵舊版相容】如果舊備份的 source 裡包著 expiryDate，自動轉移給「會員時限」
+                                if (bs.expiryDate) {
+                                    const mIdx = nextMemberships.findIndex(m => m.name === bs.name);
+                                    if (mIdx !== -1) {
+                                        nextMemberships[mIdx].expiryDate = bs.expiryDate;
+                                    } else {
+                                        nextMemberships.push({ name: bs.name, expiryDate: bs.expiryDate });
+                                    }
                                 }
                             });
                         }
 
+                        // 3. 新版會員時限還原
+                        if (d.memberships) {
+                            d.memberships.forEach(bm => {
+                                const idx = nextMemberships.findIndex(m => m.name === bm.name);
+                                if (idx !== -1) {
+                                    nextMemberships[idx].expiryDate = bm.expiryDate !== undefined ? bm.expiryDate : nextMemberships[idx].expiryDate;
+                                } else {
+                                    nextMemberships.push(bm);
+                                }
+                            });
+                        }
+
+                        // 4. 防呆提取：檢查剛匯入的影片，如果分類或來源不在清單上，自動補全
                         if (gamesToImport.length > 0) {
                             gamesToImport.forEach(g => {
-                                if (g.category && g.category !== "未分類" && !mergedCats.includes(g.category)) {
-                                    mergedCats.push(g.category);
+                                if (g.category && g.category !== "未分類" && !nextCats.includes(g.category)) {
+                                    nextCats.push(g.category);
                                 }
-                                if (g.source && g.source !== "未知來源" && !mergedSources.find(s => s.name === g.source)) {
-                                    mergedSources.push({ name: g.source, icon: '' });
+                                if (g.source && g.source !== "未知來源") {
+                                    const exist = nextSources.find(s => s.name === g.source);
+                                    if (!exist) {
+                                        nextSources.push({ name: g.source, icon: g.sourceIcon || '' });
+                                    } else if (!exist.icon && g.sourceIcon) {
+                                        exist.icon = g.sourceIcon;
+                                    }
                                 }
                             });
                         }
 
-                        if (mergedCats.length > 0 || mergedSources.length > 0) {
-                            await setDoc(doc(getPublicCol('settings'), 'config'), { categories: mergedCats, sources: mergedSources }, { merge: true });
-                        }
-
-                        // 新功能保護：若備份檔內有 memberships 追蹤清單，也一併合併還原
-                        if (d.memberships) {
-                            let mergedMemberships = [...customMemberships];
-                            d.memberships.forEach(bm => {
-                                const existing = mergedMemberships.find(m => m.name === bm.name);
-                                if (existing) {
-                                    if (bm.expiryDate) existing.expiryDate = bm.expiryDate;
-                                } else {
-                                    mergedMemberships.push(bm);
-                                }
-                            });
-                            await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: mergedMemberships }, { merge: true });
-                        }
+                        // 寫入資料庫
+                        await setDoc(doc(getPublicCol('settings'), 'config'), { 
+                            categories: nextCats, 
+                            sources: nextSources, 
+                            memberships: nextMemberships 
+                        }, { merge: true });
                         
                         logActivity("匯入", "系統備份資料", "");
-                        showNotify("導入並取代成功"); 
+                        showNotify("導入並精準還原成功"); 
                     } catch(error) { 
                         console.error("導入失敗", error);
                         showNotify("導入失敗，請確認資料庫權限或檔案格式"); 
