@@ -629,11 +629,12 @@
 
         function App() {
             // 新增：系統自動版號機制 (每次 AI 幫您更新代碼時，會自動遞增此數字)
-            const CURRENT_APP_VERSION = 2026031002; 
+            const CURRENT_APP_VERSION = 2026031003; 
 
             // 移除了 onlineUsers 相關狀態
             const [user, setUser] = useState(null), [games, setGames] = useState([]), importInputRef = useRef(null), fileInputRef = useRef(null);
-            const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); }, []);
+            // 修改：將通知顯示時間延長為 5 秒 (5000ms)，避免錯過
+            const [notification, setNotification] = useState(null), showNotify = useCallback((msg) => { setNotification(msg); setTimeout(() => setNotification(null), 5000); }, []);
             const [userProfiles, setUserProfiles] = useState([]), [activityLogs, setActivityLogs] = useState([]), [isLoadingLogs, setIsLoadingLogs] = useState(true), [isLoadingGames, setIsLoadingGames] = useState(true);
             const [userName, setUserName] = useState(() => localStorage.getItem('steam_user_name') || '用戶_' + Math.floor(Math.random()*1000)), [userColor, setUserColor] = useState(() => localStorage.getItem('steam_user_color') || '#ffbae9');
             
@@ -723,8 +724,8 @@
             }, [games]);
             useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) {} }; init(); return onAuthStateChanged(auth, setUser); }, []);
             
-            // 紀錄當下啟動網頁的時間，用來比對是否有新版本推送
-            const lastNotifiedTime = useRef(Date.now());
+            // 改進：使用「已通知的版號」來判斷，取代時間戳，100% 絕對精準！
+            const notifiedVersion = useRef(CURRENT_APP_VERSION);
 
             useEffect(() => {
                 if (!user) return;
@@ -743,13 +744,13 @@
 
                         // 1. 【自動廣播】：如果目前網頁版號「大於」資料庫版號，代表我是第一個載入新代碼的人！
                         if (CURRENT_APP_VERSION > dbVersion) {
-                            setDoc(doc(getPublicCol('settings'), 'config'), { appVersion: CURRENT_APP_VERSION, lastCodeUpdateTime: Date.now() }, { merge: true });
+                            setDoc(doc(getPublicCol('settings'), 'config'), { appVersion: CURRENT_APP_VERSION }, { merge: true });
                             logActivity("系統", "已自動偵測到新版本代碼，並推播給所有成員", "");
                         }
-                        // 2. 【接收通知】：如果資料庫版號「大於」我目前的版號，代表有人已載入新代碼，我需要刷新！
-                        else if (dbVersion > CURRENT_APP_VERSION && data.lastCodeUpdateTime && data.lastCodeUpdateTime > lastNotifiedTime.current) {
+                        // 2. 【接收通知】：只要資料庫的版號大於我目前運行的版號，且我還沒被通知過這個新版號，就跳出提示！
+                        else if (dbVersion > CURRENT_APP_VERSION && dbVersion > notifiedVersion.current) {
                             showNotify("💡 系統已自動升級新版本代碼，建議重新整理網頁！");
-                            lastNotifiedTime.current = data.lastCodeUpdateTime;
+                            notifiedVersion.current = dbVersion;
                         }
                     } 
                 });
@@ -1210,7 +1211,8 @@
 
             return (
                 <div className="min-h-screen p-4 md:p-8 relative text-white pb-24">
-                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl">{notification}</div>}
+                    {/* 改進：將 z-index 提升到 9999 確保絕對置頂，並加上動畫 */}
+                    {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
                     <div className="max-w-[1800px] mx-auto">
                         <header className="mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400]">
                             <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
