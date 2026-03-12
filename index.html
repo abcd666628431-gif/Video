@@ -487,9 +487,9 @@
                         const segs = [];
                         if (exNameOriginal.length > 0) {
                             let curStr = exNameOriginal[0];
-                            let curState = itemOverlapFlags[0] >= 2 ? 'red' : (itemOverlapFlags[0] === 1 ? 'blue' : 'none');
+                            let curState = itemOverlapFlags[0] >= 2 ? 'amber' : (itemOverlapFlags[0] === 1 ? 'blue' : 'none');
                             for (let i = 1; i < exNameOriginal.length; i++) {
-                                let state = itemOverlapFlags[i] >= 2 ? 'red' : (itemOverlapFlags[i] === 1 ? 'blue' : 'none');
+                                let state = itemOverlapFlags[i] >= 2 ? 'amber' : (itemOverlapFlags[i] === 1 ? 'blue' : 'none');
                                 if (state === curState) { curStr += exNameOriginal[i]; } else { segs.push({ text: curStr, state: curState }); curStr = exNameOriginal[i]; curState = state; }
                             }
                             segs.push({ text: curStr, state: curState });
@@ -501,9 +501,9 @@
                 const segments = [];
                 if (value.length > 0) {
                     let curStr = value[0];
-                    let curState = overlapCount[0] >= 2 ? 'red' : (overlapCount[0] === 1 ? 'blue' : 'none');
+                    let curState = overlapCount[0] >= 2 ? 'amber' : (overlapCount[0] === 1 ? 'blue' : 'none');
                     for (let i = 1; i < value.length; i++) {
-                        let state = overlapCount[i] >= 2 ? 'red' : (overlapCount[i] === 1 ? 'blue' : 'none');
+                        let state = overlapCount[i] >= 2 ? 'amber' : (overlapCount[i] === 1 ? 'blue' : 'none');
                         if (state === curState) { curStr += value[i]; } else { segments.push({ text: curStr, state: curState }); curStr = value[i]; curState = state; }
                     }
                     segments.push({ text: curStr, state: curState });
@@ -517,7 +517,7 @@
                     <div className={`relative modal-input-base w-full !p-0 ${isFocused ? '!border-b-[#ffbae9] !bg-[rgba(0,0,0,0.7)] shadow-[0_4px_12px_rgba(255,186,233,0.1)]' : ''} ${isError ? '!border-red-500 ring-2 ring-red-500/20' : ''}`}>
                         <div className="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap break-all font-black text-lg overflow-hidden" style={{ padding: '0.5rem 0.75rem', color: 'transparent', wordBreak: 'break-all' }}>
                             {highlights.map((seg, i) => (
-                                <span key={i} className={seg.state === 'red' ? 'bg-red-500/50 rounded-[2px]' : seg.state === 'blue' ? 'bg-cyan-500/40 rounded-[2px]' : ''}>{seg.text}</span>
+                                <span key={i} className={seg.state === 'amber' ? 'bg-amber-500/40 rounded-[2px]' : seg.state === 'blue' ? 'bg-cyan-500/40 rounded-[2px]' : ''}>{seg.text}</span>
                             ))}
                         </div>
                         <textarea ref={textareaRef} rows="1" className="w-full bg-transparent border-none outline-none resize-none m-0 block font-black text-white text-lg relative z-10 overflow-hidden" style={{ padding: '0.5rem 0.75rem', wordBreak: 'break-all' }} value={value} onChange={(e) => { onChange(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder={placeholder} required={true} />
@@ -534,11 +534,11 @@
                                 <div key={g.id || idx} className="text-[12px] text-white/90 font-black px-2.5 py-1.5 bg-black/20 hover:bg-black/40 rounded transition-all flex justify-between items-start group">
                                     <span className="block truncate group-hover:whitespace-normal group-hover:break-words group-hover:scale-[1.02] origin-left transition-all duration-200 flex-1 mr-2 leading-relaxed mt-[1px]">
                                         {g.segments.map((seg, i) => (
-                                            <span key={i} className={seg.state === 'red' ? 'bg-red-500/50 text-white rounded-[2px]' : seg.state === 'blue' ? 'bg-cyan-500/40 text-cyan-50 rounded-[2px]' : 'group-hover:text-[#ffbae9] transition-colors'}>{seg.text}</span>
+                                            <span key={i} className={seg.state === 'amber' ? 'bg-amber-500/50 text-white rounded-[2px]' : seg.state === 'blue' ? 'bg-cyan-500/40 text-cyan-50 rounded-[2px]' : 'group-hover:text-[#ffbae9] transition-colors'}>{seg.text}</span>
                                         ))}
                                     </span>
                                     <div className="flex-shrink-0 mt-[2px]">
-                                        {g.score >= 2 ? <span className="text-[9px] bg-red-500/20 border border-red-500/30 text-red-300 px-1.5 py-0.5 rounded">重疊 {g.score} 字</span> : <span className="text-[9px] bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-1.5 py-0.5 rounded">重疊 1 字</span>}
+                                        {g.score >= 2 ? <span className="text-[9px] bg-amber-500/20 border border-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded">相似 {g.score} 字</span> : <span className="text-[9px] bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-1.5 py-0.5 rounded">相似 1 字</span>}
                                     </div>
                                 </div>
                             ))}
@@ -585,7 +585,8 @@
             const [isWatchOrderSearchFocused, setIsWatchOrderSearchFocused] = useState(false);
             const dragItem = useRef(null); const dragOverItem = useRef(null);
             const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
-            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
+            // 修改了預設的 airingStatus 為 '已完結'
+            const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '已完結', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
             const [deleteSourceTarget, setDeleteSourceTarget] = useState(null); const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
             const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); const [newCategoryName, setNewCategoryName] = useState("");
@@ -649,7 +650,6 @@
                 return Object.keys(freq).sort((a, b) => freq[b] - freq[a]); 
             }, [games]);
             
-            // 已修改：依最近使用時間排序來源選項
             const sortedSourcesByRecent = useMemo(() => {
                 const lastUsed = {};
                 games.forEach(g => {
@@ -670,7 +670,7 @@
             const recentStatuses = useMemo(() => {
                 const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
-                return result.length > 0 ? result : ["連載中", "已完結", "待播出"];
+                return result.length > 0 ? result : ["已完結", "連載中", "待播出"]; // 改變無資料時的建議排序
             }, [games]);
             const recentCategories = useMemo(() => {
                 const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -786,7 +786,8 @@
 
             const handleOpenAddModal = useCallback(() => {
                 setEditingId(null); setRawImageData(null); 
-                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '連載中', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' }); 
+                // 修改了這裡：新增時的預設 airingStatus 改為 '已完結'
+                setFormData({ name: '', notes: '', addedBy: userName, year: '', order: (games.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '已完結', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' }); 
                 setShowTimeSettings(false); setShowManualUpdateInput(false); setIsModalOpen(true); 
             }, [userName, games.length]);
 
@@ -1173,7 +1174,6 @@
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center"><span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> {l.action === "系統" ? <span className="font-black text-green-400">{l.gameName}</span> : <><span className="mr-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"</span></>}</div>))}</div>
                             </div>
                             
-                            {/* 將寬度改為絕對固定：展開時 w-[280px]，收起時 w-[44px] */}
                             <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[280px]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                                 {isExpiryCollapsed ? (
