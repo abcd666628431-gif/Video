@@ -146,6 +146,7 @@
         // 優化 2: 將靜態常數移出元件，避免重複宣告
         const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
         const displayMembers = ["糖糖", "雲雲"];
+        const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
 
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
@@ -1172,7 +1173,6 @@
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", "-"); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
             
-            // 優化無限滾動相容性，改用 window.scrollY 更穩定
             const handleScrollToBottom = useCallback(() => {
                 setDisplayLimit(filteredGamesLengthRef.current);
                 setTimeout(() => {
