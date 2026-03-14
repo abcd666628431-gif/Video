@@ -121,7 +121,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
 
-        // 優化 1: 引入 useDeferredValue 以解決打字卡頓
         const { useState, useEffect, useRef, useMemo, memo, useCallback, useDeferredValue } = React;
 
         const firebaseConfig = {
@@ -143,10 +142,11 @@
         const NUM_REGEX = /(\d+(\.\d+)?)/;
         const IGNORE_CHAR_REGEX = /^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/;
 
-        // 優化 2: 將靜態常數移出元件，避免重複宣告
+        // 優化 1: 徹底抽離靜態常數與工具函數，阻絕內部閉包洩漏
         const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
         const displayMembers = ["糖糖", "雲雲"];
         const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
+        const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
 
         const extractFirstNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
@@ -193,7 +193,6 @@
         const toSimplified = (str) => str ? converterT2S(str) : "";
         const toTraditional = (str) => str ? converterS2T(str) : "";
 
-        // 核心優化：改為 webp 保留透明度與提升載入速度
         const compressImage = (dataUrl, maxWidth = 800) => {
             return new Promise((resolve, reject) => {
                 const img = new Image(); img.onerror = reject;
@@ -227,7 +226,6 @@
             return obj;
         };
 
-        // 優化 3: 徹底消除 Lucide 全局 DOM 掃描，改為單獨元件精準渲染
         const Icon = memo(({ name, className, onClick, title }) => {
             const containerRef = useRef(null);
             useEffect(() => {
@@ -266,7 +264,6 @@
             };
             const handleMouseUp = () => { isDragging.current = false; };
             
-            // 觸控優化
             const handleTouchStart = (e) => {
                 if(e.touches.length === 1) {
                     isDragging.current = true;
@@ -295,7 +292,6 @@
                 const finalX = (position.x + (centerX - (drawW / 2)) - (centerX - (holeSize.w / 2))) * resRatio;
                 const finalY = (position.y + (centerY - (drawH / 2)) - (centerY - (holeSize.h / 2))) * resRatio;
                 ctx.drawImage(img, finalX, finalY, drawW * resRatio, drawH * resRatio);
-                // 優化 4: 裁剪儲存同樣改為 webp
                 onCrop(canvas.toDataURL('image/webp', 0.8)); 
             };
             return (
@@ -483,7 +479,6 @@
         const NameInputWithHighlight = ({ value, onChange, games, editingId, isError, placeholder }) => {
             const textareaRef = useRef(null); 
             
-            // 優化 5: 移除 onChange 內的同步 Reflow，改用 requestAnimationFrame 與 useEffect 來處理高度
             useEffect(() => { 
                 if (textareaRef.current) {
                     requestAnimationFrame(() => {
@@ -496,7 +491,6 @@
             const [isFocused, setIsFocused] = useState(false);
             const [isHovered, setIsHovered] = useState(false);
 
-            // 優化 6: 利用 deferred value 讓出主線程，避免打字時被複雜的字串比對卡住
             const deferredValue = useDeferredValue(value);
 
             const { highlights, overlappingGames } = useMemo(() => {
@@ -514,7 +508,6 @@
                     const itemOverlapFlags = new Array(exNameOriginal.length).fill(0);
                     
                     for (let i = 0; i < valUnified.length; i++) {
-                        // 優化 7: 設定重疊比對的長度上限，切斷長字串的 O(N^2) 效能黑洞
                         const maxLen = Math.min(valUnified.length - i, 20);
                         for (let len = 1; len <= maxLen; len++) {
                             const sub = valUnified.substring(i, i + len);
@@ -699,7 +692,6 @@
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
 
-            // 優化 8: 建立 Ref 防止 useCallback 抓取陳舊狀態，並切斷無意義的組件重繪
             const gamesRef = useRef(games);
             const customSourcesRef = useRef(customSources);
             const customCategoriesRef = useRef(customCategories);
@@ -711,7 +703,6 @@
             useEffect(() => { customMembershipsRef.current = customMemberships; }, [customMemberships]);
             useEffect(() => { userNameRef.current = userName; }, [userName]);
 
-            const getPublicCol = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
             const [isExpiryCollapsed, setIsExpiryCollapsed] = useState(false);
             const [showAddMembershipModal, setShowAddMembershipModal] = useState(false);
             const [newMembershipName, setNewMembershipName] = useState("");
@@ -946,7 +937,6 @@
                 setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
             }, []);
 
-            // 優化 9: 將表單進度的回調函式記憶化，阻絕表單內部元件的連鎖重繪
             const handleTotalEpChange = useCallback(v => setFormData(p => ({...p, totalEpisodes: v})), []);
             const handleUpdatedEpChange = useCallback(v => setFormData(p => ({...p, updatedEpisodes: v})), []);
             const handlePaidProgChange = useCallback(v => setFormData(p => ({...p, paidProgress: v})), []);
@@ -1200,6 +1190,7 @@
             const toggleMemberFilter = useCallback((name, type, value) => { setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value }); }, []);
             const toggleGlobalFilter = useCallback((type, value) => { setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value }); }, []);
             
+            // 優化 2: 修復滾動載入重置，依賴 deferredSearchQuery 同步避免畫面閃爍
             const deferredSearchQuery = useDeferredValue(searchQuery);
             
             const filteredGames = useMemo(() => {
@@ -1231,9 +1222,10 @@
                 filteredGamesLengthRef.current = filteredGames.length;
             }, [filteredGames.length]);
 
+            // 在這裡！將依賴改為 deferredSearchQuery，徹底消除打字與畫面載入間的視覺撕裂感
             useEffect(() => {
                 setDisplayLimit(CHUNK_SIZE);
-            }, [searchQuery, activeTab, memberFilter]);
+            }, [deferredSearchQuery, activeTab, memberFilter]);
 
             useEffect(() => {
                 let ticking = false;
