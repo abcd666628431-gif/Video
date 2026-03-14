@@ -402,6 +402,12 @@
                     </div>
                 </li>
             );
+        }, (prevProps, nextProps) => {
+            // 效能優化：精準比對卡片資料，只有真正改變的卡片才會觸發重新渲染
+            return prevProps.isEditLocked === nextProps.isEditLocked && 
+                   JSON.stringify(prevProps.g) === JSON.stringify(nextProps.g) && 
+                   prevProps.nameColorMap === nextProps.nameColorMap && 
+                   prevProps.allSources === nextProps.allSources;
         });
 
         const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, labelStyle, containerClass }) => {
@@ -1185,11 +1191,15 @@
                 return l;
             }, [games, searchQuery, activeTab, memberFilter]);
             
-            // 更新數量紀錄並重置顯示數量 (當過濾條件、標籤改變時)
+            // 獨立更新目前的過濾後總數，供滾動載入參考 (不影響畫面顯示數量)
             useEffect(() => {
                 filteredGamesLengthRef.current = filteredGames.length;
+            }, [filteredGames.length]);
+
+            // 修正：只有當「搜尋條件、分類標籤、成員過濾」改變時，才把顯示上限重置為 100
+            useEffect(() => {
                 setDisplayLimit(CHUNK_SIZE);
-            }, [filteredGames, searchQuery, activeTab, memberFilter]);
+            }, [searchQuery, activeTab, memberFilter]);
 
             // 監聽滾動事件，實作滑動載入下一批
             useEffect(() => {
