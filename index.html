@@ -43,7 +43,7 @@
         .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* 極限壓縮卡片間距為 0.5rem (8px)，並強制固定最多雙欄 */
+        /* 恢復穩定的原生 CSS 排版，避免 content-visibility 造成的抖動 */
         .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 0.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(400px, 1fr)); } }
         .component-view li { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; position: relative; border-radius: 10px; overflow: hidden; display: flex; padding: 0; gap: 0; height: 240px; }
@@ -52,7 +52,6 @@
         .image-link { width: 180px; height: 100%; flex-shrink: 0; display: block; background: transparent; transition: width 0.2s ease; border-right: 1px solid rgba(255,255,255,0.05); position: relative; }
         .image { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; }
         
-        /* 卡片內部右側的留白壓縮 */
         .desc { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative; padding: 0.5rem 1rem 0.75rem 1rem; }
         
         .title-container { height: auto; min-height: 1.8rem; margin-bottom: 0.1rem; display: flex; flex-direction: column; align-items: flex-start; padding-right: 45px; }
@@ -142,7 +141,7 @@
         const NUM_REGEX = /(\d+(\.\d+)?)/;
         const IGNORE_CHAR_REGEX = /^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/;
 
-        // 優化 1: 徹底抽離靜態常數與工具函數，阻絕內部閉包洩漏
+        // 全局靜態變數提昇 (Hoisted)，防止每次渲染都重新分配記憶體
         const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
         const displayMembers = ["糖糖", "雲雲"];
         const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
@@ -226,16 +225,28 @@
             return obj;
         };
 
+        // 終極優化 2: 重寫 Icon 元件，完全免除 lucide.createIcons 造成的 DOM 全局掃描效能地獄
         const Icon = memo(({ name, className, onClick, title }) => {
-            const containerRef = useRef(null);
+            const spanRef = useRef(null);
             useEffect(() => {
-                if (containerRef.current && window.lucide) {
-                    containerRef.current.innerHTML = `<i data-lucide="${name}" style="width:100%;height:100%"></i>`;
-                    window.lucide.createIcons({ root: containerRef.current });
+                if (spanRef.current && window.lucide && window.lucide.icons[name]) {
+                    const iconDef = window.lucide.icons[name];
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    Object.entries(iconDef.attrs).forEach(([k, v]) => svg.setAttribute(k, v));
+                    if (className) svg.setAttribute('class', className);
+                    svg.style.width = '100%';
+                    svg.style.height = '100%';
+                    iconDef.children.forEach(child => {
+                        const childNode = document.createElementNS('http://www.w3.org/2000/svg', child[0]);
+                        Object.entries(child[1]).forEach(([k, v]) => childNode.setAttribute(k, v));
+                        svg.appendChild(childNode);
+                    });
+                    spanRef.current.innerHTML = '';
+                    spanRef.current.appendChild(svg);
                 }
-            }, [name]);
+            }, [name, className]);
             return (
-                <span ref={containerRef} onClick={(e) => { if(onClick) { e.preventDefault(); e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title} />
+                <span ref={spanRef} onClick={(e) => { if(onClick) { e.preventDefault(); e.stopPropagation(); onClick(e); } }} className={`inline-flex items-center justify-center cursor-pointer ${className || ''}`} title={title} />
             );
         });
 
@@ -338,6 +349,7 @@
             </svg>
         );
 
+        // 終極優化 1: 完美阻絕大型 Base64 字串引發的 JSON.stringify 重繪風暴
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources, className }) => {
             const [isNotesExpanded, setIsNotesExpanded] = useState(false);
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
@@ -438,8 +450,31 @@
             if (prevProps.isEditLocked !== nextProps.isEditLocked) return false;
             if (prevProps.nameColorMap !== nextProps.nameColorMap) return false;
             if (prevProps.allSources !== nextProps.allSources) return false;
-            if (prevProps.g === nextProps.g) return true;
-            return JSON.stringify(prevProps.g) === JSON.stringify(nextProps.g);
+            
+            const p = prevProps.g;
+            const n = nextProps.g;
+            if (p === n) return true;
+            
+            if (
+                p.id !== n.id || p.name !== n.name || p.order !== n.order ||
+                p.year !== n.year || p.airingStatus !== n.airingStatus ||
+                p.category !== n.category || p.source !== n.source ||
+                p.notes !== n.notes || p.manualUpdatedAt !== n.manualUpdatedAt ||
+                p.url !== n.url || p.cover !== n.cover || p.sourceIcon !== n.sourceIcon ||
+                p.addedBy !== n.addedBy || p.watchOrder !== n.watchOrder
+            ) {
+                return false;
+            }
+
+            return (
+                JSON.stringify(p.watchingBy) === JSON.stringify(n.watchingBy) &&
+                JSON.stringify(p.totalEpisodes) === JSON.stringify(n.totalEpisodes) &&
+                JSON.stringify(p.updatedEpisodes) === JSON.stringify(n.updatedEpisodes) &&
+                JSON.stringify(p.paidProgress) === JSON.stringify(n.paidProgress) &&
+                JSON.stringify(p.watchedProgress) === JSON.stringify(n.watchedProgress) &&
+                JSON.stringify(p.updateDay) === JSON.stringify(n.updateDay) &&
+                p.updateTime === n.updateTime
+            );
         });
 
         const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, labelStyle, containerClass }) => {
@@ -494,7 +529,7 @@
             const deferredValue = useDeferredValue(value);
 
             const { highlights, overlappingGames } = useMemo(() => {
-                if (!deferredValue) return { highlights: [], overlappingGames: [] };
+                if (!deferredValue || deferredValue.length < 2) return { highlights: [], overlappingGames: [] };
                 const overlapCount = new Array(deferredValue.length).fill(0);
                 const valUnified = toSimplified(deferredValue).toLowerCase();
                 const overlappingList = [];
@@ -508,7 +543,8 @@
                     const itemOverlapFlags = new Array(exNameOriginal.length).fill(0);
                     
                     for (let i = 0; i < valUnified.length; i++) {
-                        const maxLen = Math.min(valUnified.length - i, 20);
+                        // 終極優化 3: 設定長度天花板，防止 O(N^2) 演算法凍結視窗
+                        const maxLen = Math.min(valUnified.length - i, 8);
                         for (let len = 1; len <= maxLen; len++) {
                             const sub = valUnified.substring(i, i + len);
                             if (IGNORE_CHAR_REGEX.test(sub)) continue;
@@ -688,7 +724,7 @@
             const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); const [newCategoryName, setNewCategoryName] = useState("");
             const [renameCategoryTarget, setRenameCategoryTarget] = useState(null); const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             
-            const CHUNK_SIZE = 100;
+            const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
 
@@ -796,7 +832,19 @@
             useEffect(() => {
                 if (!user) return;
                 const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (e) => console.error("Games sync error:", e));
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); setActivityLogs(logs.slice(0, 30)); setIsLoadingLogs(false); }, (e) => console.error("Logs sync error:", e));
+                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
+                    const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); 
+                    setActivityLogs(logs.slice(0, 50)); 
+                    setIsLoadingLogs(false); 
+                    
+                    if (logs.length > 50) {
+                        const logsToDelete = logs.slice(50);
+                        logsToDelete.forEach(log => {
+                            if (log.id) deleteDoc(doc(getPublicCol('activity_logs'), log.id)).catch(() => {});
+                        });
+                    }
+                }, (e) => console.error("Logs sync error:", e));
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { 
                         const data = d.data();
@@ -1163,6 +1211,7 @@
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", "-"); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
             
+            // 終極優化 4: 加入 { passive: true } 讓滾動由 GPU 全權處理不被 JS 阻擋
             const handleScrollToBottom = useCallback(() => {
                 setDisplayLimit(filteredGamesLengthRef.current);
                 setTimeout(() => {
@@ -1190,7 +1239,6 @@
             const toggleMemberFilter = useCallback((name, type, value) => { setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value }); }, []);
             const toggleGlobalFilter = useCallback((type, value) => { setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value }); }, []);
             
-            // 優化 2: 修復滾動載入重置，依賴 deferredSearchQuery 同步避免畫面閃爍
             const deferredSearchQuery = useDeferredValue(searchQuery);
             
             const filteredGames = useMemo(() => {
@@ -1222,7 +1270,7 @@
                 filteredGamesLengthRef.current = filteredGames.length;
             }, [filteredGames.length]);
 
-            // 在這裡！將依賴改為 deferredSearchQuery，徹底消除打字與畫面載入間的視覺撕裂感
+            // 終極優化 5: 消除滾動條件變更時發生的時間差閃爍 (Tearing)
             useEffect(() => {
                 setDisplayLimit(CHUNK_SIZE);
             }, [deferredSearchQuery, activeTab, memberFilter]);
@@ -1246,7 +1294,7 @@
                     }
                 };
 
-                window.addEventListener('scroll', onScroll);
+                window.addEventListener('scroll', onScroll, { passive: true });
                 return () => window.removeEventListener('scroll', onScroll);
             }, []);
 
@@ -1308,7 +1356,7 @@
                 }; 
             }, [user, logActivity, showNotify]);
 
-            // 優化 10: 透過 Memoized Slots 徹底切斷 App 重繪對背景 DOM 的污染
+            // 終極優化 6: 利用 Memoized Slots 切斷子元件與 App() 刷新間的不必要關聯
             const headerUI = useMemo(() => (
                 <header className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
                     <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.21</span></div><h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
@@ -1506,7 +1554,6 @@
                 <nav className="tab-bar">{customCategories.map((cat, idx) => (<div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}><span>{cat}</span>{!isEditLocked && (<div className="tab-action-group"><div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div><div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div></div>)}</div>))}{!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類分組"><Icon name="plus" className="w-5 h-5" /></div>)}</nav> 
             ), [customCategories, activeTab, isEditLocked]);
 
-            // 在 App 的 return 進行元件替換，大幅減少更新範圍
             return (
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
