@@ -571,48 +571,36 @@
         });
 
         const AutoJumpDateInput = memo(({ value, onChange }) => {
-            const [y, setY] = useState('');
-            const [m, setM] = useState('');
-            const [d, setD] = useState('');
+            const parts = (value || "").split('-');
+            const y = parts[0] || '';
+            const m = parts.length > 1 ? parts[1] : '';
+            const d = parts.length > 2 ? parts[2] : '';
+
             const mRef = useRef(null);
             const dRef = useRef(null);
             const yRef = useRef(null);
 
-            useEffect(() => {
-                if (value && value.includes('-')) {
-                    const parts = value.split('-');
-                    setY(parts[0] || ''); setM(parts[1] || ''); setD(parts[2] || '');
-                } else {
-                    setY(''); setM(''); setD('');
-                }
-            }, [value]);
-
-            const handleUpdate = (newY, newM, newD) => {
-                if (!newY && !newM && !newD) { onChange(""); return; }
-                onChange(`${newY}-${newM}-${newD}`); 
-            };
-
             const handleY = (e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                setY(val);
-                if (val.length === 4) mRef.current?.focus();
-                handleUpdate(val, m, d);
+                if (!val && !m && !d) { onChange(""); } else { onChange(`${val}-${m}-${d}`); }
+                // 加入 20ms 延遲，避免輸入法在切換焦點時將按鍵誤送到下一個欄位
+                if (val.length === 4 && y.length < 4) setTimeout(() => mRef.current?.focus(), 20);
             };
             const handleM = (e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setM(val);
-                if (val.length === 2) dRef.current?.focus();
-                handleUpdate(y, val, d);
+                if (!y && !val && !d) { onChange(""); } else { onChange(`${y}-${val}-${d}`); }
+                // 加入 20ms 延遲
+                if (val.length === 2 && m.length < 2) setTimeout(() => dRef.current?.focus(), 20);
             };
             const handleD = (e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setD(val);
-                handleUpdate(y, m, val);
+                if (!y && !m && !val) { onChange(""); } else { onChange(`${y}-${m}-${val}`); }
             };
             const handleKeyDown = (e, field) => {
                 if (e.key === 'Backspace' && e.target.value === '') {
-                    if (field === 'm') yRef.current?.focus();
-                    if (field === 'd') mRef.current?.focus();
+                    // 退格鍵跳轉也稍微延遲，體驗更平滑
+                    if (field === 'm') setTimeout(() => yRef.current?.focus(), 10);
+                    if (field === 'd') setTimeout(() => mRef.current?.focus(), 10);
                 }
             };
 
