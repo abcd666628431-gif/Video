@@ -1278,12 +1278,12 @@
                         </header>
                         
                         <div className="flex flex-col lg:flex-row gap-1 mb-4 px-1 md:px-2">
-                            <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[40%] flex-shrink-0">
+                            <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
                                 <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                                 <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center"><span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> {l.action === "系統" ? <span className="font-black text-green-400">{l.gameName}</span> : <><span className="mr-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"</span></>}</div>))}</div>
                             </div>
                             
-                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[260px]'}`}>
+                            <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[270px]'}`}>
                                 <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                                 {isExpiryCollapsed ? (
                                     <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開會員時限"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /><span className="hidden lg:block text-[11px] font-black text-cyan-400/80 tracking-[0.2em] whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>會員時限</span><span className="block lg:hidden text-[11px] font-black text-cyan-400/80 tracking-widest whitespace-nowrap">會員時限 (點擊展開)</span></div>
