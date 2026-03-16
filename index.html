@@ -140,6 +140,7 @@
         const NUM_REGEX = /(\d+(\.\d+)?)/;
         const IGNORE_CHAR_REGEX = /^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/;
 
+        // 全域靜態提昇，防止閉包與每次渲染重建
         const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
         const displayMembers = ["糖糖", "雲雲"];
         const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
@@ -348,7 +349,6 @@
             </svg>
         );
 
-        // 終極優化 1: 完美阻絕大型 Base64 字串引發的 JSON.stringify 記憶體爆炸
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources, className }) => {
             const [isNotesExpanded, setIsNotesExpanded] = useState(false);
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
@@ -450,7 +450,6 @@
             if (prevProps.nameColorMap !== nextProps.nameColorMap) return false;
             if (prevProps.allSources !== nextProps.allSources) return false;
             
-            // 使用淺層記憶體比對，避免 JSON.stringify 轉譯上百 KB 圖片時造成的嚴重掉幀
             const p = prevProps.g;
             const n = nextProps.g;
             if (p === n) return true;
@@ -1203,7 +1202,6 @@
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", "-"); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
             
-            // 終極優化 5: 利用 IntersectionObserver (交叉觀察者) 實現 0 CPU 開銷滾動載入
             const loadMoreSentinelRef = useRef(null);
             useEffect(() => {
                 if (!loadMoreSentinelRef.current) return;
