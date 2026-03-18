@@ -91,7 +91,7 @@
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
         .progress-input-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-10; }
+        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
         .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
@@ -141,7 +141,6 @@
         }
         
         const appId = 'video-library-v1';
-
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         const NUM_REGEX = /(\d+(\.\d+)?)/;
         const IGNORE_CHAR_REGEX = /^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/;
@@ -947,7 +946,7 @@
                 setDeleteMembershipTarget(null); showNotify("已移除");
             };
             
-            // 已修正：確保「儲存修改」鍵即使在資料異步時也能正確對應資料
+            // 修正處：確保成功儲存後，強制關閉編輯狀態
             const handleSaveMemberships = async () => {
                 if(!user) return;
                 const nextMemberships = customMemberships.map((m, i) => {
@@ -970,8 +969,9 @@
                 try {
                     await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
                     showNotify("儲存完成");
+                    setIsEditingMemberships(false); // 修正：儲存成功後關閉編輯狀態
                 } catch(e) { showNotify("儲存失敗"); } finally {
-                    setIsEditingMemberships(false); setTempMembershipNames({}); setTempMembershipIcons({}); setTempMembershipTags({}); setTempMembershipDates({});
+                    setTempMembershipNames({}); setTempMembershipIcons({}); setTempMembershipTags({}); setTempMembershipDates({});
                 }
             };
 
@@ -1079,7 +1079,6 @@
                 } catch (e) {}
             }, [user]);
             
-            // 已升級：導入邏輯現在支持「名稱 + 標籤」作為唯一識別，支持舊備份還原多個同名平台
             const handleImportData = useCallback(async (e) => {
                 const f = e.target.files[0]; e.target.value = ""; if(!f || !user) return; 
                 const r = new FileReader(); r.readAsText(f);
@@ -1096,7 +1095,6 @@
                                 importedConfig[key].forEach(importedItem => {
                                     if (typeof importedItem === 'string' && !nextConfig[key].includes(importedItem)) { nextConfig[key].push(importedItem); } 
                                     else if (typeof importedItem === 'object' && importedItem.name) {
-                                        // 核心修正：針對 memberships 使用「名稱+標籤」做唯一判斷
                                         const existingIdx = nextConfig[key].findIndex(ex => key === 'memberships' ? (ex.name === importedItem.name && (ex.tag || '') === (importedItem.tag || '')) : ex.name === importedItem.name);
                                         if (existingIdx !== -1) { nextConfig[key][existingIdx] = { ...nextConfig[key][existingIdx], ...importedItem }; } else { nextConfig[key].push(importedItem); }
                                     }
@@ -1279,7 +1277,7 @@
                     {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
                     {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
-                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
                     {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
