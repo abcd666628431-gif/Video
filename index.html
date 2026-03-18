@@ -117,7 +117,7 @@
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
+        import { initializeFirestore, persistentLocalCache, getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
 
         const { useState, useEffect, useRef, useMemo, memo, useCallback, useDeferredValue } = React;
 
@@ -132,9 +132,18 @@
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
-        });
+        
+        // 加入防錯降級機制，避免舊快取衝突導致白畫面
+        let db;
+        try {
+            db = initializeFirestore(app, {
+                localCache: persistentLocalCache() 
+            });
+        } catch (error) {
+            console.warn("無法啟動持久化快取，切換回標準連線模式", error);
+            db = getFirestore(app);
+        }
+        
         const appId = 'video-library-v1';
 
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -841,7 +850,6 @@
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { 
                         const data = d.data();
-                        // 修改點：在此處加入 Array.from(new Set(...)) 來過濾重複分類
                         setCustomCategories(Array.from(new Set(data.categories || ["最新入庫", "編號排序"]))); 
                         setCustomSources(data.sources || []); 
                         setCustomMemberships(data.memberships || []);
