@@ -91,7 +91,7 @@
         .source-icon-preview-box.active { border-color: #ffbae9; box-shadow: 0 0 10px rgba(255, 186, 233, 0.3); }
         .progress-input-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         .crop-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-index: 10; }
+        .crop-hole { width: 300px; aspect-ratio: 3 / 4; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5); position: relative; z-10; }
         .crop-hole::after { content: '拖動或精密滾輪縮放 (3:4)'; position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; text-shadow: 0 1px 4px #000; font-size: 12px; font-weight: 900; text-transform: uppercase; }
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffbae9; cursor: pointer; border: 2px solid #fff; }
@@ -133,25 +133,19 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
-        // 加入防錯降級機制，避免舊快取衝突導致白畫面
         let db;
         try {
-            db = initializeFirestore(app, {
-                localCache: persistentLocalCache() 
-            });
+            db = initializeFirestore(app, { localCache: persistentLocalCache() });
         } catch (error) {
-            console.warn("無法啟動持久化快取，切換回標準連線模式", error);
             db = getFirestore(app);
         }
         
         const appId = 'video-library-v1';
 
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
         const NUM_REGEX = /(\d+(\.\d+)?)/;
         const IGNORE_CHAR_REGEX = /^[\s\-—:：,，.。!！?？()（）\[\]【】《》<>\/\\~～]+$/;
 
-        // 全域靜態提昇，防止閉包與每次渲染重建
         const emptyProgress = { v1: '', u1: '集', v2: '', u2: '分鐘' };
         const displayMembers = ["糖糖", "雲雲"];
         const ensureP = (v) => v?.v1 !== undefined ? { ...emptyProgress, ...v } : { ...emptyProgress, v1: v || '' };
@@ -198,7 +192,6 @@
 
         const converterT2S = window.OpenCC ? window.OpenCC.Converter({ from: 'tw', to: 'cn' }) : (s) => s;
         const converterS2T = window.OpenCC ? window.OpenCC.Converter({ from: 'cn', to: 'tw' }) : (s) => s;
-
         const toSimplified = (str) => str ? converterT2S(str) : "";
         const toTraditional = (str) => str ? converterS2T(str) : "";
 
@@ -235,7 +228,6 @@
             return obj;
         };
 
-        // 終極優化：加入重試機制並單獨渲染，徹底斷絕全局 DOM 掃描
         const Icon = memo(({ name, className, onClick, title }) => {
             const spanRef = useRef(null);
             useEffect(() => {
@@ -245,13 +237,8 @@
                         spanRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
                         window.lucide.createIcons({ root: spanRef.current });
                         const svg = spanRef.current.querySelector('svg');
-                        if (svg) {
-                            svg.style.width = '100%';
-                            svg.style.height = '100%';
-                        }
-                    } else {
-                        timer = setTimeout(renderIcon, 100);
-                    }
+                        if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; }
+                    } else { timer = setTimeout(renderIcon, 100); }
                 };
                 renderIcon();
                 return () => clearTimeout(timer);
@@ -276,7 +263,6 @@
             const [scale, setScale] = useState(1);
             const containerRef = useRef(null); const imgRef = useRef(null);
             const isDragging = useRef(false); const lastPos = useRef({ x: 0, y: 0 });
-            
             const handleMouseDown = (e) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY }; };
             const handleMouseMove = (e) => {
                 if (!isDragging.current) return;
@@ -285,13 +271,7 @@
                 lastPos.current = { x: e.clientX, y: e.clientY };
             };
             const handleMouseUp = () => { isDragging.current = false; };
-            
-            const handleTouchStart = (e) => {
-                if(e.touches.length === 1) {
-                    isDragging.current = true;
-                    lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                }
-            };
+            const handleTouchStart = (e) => { if(e.touches.length === 1) { isDragging.current = true; lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; } };
             const handleTouchMove = (e) => {
                 if (!isDragging.current || e.touches.length !== 1) return;
                 const dx = e.touches[0].clientX - lastPos.current.x;
@@ -299,7 +279,6 @@
                 setPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
                 lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             };
-
             const handleWheel = (e) => { const step = 0.005; setScale(prev => Math.max(0.01, Math.min(10, prev + (e.deltaY > 0 ? -step : step)))); };
             const handleConfirm = () => {
                 const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
@@ -374,9 +353,7 @@
             const seriesCompletionPct = calculateDualProgress(g.updatedEpisodes, g.totalEpisodes);
             return (
                 <li className={`group ${!isEditLocked ? 'cursor-pointer' : ''} ${className || ''}`} onClick={(e) => {
-                    if (!isEditLocked && !e.target.closest('.notes-section')) {
-                        onOpenEdit(g);
-                    }
+                    if (!isEditLocked && !e.target.closest('.notes-section')) { onOpenEdit(g); }
                 }}>
                     <div className="image-link" onClick={e => { if (isEditLocked && g.url) window.open(g.url, '_blank'); }}>
                         {g.year && <span className="year-badge">{g.year}</span>}
@@ -403,7 +380,6 @@
                         </div>
                         <div className="meta space-y-1.5 flex-1 flex flex-col justify-start">
                             <div className="flex items-center flex-wrap gap-x-1 opacity-90"><strong>分類：</strong> {g.category || '未分類'} | <span className="inline-flex items-center ml-1">{displayIcon && <img src={displayIcon} loading="lazy" decoding="async" className="source-icon-small" alt="" />}<span className="leading-none">{g.source || '未知來源'}</span></span></div>
-                            
                             <div className="text-[11px] opacity-90">
                                 <strong>更新進度：</strong> 
                                 <span className="text-white/95">更新至 {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</span>
@@ -416,7 +392,6 @@
                                     </span>
                                 )}
                             </div>
-                            
                             <div className="mt-auto pt-2">
                                 <div className="flex justify-between items-center w-full gap-2">
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -443,12 +418,10 @@
                                         </div>
                                     )}
                                 </div>
-
                                 <div className="flex justify-between items-center w-full mt-2 pt-1.5 border-t border-white/10 mb-1.5">
                                     <div className="truncate text-[10px]"><strong className="opacity-50 text-[9px] uppercase">創建</strong><span className="member-badge !py-0.5 ml-1" style={{ color: addedByColor, backgroundColor: addedByColor + '10', borderColor: addedByColor + '20' }}>{String(g.addedBy || '系統')}</span></div>
                                     {g.manualUpdatedAt && <div className="text-[10px] opacity-60">最後更新: {g.manualUpdatedAt}</div>}
                                 </div>
-
                                 <div className="progress-container"><div className="progress-fill" style={{ width: `${seriesCompletionPct}%` }}></div><div className="progress-text-overlay">{seriesCompletionPct}%</div></div>
                             </div>
                         </div>
@@ -456,35 +429,11 @@
                     </div>
                 </li>
             );
-        }, (prevProps, nextProps) => {
-            if (prevProps.isEditLocked !== nextProps.isEditLocked) return false;
-            if (prevProps.nameColorMap !== nextProps.nameColorMap) return false;
-            if (prevProps.allSources !== nextProps.allSources) return false;
-            
-            const p = prevProps.g;
-            const n = nextProps.g;
-            if (p === n) return true;
-            
-            if (
-                p.id !== n.id || p.name !== n.name || p.order !== n.order ||
-                p.year !== n.year || p.airingStatus !== n.airingStatus ||
-                p.category !== n.category || p.source !== n.source ||
-                p.notes !== n.notes || p.manualUpdatedAt !== n.manualUpdatedAt ||
-                p.url !== n.url || p.cover !== n.cover || p.sourceIcon !== n.sourceIcon ||
-                p.addedBy !== n.addedBy || p.watchOrder !== n.watchOrder
-            ) {
-                return false;
-            }
-
-            return (
-                JSON.stringify(p.watchingBy) === JSON.stringify(n.watchingBy) &&
-                JSON.stringify(p.totalEpisodes) === JSON.stringify(n.totalEpisodes) &&
-                JSON.stringify(p.updatedEpisodes) === JSON.stringify(n.updatedEpisodes) &&
-                JSON.stringify(p.paidProgress) === JSON.stringify(n.paidProgress) &&
-                JSON.stringify(p.watchedProgress) === JSON.stringify(n.watchedProgress) &&
-                JSON.stringify(p.updateDay) === JSON.stringify(n.updateDay) &&
-                p.updateTime === n.updateTime
-            );
+        }, (p, n) => {
+            if (p.isEditLocked !== n.isEditLocked || p.nameColorMap !== n.nameColorMap || p.allSources !== n.allSources) return false;
+            const pg = p.g, ng = n.g;
+            if (pg === ng) return true;
+            return pg.id === ng.id && pg.name === ng.name && pg.order === ng.order && pg.year === ng.year && pg.airingStatus === ng.airingStatus && pg.category === ng.category && pg.source === ng.source && pg.notes === ng.notes && pg.manualUpdatedAt === ng.manualUpdatedAt && pg.url === ng.url && pg.cover === ng.cover && pg.sourceIcon === ng.sourceIcon && pg.addedBy === ng.addedBy && pg.watchOrder === ng.watchOrder && JSON.stringify(pg.watchingBy) === JSON.stringify(ng.watchingBy) && JSON.stringify(pg.totalEpisodes) === JSON.stringify(ng.totalEpisodes) && JSON.stringify(pg.updatedEpisodes) === JSON.stringify(ng.updatedEpisodes) && JSON.stringify(pg.paidProgress) === JSON.stringify(ng.paidProgress) && JSON.stringify(pg.watchedProgress) === JSON.stringify(ng.watchedProgress) && JSON.stringify(pg.updateDay) === JSON.stringify(ng.updateDay) && pg.updateTime === ng.updateTime;
         });
 
         const ProgressInputField = memo(({ label, value, onChange, unitSuggestions, labelClass, labelStyle, containerClass }) => {
@@ -523,7 +472,6 @@
 
         const NameInputWithHighlight = ({ value, onChange, games, editingId, isError, placeholder }) => {
             const textareaRef = useRef(null); 
-            
             useEffect(() => { 
                 if (textareaRef.current) {
                     requestAnimationFrame(() => {
@@ -532,18 +480,14 @@
                     });
                 }
             }, [value]);
-
             const [isFocused, setIsFocused] = useState(false);
             const [isHovered, setIsHovered] = useState(false);
-
             const deferredValue = useDeferredValue(value);
-
             const { highlights, overlappingGames } = useMemo(() => {
                 if (!deferredValue || deferredValue.length < 2) return { highlights: [], overlappingGames: [] };
                 const overlapCount = new Array(deferredValue.length).fill(0);
                 const valUnified = toSimplified(deferredValue).toLowerCase();
                 const overlappingList = [];
-                
                 for (const g of games) {
                     if (g.id === editingId) continue;
                     const exNameOriginal = g.name || "";
@@ -551,7 +495,6 @@
                     const origUnified = g.searchName || toSimplified(exNameOriginal).toLowerCase();
                     let gameMaxLen = 0;
                     const itemOverlapFlags = new Array(exNameOriginal.length).fill(0);
-                    
                     for (let i = 0; i < valUnified.length; i++) {
                         const maxLen = Math.min(valUnified.length - i, 8);
                         for (let len = 1; len <= maxLen; len++) {
@@ -561,20 +504,15 @@
                             while ((searchIdx = origUnified.indexOf(sub, searchIdx)) !== -1) {
                                 if (len > gameMaxLen) gameMaxLen = len;
                                 for (let k = searchIdx; k < searchIdx + len; k++) {
-                                    if (!IGNORE_CHAR_REGEX.test(exNameOriginal[k])) {
-                                        itemOverlapFlags[k] = Math.max(itemOverlapFlags[k], len);
-                                    }
+                                    if (!IGNORE_CHAR_REGEX.test(exNameOriginal[k])) { itemOverlapFlags[k] = Math.max(itemOverlapFlags[k], len); }
                                 }
                                 for (let k = i; k < i + len; k++) {
-                                    if (!IGNORE_CHAR_REGEX.test(deferredValue[k])) {
-                                        overlapCount[k] = Math.max(overlapCount[k], len);
-                                    }
+                                    if (!IGNORE_CHAR_REGEX.test(deferredValue[k])) { overlapCount[k] = Math.max(overlapCount[k], len); }
                                 }
                                 searchIdx += 1;
                             }
                         }
                     }
-                    
                     if (gameMaxLen > 0) {
                         const segs = [];
                         if (exNameOriginal.length > 0) {
@@ -589,7 +527,6 @@
                         overlappingList.push({ id: g.id, name: exNameOriginal, score: gameMaxLen, segments: segs });
                     }
                 }
-                
                 const segments = [];
                 if (deferredValue.length > 0) {
                     let curStr = deferredValue[0];
@@ -603,7 +540,6 @@
                 const sortedOverlaps = overlappingList.sort((a, b) => b.score - a.score).slice(0, 10); 
                 return { highlights: segments, overlappingGames: sortedOverlaps };
             }, [deferredValue, games, editingId]);
-
             return (
                 <div className="relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
                     <div className={`relative modal-input-base w-full !p-0 ${isFocused ? '!border-b-[#ffbae9] !bg-[rgba(0,0,0,0.7)] shadow-[0_4px_12px_rgba(255,186,233,0.1)]' : ''} ${isError ? '!border-red-500 ring-2 ring-red-500/20' : ''}`}>
@@ -672,14 +608,8 @@
 
         const AutoJumpDateInput = memo(({ value, onChange }) => {
             const parts = (value || "").split('-');
-            const y = parts[0] || '';
-            const m = parts.length > 1 ? parts[1] : '';
-            const d = parts.length > 2 ? parts[2] : '';
-
-            const mRef = useRef(null);
-            const dRef = useRef(null);
-            const yRef = useRef(null);
-
+            const y = parts[0] || '', m = parts.length > 1 ? parts[1] : '', d = parts.length > 2 ? parts[2] : '';
+            const mRef = useRef(null), dRef = useRef(null), yRef = useRef(null);
             const handleY = (e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                 if (!val && !m && !d) { onChange(""); } else { onChange(`${val}-${m}-${d}`); }
@@ -700,7 +630,6 @@
                     if (field === 'd') setTimeout(() => mRef.current?.focus(), 10);
                 }
             };
-
             return (
                 <div className="flex items-center bg-black/40 border border-cyan-400/40 rounded px-1 py-0.5 focus-within:border-[#ffbae9] focus-within:ring-1 focus-within:ring-[#ffbae9]/30 transition-all w-fit">
                     <input ref={yRef} value={y} onChange={handleY} onKeyDown={e=>handleKeyDown(e,'y')} placeholder="YYYY" className="bg-transparent text-[9px] font-mono text-center outline-none w-[26px] text-cyan-200 placeholder:text-white/20" />
@@ -723,46 +652,28 @@
             const [showWatchOrderList, setShowWatchOrderList] = useState(false); const watchOrderDropdownRef = useRef(null);
             const [showToolsDropdown, setShowToolsDropdown] = useState(false); const toolsDropdownRef = useRef(null);
             const [isSaving, setIsSaving] = useState(false);
-            const [watchOrderSearchQuery, setWatchOrderSearchQuery] = useState(""); 
-            const [isWatchOrderSearchFocused, setIsWatchOrderSearchFocused] = useState(false);
-            const dragItem = useRef(null); const dragOverItem = useRef(null);
-            
+            const [watchOrderSearchQuery, setWatchOrderSearchQuery] = useState(""); const [isWatchOrderSearchFocused, setIsWatchOrderSearchFocused] = useState(false);
+            const dragItem = useRef(null), dragOverItem = useRef(null);
             const [formData, setFormData] = useState({ name: '', notes: '', addedBy: '', year: '', order: '', url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '已完結', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' });
             const [lastSelectedImgZone, setLastSelectedImgZone] = useState('cover'), [searchQuery, setSearchQuery] = useState(''), [isEditLocked, setIsEditLocked] = useState(true), [showClearConfirm, setShowClearConfirm] = useState(false), [deleteGameTarget, setDeleteGameTarget] = useState(null), [isCropping, setIsCropping] = useState(false), [rawImageData, setRawImageData] = useState(null), [memberFilter, setMemberFilter] = useState(null);
-            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null); const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
-            const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); const [newCategoryName, setNewCategoryName] = useState("");
-            const [renameCategoryTarget, setRenameCategoryTarget] = useState(null); const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
-            
+            const [deleteSourceTarget, setDeleteSourceTarget] = useState(null), [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
+            const [showAddCategoryModal, setShowAddCategoryModal] = useState(false), [newCategoryName, setNewCategoryName] = useState("");
+            const [renameCategoryTarget, setRenameCategoryTarget] = useState(null), [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
-
-            const gamesRef = useRef(games);
-            const customSourcesRef = useRef(customSources);
-            const customCategoriesRef = useRef(customCategories);
-            const customMembershipsRef = useRef(customMemberships);
-            const userNameRef = useRef(userName);
+            const gamesRef = useRef(games), customSourcesRef = useRef(customSources), customCategoriesRef = useRef(customCategories), customMembershipsRef = useRef(customMemberships), userNameRef = useRef(userName);
             useEffect(() => { gamesRef.current = games; }, [games]);
             useEffect(() => { customSourcesRef.current = customSources; }, [customSources]);
             useEffect(() => { customCategoriesRef.current = customCategories; }, [customCategories]);
             useEffect(() => { customMembershipsRef.current = customMemberships; }, [customMemberships]);
             useEffect(() => { userNameRef.current = userName; }, [userName]);
-
             const [isExpiryCollapsed, setIsExpiryCollapsed] = useState(false);
-            const [showAddMembershipModal, setShowAddMembershipModal] = useState(false);
-            const [newMembershipName, setNewMembershipName] = useState("");
-            const [newMembershipIcon, setNewMembershipIcon] = useState("");
-            const [newMembershipTag, setNewMembershipTag] = useState("");
+            const [showAddMembershipModal, setShowAddMembershipModal] = useState(false), [newMembershipName, setNewMembershipName] = useState(""), [newMembershipIcon, setNewMembershipIcon] = useState(""), [newMembershipTag, setNewMembershipTag] = useState("");
             const membershipFileInputRef = useRef(null);
-            const [showClearMembershipsConfirm, setShowClearMembershipsConfirm] = useState(false);
-            const [deleteMembershipTarget, setDeleteMembershipTarget] = useState(null);
-            
-            const [isEditingMemberships, setIsEditingMemberships] = useState(false);
-            const [tempMembershipNames, setTempMembershipNames] = useState({});
-            const [tempMembershipIcons, setTempMembershipIcons] = useState({}); 
-            const [tempMembershipTags, setTempMembershipTags] = useState({}); 
-            const [tempMembershipDates, setTempMembershipDates] = useState({}); 
-            
+            const [showClearMembershipsConfirm, setShowClearMembershipsConfirm] = useState(false), [deleteMembershipTarget, setDeleteMembershipTarget] = useState(null), [isEditingMemberships, setIsEditingMemberships] = useState(false);
+            const [tempMembershipNames, setTempMembershipNames] = useState({}), [tempMembershipIcons, setTempMembershipIcons] = useState({}), [tempMembershipTags, setTempMembershipTags] = useState({}), [tempMembershipDates, setTempMembershipDates] = useState({}); 
+
             const handleIconFileSelect = async (e, membershipIndex) => {
                 if(e.target.files[0]) {
                     const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100);
@@ -770,7 +681,6 @@
                     e.target.value = "";
                 }
             };
-
             const calculateDaysLeft = useCallback((dateStr) => {
                 if (!dateStr || dateStr.length < 8) return null;
                 const target = new Date(dateStr + "T00:00:00");
@@ -779,14 +689,11 @@
                 const diffTime = target - now;
                 return Math.round(diffTime / (1000 * 60 * 60 * 24));
             }, []);
-
-            const userProfilesSignature = JSON.stringify(userProfiles.map(u => ({ n: u.name, c: u.color })));
             const nameColorMap = useMemo(() => { 
                 const m = {}; userProfiles.forEach(p => { if(p.name) m[p.name] = p.color; }); 
                 m[userName] = userColor; m["糖糖"] = "#ffbae9"; m["神雲"] = "#47daff"; m["雲雲"] = "#47daff"; 
                 return m; 
-            }, [userProfilesSignature, userName, userColor]);
-
+            }, [userProfiles, userName, userColor]);
             const unitSuggestions = useMemo(() => { 
                 const freq = {}; const baseUnits = ['集', '話', '章', '季', '卷', '冊', '分鐘']; baseUnits.forEach(u => freq[u] = 0);
                 games.forEach(g => { 
@@ -795,88 +702,65 @@
                 }); 
                 return Object.keys(freq).sort((a, b) => freq[b] - freq[a]); 
             }, [games]);
-            
             const sortedSourcesByRecent = useMemo(() => {
                 const lastUsed = {};
                 games.forEach(g => {
                     if (g.source && g.source !== "未知來源") {
                         const t = g.updatedAt?.seconds || g.timestamp?.seconds || g.createdAt?.seconds || 0;
-                        if (!lastUsed[g.source] || t > lastUsed[g.source]) {
-                            lastUsed[g.source] = t;
-                        }
+                        if (!lastUsed[g.source] || t > lastUsed[g.source]) { lastUsed[g.source] = t; }
                     }
                 });
-                return customSources
-                    .filter(s => s.name !== "未知來源")
-                    .sort((a, b) => (lastUsed[b.name] || 0) - (lastUsed[a.name] || 0));
+                return customSources.filter(s => s.name !== "未知來源").sort((a, b) => (lastUsed[b.name] || 0) - (lastUsed[a.name] || 0));
             }, [games, customSources]);
-            
             const isNameDuplicate = useMemo(() => { const currentName = formData.name.trim(); if (!currentName) return false; return games.some(g => g.name.trim() === currentName && g.id !== editingId); }, [formData.name, games, editingId]);
-
             const recentStatuses = useMemo(() => {
-                const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
+                const seen = new Set(), result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
                 return result.length > 0 ? result : ["已完結", "連載中", "待播出"]; 
             }, [games]);
             const recentCategories = useMemo(() => {
-                const seen = new Set(); const result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+                const seen = new Set(), result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
                 for(const g of sorted) { if(g.category && g.category !== "未分類" && !seen.has(g.category)) { seen.add(g.category); result.push(g.category); } if(result.length >= 3) break; }
                 return result;
             }, [games]);
-            
-            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) { console.error("Auth init failed:", e); } }; init(); return onAuthStateChanged(auth, setUser); }, []);
-            
+            useEffect(() => { const init = async () => { try { await signInAnonymously(auth); } catch (e) { console.error("Auth failed:", e); } }; init(); return onAuthStateChanged(auth, setUser); }, []);
             const sortedMemberships = useMemo(() => {
                 return customMemberships.map((m, index) => ({ ...m, _originalIndex: index })).sort((a, b) => {
-                    const dA = a.expiryDate ? calculateDaysLeft(a.expiryDate) : null;
-                    const dB = b.expiryDate ? calculateDaysLeft(b.expiryDate) : null;
-                    const valA = dA === null ? 99999 : dA;
-                    const valB = dB === null ? 99999 : dB;
+                    const dA = a.expiryDate ? calculateDaysLeft(a.expiryDate) : null, dB = b.expiryDate ? calculateDaysLeft(b.expiryDate) : null;
+                    const valA = dA === null ? 99999 : dA, valB = dB === null ? 99999 : dB;
                     return valA - valB;
                 });
             }, [customMemberships, calculateDaysLeft]);
-
-            const logActivity = useCallback(async (action, gameName, gameOrder) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName: userNameRef.current, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) { console.error("Logging failed:", e); } }, [user]);
-
+            const logActivity = useCallback(async (action, gameName, gameOrder) => { if(!user) return; try { await addDoc(getPublicCol('activity_logs'), { userName: userNameRef.current, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); } catch(e) {} }, [user]);
             useEffect(() => {
                 if (!user) return;
-                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); }, (e) => console.error("Games sync error:", e));
+                const ug = onSnapshot(getPublicCol('games'), (s) => { setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); setIsLoadingGames(false); });
                 const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); 
-                    setActivityLogs(logs.slice(0, 50)); 
-                    setIsLoadingLogs(false); 
-                }, (e) => console.error("Logs sync error:", e));
+                    setActivityLogs(logs.slice(0, 50)); setIsLoadingLogs(false); 
+                });
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { 
                         const data = d.data();
                         setCustomCategories(Array.from(new Set(data.categories || ["最新入庫", "編號排序"]))); 
                         setCustomSources(data.sources || []); 
                         setCustomMemberships(data.memberships || []);
-                        const dbVersion = data.appVersion || 0;
-                        if (CURRENT_APP_VERSION > dbVersion) {
-                            setDoc(doc(getPublicCol('settings'), 'config'), { appVersion: CURRENT_APP_VERSION }, { merge: true }).catch(e => console.error(e));
-                            logActivity("系統", "已自動偵測到新版本代碼，並推播給所有成員", "");
-                        }
                     } 
-                }, (e) => console.error("Config sync error:", e));
-                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); }, (e) => console.error("Profiles sync error:", e));
+                });
+                const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { setUserProfiles(s.docs.map(d => d.data())); });
                 return () => { ug(); ul(); us(); upro(); };
-            }, [user, logActivity]);
+            }, [user]);
 
             useEffect(() => {
-                const handleClickOutsideTools = (e) => {
-                    if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target)) setShowToolsDropdown(false);
-                };
-                document.addEventListener("mousedown", handleClickOutsideTools);
-                return () => document.removeEventListener("mousedown", handleClickOutsideTools);
+                const handleClickOutsideTools = (e) => { if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target)) setShowToolsDropdown(false); };
+                document.addEventListener("mousedown", handleClickOutsideTools); return () => document.removeEventListener("mousedown", handleClickOutsideTools);
             }, []);
 
             useEffect(() => {
                 const handlePaste = async (e) => {
                     const activeElement = document.activeElement;
                     const isInputActive = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
-
                     if (isEditingMemberships) {
                         if (activeElement && activeElement.tagName === 'INPUT' && activeElement.dataset.membershipIndex !== undefined) {
                             const idx = activeElement.dataset.membershipIndex;
@@ -893,16 +777,13 @@
                             const textData = e.clipboardData.getData('text/plain');
                             if (textData) {
                                 const trimmed = textData.trim();
-                                const isImageUrl = trimmed.startsWith('data:image') || /^https?:\/\/.+/i.test(trimmed) && /\.(jpg|jpeg|png|webp|gif|bmp|svg|avif|heic)([\?#].*)?$/i.test(trimmed);
-                                if (isImageUrl) {
-                                    setTempMembershipIcons(prev => ({...prev, [idx]: trimmed})); showNotify("圖標連結已更新");
-                                    e.preventDefault();
+                                if (trimmed.startsWith('data:image') || /^https?:\/\/.+/i.test(trimmed)) {
+                                    setTempMembershipIcons(prev => ({...prev, [idx]: trimmed})); showNotify("圖標連結已更新"); e.preventDefault();
                                 }
                             }
                             return;
                         }
                     }
-
                     if (showAddMembershipModal) {
                         const items = e.clipboardData?.items;
                         if (items) {
@@ -917,20 +798,13 @@
                         const textData = e.clipboardData.getData('text/plain');
                         if (textData) {
                             const trimmed = textData.trim();
-                            const isImageUrlStrict = trimmed.startsWith('data:image') || /^https?:\/\/.+/i.test(trimmed) && /\.(jpg|jpeg|png|webp|gif|bmp|svg|avif|heic)([\?#].*)?$/i.test(trimmed);
-                            if (isImageUrlStrict && isInputActive) {
-                                setNewMembershipIcon(trimmed); showNotify("圖標連結已貼上");
-                                e.preventDefault();
-                            } else if (!isInputActive && /^https?:\/\/.+/i.test(trimmed)) {
-                                setNewMembershipIcon(trimmed); showNotify("圖標連結已貼上");
-                                e.preventDefault();
+                            if (trimmed.startsWith('data:image') || /^https?:\/\/.+/i.test(trimmed)) {
+                                setNewMembershipIcon(trimmed); showNotify("圖標連結已貼上"); e.preventDefault();
                             }
                         }
                         return;
                     }
-
                     if (!isModalOpen) return;
-                    
                     const items = e.clipboardData?.items;
                     if (items) {
                         for (const item of items) {
@@ -941,29 +815,17 @@
                                     if(isCover) { setFormData(prev => ({ ...prev, cover: compressed })); setRawImageData(compressed); } else { setFormData(prev => ({ ...prev, sourceIcon: compressed })); }
                                     showNotify(isCover ? "封面已貼上" : "來源圖標已貼上");
                                 };
-                                reader.readAsDataURL(file);
-                                if (isInputActive) e.preventDefault();
-                                return;
+                                reader.readAsDataURL(file); if (isInputActive) e.preventDefault(); return;
                             }
                         }
                     }
-                    
                     const textData = e.clipboardData.getData('text/plain');
-                    if (textData) {
+                    if (textData && !isInputActive) {
                         const trimmed = textData.trim();
-                        const hasImageExt = /\.(jpg|jpeg|png|webp|gif|bmp|svg|avif|heic|jpe)([\?#].*)?$/i.test(trimmed);
-                        const isBase64 = trimmed.startsWith('data:image');
-                        const isHttpUrl = /^https?:\/\/.+/i.test(trimmed);
-
-                        if (isInputActive) return; 
-
-                        const isImageUrl = isBase64 || hasImageExt || isHttpUrl; 
-
-                        if (isImageUrl) {
+                        if (trimmed.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)/i.test(trimmed) || /^https?:\/\/.+/i.test(trimmed)) {
                             const isCover = lastSelectedImgZone === 'cover';
                             if(isCover) { setFormData(prev => ({ ...prev, cover: trimmed })); setRawImageData(trimmed); } else { setFormData(prev => ({ ...prev, sourceIcon: trimmed })); }
-                            showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上");
-                            e.preventDefault();
+                            showNotify(isCover ? "圖片連結已貼上" : "圖標連結已貼上"); e.preventDefault();
                         }
                     }
                 };
@@ -975,21 +837,16 @@
                 setFormData({ name: '', notes: '', addedBy: userNameRef.current, year: '', order: (gamesRef.current.length + 1).toString(), url: '', cover: null, totalEpisodes: { ...emptyProgress }, watchedProgress: {}, updatedEpisodes: { ...emptyProgress }, paidProgress: { ...emptyProgress, u2: '章' }, airingStatus: '已完結', source: '', category: '', sourceIcon: '', manualUpdatedAt: '', watchingBy: [], updateDay: [], updateTime: '' }); 
                 setShowTimeSettings(false); setShowManualUpdateInput(false); setIsModalOpen(true); 
             }, []);
-
             const handleOpenEdit = useCallback((item) => {
                 setEditingId(item.id); setRawImageData(item.cover); 
                 const watchers = Array.isArray(item.watchingBy) ? item.watchingBy : (item.watchingBy ? [item.watchingBy] : []);
-                let wp = item.watchedProgress || {}; let normalizedWp = {};
+                let wp = item.watchedProgress || {}, normalizedWp = {};
                 if (wp.v1 !== undefined) { normalizedWp = { [watchers[0] || 'Unknown']: ensureP(wp) }; } else { Object.keys(wp).forEach(name => { normalizedWp[name] = ensureP(wp[name]); }); }
                 const globalSource = customSourcesRef.current.find(s => s.name === item.source); const initialSourceIcon = globalSource?.icon || item.sourceIcon || '';
                 const currentUpdateDay = item.updateDay ? (Array.isArray(item.updateDay) ? item.updateDay : [item.updateDay]) : [];
                 setFormData({ ...item, sourceIcon: initialSourceIcon, totalEpisodes: ensureP(item.totalEpisodes), watchedProgress: normalizedWp, updatedEpisodes: ensureP(item.updatedEpisodes), paidProgress: ensureP(item.paidProgress), notes: item.notes || '', manualUpdatedAt: item.manualUpdatedAt || '', watchingBy: watchers, updateDay: currentUpdateDay }); 
                 setShowTimeSettings(!!(currentUpdateDay.length > 0 || item.updateTime)); setShowManualUpdateInput(!!item.manualUpdatedAt); setIsModalOpen(true); 
             }, []);
-
-            const handleTotalEpChange = useCallback(v => setFormData(p => ({...p, totalEpisodes: v})), []);
-            const handleUpdatedEpChange = useCallback(v => setFormData(p => ({...p, updatedEpisodes: v})), []);
-            const handlePaidProgChange = useCallback(v => setFormData(p => ({...p, paidProgress: v})), []);
 
             const proceedSave = async () => {
                 setShowDuplicateConfirm(false); setIsSaving(true);
@@ -1015,14 +872,12 @@
                     const finalData = sanitizePayload(rawPayload);
                     if(editingId) { await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); logActivity("修改", finalData.name, to); } else { await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); logActivity("錄入", finalData.name, to); }
                     showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
-                } catch(e) { showNotify(`操作失敗：${e.message}`); console.error("Save error:", e); } finally { setIsSaving(false); }
+                } catch(e) { showNotify(`操作失敗：${e.message}`); } finally { setIsSaving(false); }
             };
 
-            const handleUpdateWatchOrder = async (id, val) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); } catch(e) { showNotify("更新順序失敗"); } };
+            const handleUpdateWatchOrder = async (id, val) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); } catch(e) {} };
             const watchListGames = useMemo(() => { return [...games].filter(g => g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "").sort((a, b) => parseFloat(a.watchOrder) - parseFloat(b.watchOrder)); }, [games]);
-            
             const deferredWatchOrderSearchQuery = useDeferredValue(watchOrderSearchQuery);
-
             const watchOrderSuggestions = useMemo(() => {
                 if (!deferredWatchOrderSearchQuery.trim()) return [];
                 const qNorm = toSimplified(deferredWatchOrderSearchQuery).toLowerCase();
@@ -1043,12 +898,11 @@
                     if (!isNaN(targetNum) && String(targetNum) === query) { targetGame = games.find(g => extractFirstNumber(g.order) === targetNum && (!g.watchOrder)); }
                     if (!targetGame && watchOrderSuggestions.length > 0) { targetGame = watchOrderSuggestions[0]; }
                 }
-                if (!targetGame) { showNotify("找不到符合的影片，或已在列表中"); return; }
+                if (!targetGame) { showNotify("找不到符合的影片"); return; }
                 const nextOrder = watchListGames.length > 0 ? Math.max(...watchListGames.map(g => parseFloat(g.watchOrder))) + 1 : 1;
-                try { await setDoc(doc(getPublicCol('games'), targetGame.id), { watchOrder: nextOrder }, { merge: true }); setWatchOrderSearchQuery(""); setIsWatchOrderSearchFocused(false); showNotify("已加入"); } catch(e) { showNotify("加入失敗"); }
+                try { await setDoc(doc(getPublicCol('games'), targetGame.id), { watchOrder: nextOrder }, { merge: true }); setWatchOrderSearchQuery(""); setIsWatchOrderSearchFocused(false); showNotify("已加入"); } catch(e) {}
             };
-
-            const handleRemoveWatchOrder = async (id) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: "" }, { merge: true }); } catch(e) { showNotify("移除失敗"); } };
+            const handleRemoveWatchOrder = async (id) => { if(!user) return; try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: "" }, { merge: true }); } catch(e) {} };
             const handleSortDrop = async () => {
                 if (dragItem.current === null || dragOverItem.current === null || !user) return;
                 const _watchList = [...watchListGames]; const draggedItemContent = _watchList.splice(dragItem.current, 1)[0]; _watchList.splice(dragOverItem.current, 0, draggedItemContent);
@@ -1056,68 +910,46 @@
                 try {
                     const updates = _watchList.map((g, idx) => { if (parseFloat(g.watchOrder) !== idx + 1) { return setDoc(doc(getPublicCol('games'), g.id), { watchOrder: idx + 1 }, { merge: true }); } return null; }).filter(p => p !== null);
                     if (updates.length > 0) await Promise.all(updates);
-                } catch (e) { showNotify("排序失敗"); }
+                } catch (e) {}
             };
             const handleAddCategory = async () => {
                 if(!newCategoryName.trim() || !user) return; if(customCategories.includes(newCategoryName.trim())) { showNotify("已存在"); return; }
                 const nextCats = [...customCategories, newCategoryName.trim()]; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
                 showNotify("已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
             };
-
             const handleRenameCategory = async () => {
                 if(!renameCategoryTarget || !renameCategoryNewValue.trim() || !user) return;
-                const oldName = renameCategoryTarget;
-                const newName = renameCategoryNewValue.trim();
-                
+                const oldName = renameCategoryTarget, newName = renameCategoryNewValue.trim();
                 if (oldName === newName) { setRenameCategoryTarget(null); setRenameCategoryNewValue(""); return; }
-                if (customCategories.includes(newName)) { showNotify("分類名稱已存在"); return; }
-
-                showNotify("正在更新分類與關聯影片...");
+                if (customCategories.includes(newName)) { showNotify("名稱已存在"); return; }
+                showNotify("正在同步更新...");
                 try {
                     const nextCats = customCategories.map(c => c === oldName ? newName : c); 
                     await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                    
                     const gamesToUpdate = games.filter(g => g.category === oldName);
-                    if (gamesToUpdate.length > 0) {
-                        await Promise.all(gamesToUpdate.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName })));
-                    }
-                    
-                    logActivity("修改分類", `[${oldName}] 變更為 [${newName}]`, "");
-                    showNotify("分類與關聯卡片已全面更新！");
-                } catch(e) {
-                    showNotify("修改失敗");
-                    console.error("Rename cat error:", e);
-                } finally {
-                    setRenameCategoryTarget(null); setRenameCategoryNewValue("");
-                }
+                    if (gamesToUpdate.length > 0) { await Promise.all(gamesToUpdate.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName }))); }
+                    showNotify("分類更新完成");
+                } catch(e) {} finally { setRenameCategoryTarget(null); setRenameCategoryNewValue(""); }
             };
-
             const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
-            
-            // 已更新：允許新增「同名稱但不同標籤」的時限追蹤
             const handleAddMembership = async () => {
                 const name = newMembershipName.trim(); if(!name || !user) return; 
-                if(customMemberships.some(m => m.name === name && (m.tag || '') === newMembershipTag.trim())) { showNotify("此平台與標籤組合已在追蹤中"); return; }
+                if(customMemberships.some(m => m.name === name && (m.tag || '') === newMembershipTag.trim())) { showNotify("此標籤已存在"); return; }
                 const nextMemberships = [...customMemberships, { name, expiryDate: '', icon: newMembershipIcon || '', tag: newMembershipTag.trim() }];
                 await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                showNotify("已新增時限追蹤"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon(""); setNewMembershipTag("");
+                showNotify("已新增"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon(""); setNewMembershipTag("");
             };
-
             const handleDeleteMembership = async (index) => {
                 if(index === undefined || index === null || !user) return;
                 const nextMemberships = customMemberships.filter((_, i) => i !== index);
                 await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                
-                if (isEditingMemberships) {
-                    setIsEditingMemberships(false);
-                }
-                
-                setDeleteMembershipTarget(null); showNotify("已移除追蹤");
+                if (isEditingMemberships) { setIsEditingMemberships(false); }
+                setDeleteMembershipTarget(null); showNotify("已移除");
             };
-
+            
+            // 已修正：確保「儲存修改」鍵即使在資料異步時也能正確對應資料
             const handleSaveMemberships = async () => {
                 if(!user) return;
-
                 const nextMemberships = customMemberships.map((m, i) => {
                     let updated = { ...m };
                     if (tempMembershipIcons[i] !== undefined) updated.icon = tempMembershipIcons[i];
@@ -1129,117 +961,67 @@
                     if (tempMembershipDates[i] !== undefined) {
                         const val = tempMembershipDates[i] || '';
                         const parts = val.split('-');
-                        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-                            updated.expiryDate = `${parts[0].padStart(4, '20')}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                        } else {
-                            updated.expiryDate = '';
-                        }
+                        updated.expiryDate = (parts.length === 3 && parts[0] && parts[1] && parts[2]) 
+                            ? `${parts[0].padStart(4, '20')}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}` 
+                            : updated.expiryDate;
                     }
                     return updated;
                 });
-
                 try {
                     await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                    showNotify("時限平台資料已更新");
-                } catch(e) {
-                    showNotify("儲存失敗");
-                    console.error("Save memberships error:", e);
-                } finally {
-                    setIsEditingMemberships(false);
-                    setTempMembershipNames({});
-                    setTempMembershipIcons({});
-                    setTempMembershipTags({});
-                    setTempMembershipDates({});
+                    showNotify("儲存完成");
+                } catch(e) { showNotify("儲存失敗"); } finally {
+                    setIsEditingMemberships(false); setTempMembershipNames({}); setTempMembershipIcons({}); setTempMembershipTags({}); setTempMembershipDates({});
                 }
             };
 
             const handleClearAllMemberships = async () => {
                 if(!user) return; setShowClearMembershipsConfirm(false);
-                try {
-                    await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: [] }, { merge: true });
-                    logActivity("清空", "所有時限追蹤", ""); showNotify("已清空時限面板");
-                } catch(e) { showNotify("操作失敗"); }
+                try { await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: [] }, { merge: true }); showNotify("已清空"); } catch(e) {}
             };
-
             const handleRepairData = useCallback(async () => {
-                if(!user) return; showNotify("啟動修復與資料遷移中...");
+                if(!user) return; showNotify("資料遷移中...");
                 try {
-                    const snapshot = await getDocs(getPublicCol('games')); let count = 0; let mergedSources = [...customSourcesRef.current];
+                    const snapshot = await getDocs(getPublicCol('games')); let mergedSources = [...customSourcesRef.current];
                     for(const d of snapshot.docs) { 
                         const data = d.data(); 
                         const updateObj = sanitizePayload({ 
                             totalEpisodes: ensureP(data.totalEpisodes), updatedEpisodes: ensureP(data.updatedEpisodes), paidProgress: ensureP(data.paidProgress),
                             name_simp: toSimplified(data.name || ""), name_trad: toTraditional(data.name || ""), searchName: toSimplified(data.name || "").toLowerCase()
                         }); 
-                        await updateDoc(d.ref, updateObj); count++; 
+                        await updateDoc(d.ref, updateObj);
                         if (data.source && data.source !== "未知來源") {
                             const exist = mergedSources.find(s => s.name === data.source);
                             if (!exist) { mergedSources.push({ name: data.source, icon: data.sourceIcon || '' }); } else if (!exist.icon && data.sourceIcon) { exist.icon = data.sourceIcon; }
                         }
                     }
-
-                    let nextMemberships = [...customMembershipsRef.current];
-                    let mChanged = false;
-                    nextMemberships = nextMemberships.map(m => {
-                        if (!m.icon) {
-                            const fallback = mergedSources.find(s => s.name === m.name);
-                            if (fallback && fallback.icon) {
-                                mChanged = true;
-                                return { ...m, icon: fallback.icon };
-                            }
-                        }
-                        return m;
-                    });
-
-                    if (mergedSources.length > customSourcesRef.current.length || mChanged) { 
-                        await setDoc(doc(getPublicCol('settings'), 'config'), { 
-                            sources: mergedSources, 
-                            memberships: nextMemberships 
-                        }, { merge: true }); 
-                    }
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { sources: mergedSources }, { merge: true }); 
                     showNotify(`修復完成`);
-                } catch(e) { showNotify("失敗"); console.error("Repair error:", e); }
-            }, [user, showNotify]);
-
+                } catch(e) {}
+            }, [user]);
             const handleReorderIndices = useCallback(async () => {
                 if (!user) return; showNotify("排列中...");
                 try {
                     const sorted = [...gamesRef.current].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
                     const updates = sorted.map((g, index) => { const newOrder = index + 1; if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }); return null; }).filter(p => p !== null);
-                    if (updates.length > 0) { await Promise.all(updates); showNotify(`完成！`); } else { showNotify("編號已整齊"); }
-                } catch (e) { showNotify("失敗"); }
-            }, [user, showNotify]);
-
-            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { const g = games.find(x => x.id === id); await deleteDoc(doc(getPublicCol('games'), id)); logActivity("刪除", g?.name || "未知", g?.order); showNotify("已刪除"); } catch (e) { showNotify("失敗"); } };
+                    if (updates.length > 0) { await Promise.all(updates); showNotify(`完成！`); }
+                } catch (e) {}
+            }, [user]);
+            const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { await deleteDoc(doc(getPublicCol('games'), id)); showNotify("已刪除"); } catch (e) {} };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
-            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); logActivity("清空", "全部影片資料", "-"); showNotify("已清空"); } catch(e) { showNotify("失敗"); } };
-            
+            const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("已清空"); } catch(e) {} };
             const loadMoreSentinelRef = useRef(null);
             useEffect(() => {
                 if (!loadMoreSentinelRef.current) return;
                 const observer = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting) {
-                        setDisplayLimit(prev => {
-                            if (prev > filteredGamesLengthRef.current) return prev;
-                            return prev + CHUNK_SIZE;
-                        });
-                    }
+                    if (entries[0].isIntersecting) { setDisplayLimit(prev => (prev > filteredGamesLengthRef.current) ? prev : prev + CHUNK_SIZE); }
                 }, { rootMargin: '400px' });
-                
-                observer.observe(loadMoreSentinelRef.current);
-                return () => observer.disconnect();
+                observer.observe(loadMoreSentinelRef.current); return () => observer.disconnect();
             }, []);
-
             const handleScrollToBottom = useCallback(() => {
                 setDisplayLimit(filteredGamesLengthRef.current);
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: document.documentElement.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }, 100);
+                setTimeout(() => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); }, 100);
             }, []);
-
             const memberStats = useMemo(() => {
                 const sm = {}; games.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
@@ -1251,24 +1033,18 @@
                     }); 
                 }); return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
             }, [games, nameColorMap]);
-
             const activeCategoriesInUse = useMemo(() => { const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.cats).forEach(([cat, count]) => { sums[cat] = (sums[cat] || 0) + count; }); }); return Object.keys(sums).sort((a, b) => sums[b] - sums[a]); }, [memberStats]);
             const activeSourcesInUse = useMemo(() => { const sums = {}; memberStats.forEach(m => { Object.entries(m.stats.sources).forEach(([src, count]) => { sums[src] = (sums[src] || 0) + count; }); }); return Object.keys(sums).sort((a, b) => sums[b] - sums[a]); }, [memberStats]);
             const toggleMemberFilter = useCallback((name, type, value) => { setMemberFilter(prev => (prev?.name === name && prev?.type === type && prev?.value === value) ? null : { name, type, value }); }, []);
             const toggleGlobalFilter = useCallback((type, value) => { setMemberFilter(prev => (prev?.name === null && prev?.type === type && prev?.value === value) ? null : { name: null, type, value }); }, []);
-            
             const deferredSearchQuery = useDeferredValue(searchQuery);
-            
             const filteredGames = useMemo(() => {
                 let l = [...games]; const q = deferredSearchQuery.toLowerCase().trim(); 
                 if(q) {
                     const qNorm = toSimplified(q); const isNumSearch = /^\d+$/.test(q); const numToSearch = isNumSearch ? parseInt(q) : null;
                     l = l.filter(g => {
                         if (numToSearch !== null && extractFirstNumber(g.order) === numToSearch) return true;
-                        const gSearch = g.searchName || toSimplified(g.name || "").toLowerCase();
-                        const catSearch = toSimplified(g.category || "").toLowerCase();
-                        const notesSearch = toSimplified(g.notes || "").toLowerCase();
-                        return gSearch.includes(qNorm) || catSearch.includes(qNorm) || notesSearch.includes(qNorm);
+                        return (g.searchName || toSimplified(g.name || "").toLowerCase()).includes(qNorm) || toSimplified(g.category || "").toLowerCase().includes(qNorm) || toSimplified(g.notes || "").toLowerCase().includes(qNorm);
                     });
                 }
                 if (memberFilter) {
@@ -1283,21 +1059,8 @@
                 if (activeTab === "最新入庫") { l.sort((a,b) => (b.createdAt?.seconds || 0) - (a.timestamp?.seconds || 0)); } else { if (activeTab && activeTab !== "編號排序") l = l.filter(g => g.category === activeTab); l.sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); }
                 return l;
             }, [games, deferredSearchQuery, activeTab, memberFilter]);
-            
-            useEffect(() => {
-                setDisplayLimit(prev => {
-                    if (filteredGames.length > filteredGamesLengthRef.current && prev <= filteredGamesLengthRef.current) {
-                        return prev + CHUNK_SIZE;
-                    }
-                    return prev;
-                });
-                filteredGamesLengthRef.current = filteredGames.length;
-            }, [filteredGames.length]);
-
-            useEffect(() => {
-                setDisplayLimit(CHUNK_SIZE);
-            }, [deferredSearchQuery, activeTab, memberFilter]);
-
+            useEffect(() => { setDisplayLimit(prev => (filteredGames.length > filteredGamesLengthRef.current && prev <= filteredGamesLengthRef.current) ? prev + CHUNK_SIZE : prev); filteredGamesLengthRef.current = filteredGames.length; }, [filteredGames.length]);
+            useEffect(() => { setDisplayLimit(CHUNK_SIZE); }, [deferredSearchQuery, activeTab, memberFilter]);
             const gameListUI = useMemo(() => {
                 if (isLoadingGames) return <div className="col-span-full py-20 text-center animate-pulse text-white/20 font-black">SYNCHRONIZING...</div>;
                 return filteredGames.slice(0, displayLimit).map(g => (
@@ -1306,56 +1069,46 @@
             }, [isLoadingGames, filteredGames, nameColorMap, customSources, isEditLocked, handleOpenEdit, displayLimit]);
 
             const handleExportData = useCallback(async () => {
-                if (!user) return;
-                showNotify("準備導出資料...");
+                if (!user) return; showNotify("準備導出...");
                 try {
                     const configSnap = await getDoc(doc(getPublicCol('settings'), 'config'));
                     const fullConfig = configSnap.exists() ? configSnap.data() : { categories: customCategoriesRef.current, sources: customSourcesRef.current, memberships: customMembershipsRef.current };
-                    const sorted = [...gamesRef.current].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                    const exportPayload = { _meta: { version: "3.1", exportDate: new Date().toISOString() }, config: fullConfig, games: sorted };
+                    const exportPayload = { _meta: { version: "3.2", exportDate: new Date().toISOString() }, config: fullConfig, games: [...gamesRef.current].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)) };
                     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `AnimeMatrix_Backup_${Date.now()}.json`; a.click();
-                    logActivity("導出", "系統備份資料", "");
-                } catch (e) { showNotify("導出失敗"); console.error("Export error:", e); }
-            }, [user, logActivity, showNotify]);
+                } catch (e) {}
+            }, [user]);
             
+            // 已升級：導入邏輯現在支持「名稱 + 標籤」作為唯一識別，支持舊備份還原多個同名平台
             const handleImportData = useCallback(async (e) => {
                 const f = e.target.files[0]; e.target.value = ""; if(!f || !user) return; 
                 const r = new FileReader(); r.readAsText(f);
                 r.onload = async (ev) => { 
                     try { 
-                        showNotify("導入與精準還原資料中...");
+                        showNotify("資料精準還原中...");
                         const d = JSON.parse(ev.target.result); 
-                        let gamesToImport = Array.isArray(d) ? d : (d.games || []);
-                        let importedConfig = d.config || (Array.isArray(d) ? {} : { categories: d.categories || [], sources: d.sources || [], memberships: d.memberships || [] });
+                        let gamesToImport = d.games || [], importedConfig = d.config || {};
                         const currentConfigSnap = await getDoc(doc(getPublicCol('settings'), 'config'));
                         let nextConfig = currentConfigSnap.exists() ? currentConfigSnap.data() : { categories: [...customCategoriesRef.current], sources: [...customSourcesRef.current], memberships: [...customMembershipsRef.current] };
                         Object.keys(importedConfig).forEach(key => {
                             if (Array.isArray(importedConfig[key])) {
                                 if (!nextConfig[key]) nextConfig[key] = [];
                                 importedConfig[key].forEach(importedItem => {
-                                    if (typeof importedItem === 'string') {
-                                        if (!nextConfig[key].includes(importedItem)) nextConfig[key].push(importedItem);
-                                    } else if (typeof importedItem === 'object' && importedItem.name) {
-                                        // 已修復：比對 memberships 時，同時比對「名稱」與「標籤」
+                                    if (typeof importedItem === 'string' && !nextConfig[key].includes(importedItem)) { nextConfig[key].push(importedItem); } 
+                                    else if (typeof importedItem === 'object' && importedItem.name) {
+                                        // 核心修正：針對 memberships 使用「名稱+標籤」做唯一判斷
                                         const existingIdx = nextConfig[key].findIndex(ex => key === 'memberships' ? (ex.name === importedItem.name && (ex.tag || '') === (importedItem.tag || '')) : ex.name === importedItem.name);
                                         if (existingIdx !== -1) { nextConfig[key][existingIdx] = { ...nextConfig[key][existingIdx], ...importedItem }; } else { nextConfig[key].push(importedItem); }
                                     }
                                 });
-                            } else { nextConfig[key] = importedConfig[key]; }
+                            }
                         });
                         await setDoc(doc(getPublicCol('settings'), 'config'), nextConfig, { merge: true });
-                        if(gamesToImport.length > 0) {
-                            await Promise.all(gamesToImport.map(g => {
-                                const {id, ...rest} = g; const cleanRest = sanitizePayload(rest);
-                                const payload = { ...cleanRest, createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp() };
-                                if (id) { return setDoc(doc(getPublicCol('games'), id), payload); } else { return addDoc(getPublicCol('games'), payload); }
-                            })); 
-                        }
-                        logActivity("匯入", "系統備份資料", ""); showNotify("導入並精準還原成功！"); 
-                    } catch(error) { showNotify("導入失敗，請確認資料庫權限或檔案格式"); console.error("Import error:", error); } 
+                        if(gamesToImport.length > 0) { await Promise.all(gamesToImport.map(g => { const {id, ...rest} = g; return setDoc(doc(getPublicCol('games'), id || Math.random().toString(36).substr(2, 9)), { ...sanitizePayload(rest), createdAt: rest.createdAt || serverTimestamp(), updatedAt: serverTimestamp() }); })); }
+                        showNotify("還原成功！"); 
+                    } catch(error) { showNotify("導入失敗"); } 
                 }; 
-            }, [user, logActivity, showNotify]);
+            }, [user]);
 
             const headerUI = useMemo(() => (
                 <header className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
@@ -1368,30 +1121,30 @@
                                     <div className="p-3 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#ffbae9]/15 to-transparent gap-2">
                                         <h2 className="text-[14px] font-black text-[#ffbae9] uppercase tracking-widest flex items-center gap-2 flex-shrink-0"><Icon name="list-ordered" className="w-5 h-5" /> 觀看順序</h2>
                                         <div className="flex-1 relative flex items-center gap-2">
-                                            <input type="text" placeholder="輸入編號或名稱搜尋..." className="modal-input-base flex-1 !min-h-[30px] text-[12px] font-black px-2 !py-1" value={watchOrderSearchQuery} onChange={(e) => setWatchOrderSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddWatchOrder()} onFocus={() => setIsWatchOrderSearchFocused(true)} onBlur={() => setTimeout(() => setIsWatchOrderSearchFocused(false), 200)} />
+                                            <input type="text" placeholder="搜尋..." className="modal-input-base flex-1 !min-h-[30px] text-[12px] font-black px-2 !py-1" value={watchOrderSearchQuery} onChange={(e) => setWatchOrderSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddWatchOrder()} onFocus={() => setIsWatchOrderSearchFocused(true)} onBlur={() => setTimeout(() => setIsWatchOrderSearchFocused(false), 200)} />
                                             {isWatchOrderSearchFocused && watchOrderSuggestions.length > 0 && (<div className="absolute top-full left-0 w-full mt-1 bg-[#1a2332] border border-[#ffbae9]/30 rounded shadow-2xl z-[700] max-h-[200px] overflow-y-auto custom-scrollbar">{watchOrderSuggestions.map(sg => (<div key={sg.id} onMouseDown={(e) => { e.preventDefault(); handleAddWatchOrder(sg); }} className="px-3 py-2 border-b border-white/5 hover:bg-[#ffbae9]/20 cursor-pointer flex justify-between items-center transition-colors"><span className="font-black text-[12px] truncate text-white">{sg.name}</span><span className="text-[10px] text-[#ffbae9] ml-2 flex-shrink-0">#{sg.order || 0}</span></div>))}</div>)}
-                                            <button onClick={() => handleAddWatchOrder()} className="bg-[#ffbae9] text-[#3f5968] px-4 py-1.5 rounded font-black text-[12px] transition-colors hover:bg-white shadow-lg flex-shrink-0">加入</button>
+                                            <button onClick={() => handleAddWatchOrder()} className="bg-[#ffbae9] text-[#3f5968] px-4 py-1.5 rounded font-black text-[12px] hover:bg-white shadow-lg flex-shrink-0">加入</button>
                                         </div>
-                                        <button onClick={() => setShowWatchOrderList(false)} className="text-white/50 hover:text-white transition-colors bg-black/40 p-1.5 rounded-full flex-shrink-0 ml-1"><Icon name="x" className="w-4 h-4" /></button>
+                                        <button onClick={() => setShowWatchOrderList(false)} className="text-white/50 hover:text-white bg-black/40 p-1.5 rounded-full flex-shrink-0 ml-1"><Icon name="x" className="w-4 h-4" /></button>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-black/30">
-                                        {watchListGames.length === 0 ? (<div className="text-center text-white/30 text-[12px] font-black py-10 leading-relaxed uppercase tracking-widest">目前列表為空<br/>請從上方輸入名稱或編號加入</div>) : (watchListGames.map((g, idx) => (
-                                                <div key={g.id} draggable={true} onDragStart={(e) => { dragItem.current = idx; }} onDragEnter={(e) => { dragOverItem.current = idx; }} onDragEnd={handleSortDrop} onDragOver={(e) => e.preventDefault()} className="group bg-[#2a3b4c]/80 border border-white/10 rounded-md p-2.5 flex gap-3 relative hover:border-[#ffbae9]/50 transition-colors cursor-grab active:cursor-grabbing shadow-sm">
-                                                    <div className="flex items-center text-white/30 flex-shrink-0 hover:text-[#ffbae9] transition-colors"><Icon name="grip-vertical" className="w-5 h-5" /></div>
-                                                    <div className="flex flex-col items-center justify-center w-[46px] flex-shrink-0"><label className="text-[9px] text-[#ffbae9]/80 font-black uppercase mb-1">排序</label><WatchOrderInput disabled={false} value={g.watchOrder} onChange={(val) => handleUpdateWatchOrder(g.id, val)} /></div>
+                                        {watchListGames.length === 0 ? (<div className="text-center text-white/30 text-[12px] font-black py-10 uppercase tracking-widest">目前列表為空</div>) : (watchListGames.map((g, idx) => (
+                                                <div key={g.id} draggable={true} onDragStart={(e) => { dragItem.current = idx; }} onDragEnter={(e) => { dragOverItem.current = idx; }} onDragEnd={handleSortDrop} onDragOver={(e) => e.preventDefault()} className="group bg-[#2a3b4c]/80 border border-white/10 rounded-md p-2.5 flex gap-3 relative hover:border-[#ffbae9]/50 transition-colors shadow-sm">
+                                                    <div className="flex items-center text-white/30 flex-shrink-0"><Icon name="grip-vertical" className="w-5 h-5" /></div>
+                                                    <div className="flex flex-col items-center justify-center w-[46px] flex-shrink-0"><label className="text-[9px] text-[#ffbae9]/80 font-black uppercase mb-1">排序</label><WatchOrderInput value={g.watchOrder} onChange={(val) => handleUpdateWatchOrder(g.id, val)} /></div>
                                                     <div className="w-[42px] h-[56px] flex-shrink-0 bg-black/40 rounded border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}>{g.cover ? <img src={g.cover} loading="lazy" decoding="async" className="w-full h-full object-cover" alt="cover" /> : <Icon name="image" className="w-4 h-4 text-white/20" />}</div>
-                                                    <div className="flex-1 flex flex-col justify-center min-w-0 cursor-pointer group/item py-1" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}><div className="font-black text-[14px] text-white leading-tight group-hover/item:text-[#ffbae9] truncate transition-colors">{g.name}</div><div className="text-[10px] text-white/80 font-bold bg-black/40 w-fit px-1.5 py-0.5 rounded border border-white/10 mt-1.5 -ml-1.5">集數: {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</div></div>
-                                                    <div className="flex flex-col gap-1.5 items-end justify-center flex-shrink-0 pr-7">{g.watchingBy && g.watchingBy.length > 0 ? g.watchingBy.map(w => { const prog = g.watchedProgress?.[w]; const c = nameColorMap[w] || '#ffffff'; return (<div key={w} className="text-[11px] font-black flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border shadow-sm" style={{ borderColor: c + '50' }}><span className="w-2 h-2 rounded-full" style={{ backgroundColor: c }}></span><span style={{color: c}}>{w}</span><span className="text-white/60 ml-1 text-[10px]">{formatProgressText(prog) || '未開始'}</span></div>) }) : (<span className="text-[11px] text-white/30 italic">無人觀看</span>)}</div>
-                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"><button onClick={(e) => { e.stopPropagation(); handleRemoveWatchOrder(g.id); }} className="text-red-400 hover:text-white transition-colors p-1 bg-black/50 rounded-full hover:bg-red-500 shadow-md"><Icon name="x" className="w-3 h-3" /></button></div>
+                                                    <div className="flex-1 min-w-0 cursor-pointer py-1" onClick={() => { setShowWatchOrderList(false); handleOpenEdit(g); }}><div className="font-black text-[14px] text-white leading-tight truncate">{g.name}</div><div className="text-[10px] text-white/80 font-bold bg-black/40 w-fit px-1.5 py-0.5 rounded border border-white/10 mt-1.5">集數: {formatProgressText(g.updatedEpisodes)} / {formatProgressText(g.totalEpisodes) || '?'}</div></div>
+                                                    <div className="flex flex-col gap-1.5 items-end justify-center pr-7">{g.watchingBy && g.watchingBy.length > 0 ? g.watchingBy.map(w => (<div key={w} className="text-[11px] font-black flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border shadow-sm" style={{ borderColor: (nameColorMap[w] || '#fff') + '50' }}><span className="w-2 h-2 rounded-full" style={{ backgroundColor: nameColorMap[w] || '#fff' }}></span><span style={{color: nameColorMap[w] || '#fff'}}>{w}</span></div>)) : (<span className="text-[11px] text-white/30">無人</span>)}</div>
+                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => { e.stopPropagation(); handleRemoveWatchOrder(g.id); }} className="text-red-400 hover:text-white p-1 bg-black/50 rounded-full hover:bg-red-500 shadow-md"><Icon name="x" className="w-3 h-3" /></button></div>
                                                 </div>
                                             )))}
                                     </div>
                                 </div>)}
                         </div>
-                        {!isEditLocked && (<div className="relative" ref={toolsDropdownRef}><button onClick={() => setShowToolsDropdown(!showToolsDropdown)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 border border-slate-500/30 text-slate-200 text-xs font-black rounded hover:bg-slate-700 uppercase transition-all shadow-lg"><Icon name="settings" className="w-4 h-4" /> 系統維護</button>{showToolsDropdown && (<div className="absolute right-0 top-full mt-2 w-36 bg-[#1c2533] border border-white/20 rounded-md shadow-2xl z-[700] flex flex-col py-1 overflow-hidden animate-slide-down-fade"><button onClick={() => { handleRepairData(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-blue-600/20 text-blue-300 transition-colors w-full text-left"><Icon name="wrench" className="w-4 h-4 flex-shrink-0" /> 數據修復</button><button onClick={() => { handleReorderIndices(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-amber-600/20 text-amber-300 transition-colors w-full text-left"><Icon name="list-ordered" className="w-4 h-4 flex-shrink-0" /> 編號重排</button><div className="h-px bg-white/10 my-1"></div><button onClick={() => { setShowClearConfirm(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-red-600/20 text-red-400 transition-colors w-full text-left"><Icon name="trash-2" className="w-4 h-4 flex-shrink-0" /> 清除全部</button></div>)}</div>)}
+                        {!isEditLocked && (<div className="relative" ref={toolsDropdownRef}><button onClick={() => setShowToolsDropdown(!showToolsDropdown)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 border border-slate-500/30 text-slate-200 text-xs font-black rounded hover:bg-slate-700 uppercase transition-all shadow-lg"><Icon name="settings" className="w-4 h-4" /> 系統維護</button>{showToolsDropdown && (<div className="absolute right-0 top-full mt-2 w-36 bg-[#1c2533] border border-white/20 rounded-md shadow-2xl z-[700] flex flex-col py-1 animate-slide-down-fade"><button onClick={() => { handleRepairData(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-blue-600/20 text-blue-300 transition-colors w-full text-left"><Icon name="wrench" className="w-4 h-4 flex-shrink-0" /> 數據修復</button><button onClick={() => { handleReorderIndices(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-amber-600/20 text-amber-300 transition-colors w-full text-left"><Icon name="list-ordered" className="w-4 h-4 flex-shrink-0" /> 編號重排</button><div className="h-px bg-white/10 my-1"></div><button onClick={() => { setShowClearConfirm(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-red-600/20 text-red-400 transition-colors w-full text-left"><Icon name="trash-2" className="w-4 h-4 flex-shrink-0" /> 清除全部</button></div>)}</div>)}
                     </div>
                 </header>
-            ), [games.length, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, handleRepairData, handleReorderIndices]);
+            ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown]);
 
             const activityLogsUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
@@ -1404,105 +1157,63 @@
                 <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[270px]'}`}>
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
                     {isExpiryCollapsed ? (
-                        <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開會員時限"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /><span className="hidden lg:block text-[11px] font-black text-cyan-400/80 tracking-[0.2em] whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>會員時限</span><span className="block lg:hidden text-[11px] font-black text-cyan-400/80 tracking-widest whitespace-nowrap">會員時限 (點擊展開)</span></div>
+                        <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /></div>
                     ) : (
                         <>
                             <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase">
-                                <div className="flex items-center">
-                                    <Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限
-                                </div>
+                                <div className="flex items-center"><Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限</div>
                                 <div className="flex items-center gap-1">
                                     <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => {
-                                        if (isEditingMemberships) {
-                                            handleSaveMemberships();
-                                        } else {
+                                        if (isEditingMemberships) { handleSaveMemberships(); } else {
                                             const tempN = {}, tempI = {}, tempT = {}, tempD = {};
-                                            customMemberships.forEach((m, i) => {
-                                                tempN[i] = m.name;
-                                                tempI[i] = m.icon;
-                                                tempT[i] = m.tag || '';
-                                                tempD[i] = m.expiryDate || '';
-                                            });
-                                            setTempMembershipNames(tempN);
-                                            setTempMembershipIcons(tempI);
-                                            setTempMembershipTags(tempT);
-                                            setTempMembershipDates(tempD);
-                                            setIsEditingMemberships(true);
+                                            customMemberships.forEach((m, i) => { tempN[i] = m.name; tempI[i] = m.icon; tempT[i] = m.tag || ''; tempD[i] = m.expiryDate || ''; });
+                                            setTempMembershipNames(tempN); setTempMembershipIcons(tempI); setTempMembershipTags(tempT); setTempMembershipDates(tempD); setIsEditingMemberships(true);
                                         }
-                                    }} title={isEditingMemberships ? "儲存修改" : "進入管理與編輯模式"}>
-                                        <Icon name={isEditingMemberships ? "check" : "settings"} className={`w-4 h-4 transition-colors ${isEditingMemberships ? 'text-green-400' : 'text-white/30 group-hover:text-cyan-400'}`} />
+                                    }} title={isEditingMemberships ? "儲存修改" : "編輯"}>
+                                        <Icon name={isEditingMemberships ? "check" : "settings"} className={`w-4 h-4 transition-colors ${isEditingMemberships ? 'text-green-400 animate-pulse' : 'text-white/30 group-hover:text-cyan-400'}`} />
                                     </div>
-                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { setNewMembershipName(""); setNewMembershipIcon(""); setShowAddMembershipModal(true); }} title="新增追蹤平台">
-                                        <Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
-                                    </div>
-                                    <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起面板">
-                                        <Icon name="chevron-left" className="w-4 h-4 text-white/30 group-hover:text-cyan-400 transition-colors" />
-                                    </div>
+                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { setNewMembershipName(""); setNewMembershipIcon(""); setShowAddMembershipModal(true); }} title="新增"><Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400" /></div>
+                                    <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起"><Icon name="chevron-left" className="w-4 h-4 text-white/30" /></div>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1" style={{ gap: '0.5px' }}>
                                 {sortedMemberships.map(m => {
                                     const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
                                     const sourceFallback = customSources.find(s => s.name === m.name);
-                                    
                                     let displayIcon = m.icon || sourceFallback?.icon;
-                                    if (isEditingMemberships && tempMembershipIcons[m._originalIndex] !== undefined) {
-                                        displayIcon = tempMembershipIcons[m._originalIndex];
-                                    }
-
+                                    if (isEditingMemberships && tempMembershipIcons[m._originalIndex] !== undefined) { displayIcon = tempMembershipIcons[m._originalIndex]; }
                                     const currentRenamingName = tempMembershipNames[m._originalIndex] !== undefined ? tempMembershipNames[m._originalIndex] : m.name;
-                                    
                                     if (isEditingMemberships) {
                                         return (
-                                            <div key={m._originalIndex} className="flex justify-between items-center bg-black/40 py-0.5 px-1.5 rounded border border-cyan-400/30 group transition-colors my-[1px] shadow-sm">
+                                            <div key={m._originalIndex} className="flex justify-between items-center bg-black/40 py-0.5 px-1.5 rounded border border-cyan-400/30 my-[1px] shadow-sm">
                                                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                                     <div className="relative">
-                                                        <div className="w-4 h-4 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer hover:border-[#ffbae9] overflow-hidden flex-shrink-0 group/icon" 
-                                                            onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} 
-                                                            title="點擊上傳，或選取輸入框後 Ctrl+V 貼上"
-                                                        >
+                                                        <div className="w-4 h-4 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer overflow-hidden flex-shrink-0 group/icon" onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} title="點擊貼上圖標">
                                                             {displayIcon ? <img src={displayIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
-                                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/icon:opacity-100 transition-opacity">
-                                                                <Icon name="upload" className="w-2.5 h-2.5 text-white" />
-                                                            </div>
                                                         </div>
                                                         <input type="file" id={`icon-upload-${m._originalIndex}`} className="hidden" accept="image/*" onChange={(e) => handleIconFileSelect(e, m._originalIndex)} />
                                                     </div>
                                                     <div className="flex items-center gap-1 flex-1 min-w-0">
-                                                        <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full min-w-0 font-black focus:border-[#ffbae9]" 
-                                                            value={currentRenamingName} 
-                                                            onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} 
-                                                            data-membership-index={m._originalIndex}
-                                                            title="在此按 Ctrl+V 貼上圖片可更換圖標"
-                                                            placeholder="名稱"
-                                                        />
-                                                        <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[36px] flex-shrink-0 font-bold focus:border-[#ffbae9]" 
-                                                            value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} 
-                                                            onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} 
-                                                            placeholder="標籤"
-                                                        />
+                                                        <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full min-w-0 font-black" value={currentRenamingName} onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} data-membership-index={m._originalIndex} placeholder="名稱" />
+                                                        <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[36px] flex-shrink-0 font-bold" value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} placeholder="標籤" />
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center flex-shrink-0 ml-1.5 gap-1.5">
                                                     <AutoJumpDateInput value={tempMembershipDates[m._originalIndex] !== undefined ? tempMembershipDates[m._originalIndex] : (m.expiryDate || '')} onChange={(val) => setTempMembershipDates({ ...tempMembershipDates, [m._originalIndex]: val })} />
-                                                    <Icon name="trash-2" className="w-3.5 h-3.5 text-red-400/50 hover:text-red-400 cursor-pointer transition-colors flex-shrink-0" onClick={() => { setDeleteMembershipTarget({ index: m._originalIndex, name: m.name }); }} title="移除此追蹤" />
+                                                    <Icon name="trash-2" className="w-3.5 h-3.5 text-red-400/50 hover:text-red-400 flex-shrink-0" onClick={() => { setDeleteMembershipTarget({ index: m._originalIndex, name: m.name }); }} />
                                                 </div>
                                             </div>
                                         );
                                     }
-
                                     return (
                                         <div key={m._originalIndex} className="flex justify-between items-center bg-black/20 py-0.5 px-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
                                             <div className="flex items-center gap-1.5 overflow-hidden flex-1">
                                                 {displayIcon ? <img src={displayIcon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
-                                                <div className="flex items-center gap-1.5 truncate flex-1">
-                                                    <span className="truncate font-black text-white/90 text-[11px]">{m.name}</span>
-                                                    {m.tag && <span className="flex-shrink-0 border border-white/10 bg-white/5 text-white/50 px-1.5 py-[1px] rounded-[3px] text-[9px] font-black">{m.tag}</span>}
-                                                </div>
+                                                <div className="flex items-center gap-1.5 truncate flex-1"><span className="truncate font-black text-white/90 text-[11px]">{m.name}</span>{m.tag && <span className="flex-shrink-0 border border-white/10 bg-white/5 text-white/50 px-1.5 py-[1px] rounded-[3px] text-[9px] font-black">{m.tag}</span>}</div>
                                             </div>
                                             <div className="flex items-center flex-shrink-0 ml-2">
-                                                <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30 border-transparent' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
-                                                    {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日到期" : `剩 ${daysLeft} 天`}
+                                                <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
+                                                    {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日" : `剩 ${daysLeft} 天`}
                                                 </div>
                                             </div>
                                         </div>
@@ -1512,7 +1223,7 @@
                         </>
                     )}
                 </div>
-            ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, customSources, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft]);
+            ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft]);
 
             const statsPanelUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] relative flex flex-col w-full lg:flex-1 flex-shrink-0 min-w-0">
@@ -1539,59 +1250,37 @@
                         </table>
                     </div>
                 </div>
-            ), [memberStats, statMode, activeCategoriesInUse, activeSourcesInUse, memberFilter, games.length, handleExportData, handleImportData]);
+            ), [memberStats, statMode, activeCategoriesInUse, activeSourcesInUse, memberFilter, games.length]);
 
             const toolbarUI = useMemo(() => (
                 <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border-y border-white/10 overflow-hidden shadow-xl">
                     {!isEditLocked && <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-4 md:py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號(如1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                     {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
                     <div className="px-4 md:px-6 flex items-center justify-end py-4 md:py-0 gap-3"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all whitespace-nowrap ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
                 </div>
             ), [isEditLocked, searchQuery, memberFilter, handleOpenAddModal]);
 
             const categoryTabsUI = useMemo(() => (
-                <nav className="tab-bar">{customCategories.map((cat, idx) => (<div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}><span>{cat}</span>{!isEditLocked && (<div className="tab-action-group"><div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div><div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div></div>)}</div>))}{!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類分組"><Icon name="plus" className="w-5 h-5" /></div>)}</nav> 
+                <nav className="tab-bar">{customCategories.map((cat, idx) => (<div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}><span>{cat}</span>{!isEditLocked && (<div className="tab-action-group"><div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div><div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div></div>)}</div>))}{!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類"><Icon name="plus" className="w-5 h-5" /></div>)}</nav> 
             ), [customCategories, activeTab, isEditLocked]);
 
             return (
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
-                    <div className="w-full mx-auto">
-                        {headerUI}
-                        <div className="flex flex-col lg:flex-row gap-1 mb-4 px-1 md:px-2">
-                            {activityLogsUI}
-                            {membershipPanelUI}
-                            {statsPanelUI}
-                        </div>
-                        {toolbarUI}
-                        <article className="tab-content bg-black/10 border-b border-white/10 p-1 md:p-1.5 shadow-2xl">
-                            {categoryTabsUI}
-                            <div className="component-view">
-                                <ul>{gameListUI}</ul>
-                                <div ref={loadMoreSentinelRef} className="h-12 w-full mt-4"></div>
-                            </div> 
-                        </article>
-                    </div>
-                    
+                    <div className="w-full mx-auto">{headerUI}<div className="flex flex-col lg:flex-row gap-1 mb-4 px-1 md:px-2">{activityLogsUI}{membershipPanelUI}{statsPanelUI}</div>{toolbarUI}<article className="tab-content bg-black/10 border-b border-white/10 p-1 md:p-1.5 shadow-2xl">{categoryTabsUI}<div className="component-view"><ul>{gameListUI}</ul><div ref={loadMoreSentinelRef} className="h-12 w-full mt-4"></div></div></article></div>
                     {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
-                    {showAddMembershipModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-6 uppercase text-center tracking-widest italic">新增時限追蹤</h4><div className="flex w-full gap-3 items-center mb-4"><div className="source-icon-preview-box !w-12 !h-12 active bg-black/40" onClick={() => membershipFileInputRef.current?.click()}>{newMembershipIcon ? <img src={newMembershipIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-5 h-5 text-white/20" />}</div><div className="flex-1 flex flex-col gap-2"><input type="text" autoFocus className="modal-input-base w-full text-center font-black !text-[13px] !px-2 !py-1 !min-h-[32px]" placeholder="輸入平台名稱..." value={newMembershipName} onChange={e => { const val = e.target.value; setNewMembershipName(val); }} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /><input type="text" className="modal-input-base w-full text-center font-bold !text-[10px] !px-2 !py-1 !min-h-[24px] text-white/70" placeholder="獨立標籤 (選填，如: 家庭方案)" value={newMembershipTag} onChange={e => setNewMembershipTag(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /></div></div>{(() => { const availableSources = customSources.filter(s => s.name !== "未知來源" && !customMemberships.some(m => m.name === s.name)); if (availableSources.length > 0) { return (<div className="flex flex-wrap justify-center gap-1.5 mb-6">{availableSources.map(s => (<button key={s.name} type="button" className="quick-fill-btn text-[10px] !px-2" onClick={() => { setNewMembershipName(s.name); setNewMembershipIcon(s.icon || ""); setNewMembershipTag(""); }}>{s.name}</button>))}</div>); } return <div className="mb-6"></div>; })()}<div className="flex gap-4"><button onClick={() => { setShowAddMembershipModal(false); setNewMembershipTag(""); }} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddMembership} disabled={!newMembershipName.trim()} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName.trim() ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button></div><input type="file" ref={membershipFileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setNewMembershipIcon(c); e.target.value=""; } }} /></div></div>)}
-                    {deleteMembershipTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">移除時限追蹤？</h4><p className="text-sm text-slate-300 mb-8 font-bold">不再追蹤 <span className="text-red-400">"{deleteMembershipTarget.name}"</span> 的到期日？</p><div className="flex gap-4"><button onClick={() => setDeleteMembershipTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteMembership(deleteMembershipTarget.index)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定移除</button></div></div></div>)}
-                    {showClearMembershipsConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">清空時限面板？</h4><p className="text-sm text-slate-300 mb-8 font-bold">這將會刪除您面板上所有的平台與到期日紀錄。</p><div className="flex gap-4"><button onClick={() => setShowClearMembershipsConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={handleClearAllMemberships} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定清空</button></div></div></div>)}
+                    {showAddMembershipModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-6 uppercase text-center tracking-widest italic">新增時限追蹤</h4><div className="flex w-full gap-3 items-center mb-4"><div className="source-icon-preview-box !w-12 !h-12 active bg-black/40" onClick={() => membershipFileInputRef.current?.click()}>{newMembershipIcon ? <img src={newMembershipIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-5 h-5 text-white/20" />}</div><div className="flex-1 flex flex-col gap-2"><input type="text" autoFocus className="modal-input-base w-full text-center font-black !text-[13px] !px-2 !py-1 !min-h-[32px]" placeholder="輸入平台名稱..." value={newMembershipName} onChange={e => setNewMembershipName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /><input type="text" className="modal-input-base w-full text-center font-bold !text-[10px] !px-2 !py-1 !min-h-[24px] text-white/70" placeholder="獨立標籤 (選填，如: 家庭方案)" value={newMembershipTag} onChange={e => setNewMembershipTag(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /></div></div><div className="flex gap-4"><button onClick={() => { setShowAddMembershipModal(false); setNewMembershipTag(""); }} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddMembership} disabled={!newMembershipName.trim()} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName.trim() ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button></div><input type="file" ref={membershipFileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setNewMembershipIcon(c); e.target.value=""; } }} /></div></div>)}
+                    {deleteMembershipTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">移除時限追蹤？</h4><p className="text-sm text-slate-300 mb-8 font-bold">不再追蹤 <span className="text-red-400">"{deleteMembershipTarget.name}"</span>？</p><div className="flex gap-4"><button onClick={() => setDeleteMembershipTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteMembership(deleteMembershipTarget.index)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定移除</button></div></div></div>)}
                     {renameCategoryTarget && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-4 uppercase text-center tracking-widest italic">修改分組名稱</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" value={renameCategoryNewValue} onChange={e=>setRenameCategoryNewValue(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleRenameCategory()} /><div className="flex gap-4"><button onClick={() => setRenameCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleRenameCategory} className="flex-1 py-3 bg-cyan-600 text-white text-[12px] font-black rounded-full uppercase">儲存修改</button></div></div></div>)}
                     {deleteCategoryTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4><p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button></div></div></div>)}
-                    <div className="fab-btn-container">
-                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>
-                        {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
-                        <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div>
-                        <div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div>
-                    </div>
-                    {isModalOpen && (<div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => {setIsModalOpen(false); setEditingId(null);}}><div className="bg-[#0b0e14] border border-white/10 w-full max-w-[900px] my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div><button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button><div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1"><h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3><form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2"><div className="grid grid-cols-1 md:grid-cols-[repeat(14,minmax(0,1fr))] gap-4 md:gap-8"><div className="md:col-span-6 flex flex-col gap-5 items-start"><div className="flex flex-row items-center justify-center gap-6 w-full"><div className="flex flex-col gap-4 flex-shrink-0"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">年份</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div></div><div className="flex flex-col items-center"><div tabIndex="0" onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>{formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}</div>{formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}</div></div><div className="flex flex-col gap-4 w-full"><div className="grid grid-cols-2 gap-4"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select><div className="flex flex-wrap gap-1 mt-1.5">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select><div className="flex flex-wrap gap-1 mt-1.5">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div></div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label><div className="flex flex-col gap-2"><div className="flex w-full gap-2 items-center"><div tabIndex="0" className={`source-icon-preview-box !w-8 !h-8 outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div></div><div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByRecent.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div></div></div></div><input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} /></div><div className="md:col-span-8 border-l border-white/5 md:pl-8"><div className="space-y-2"><div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><NameInputWithHighlight value={formData.name} onChange={(v) => setFormData({...formData, name: v})} games={games} editingId={editingId} isError={isNameDuplicate} placeholder="" /></div><div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div></div><div className="mt-4 grid grid-cols-2 gap-4"><ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={handleTotalEpChange} /><ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={handleUpdatedEpChange} /></div><div className="mt-4 flex flex-row gap-6 items-end"><div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div></div><div className="mt-4 grid grid-cols-2 gap-4"><div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div><div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={handlePaidProgChange} /></div></div><div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start"><div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div><div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-1 bg-black/40 p-1 rounded border border-white/5 w-fit"><input className="bg-transparent outline-none w-[90px] font-black text-[11px] px-1 text-center" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/30 hover:text-red-400 p-0.5 rounded-full transition-colors"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[120px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div></div><div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div><div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" disabled={isSaving} className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] transition-colors ${isSaving ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>{isSaving ? '資料處理中...' : '確認提交'}</button></div></div></div></form></div></div></div>)}
-                    {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><p className="text-sm text-slate-300 mb-8 font-bold">移除 <span className="text-red-400">"{deleteSourceTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
-                    {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
+                    <div className="fab-btn-container"><div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>{!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}<div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div><div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div></div>
+                    {isModalOpen && (<div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => {setIsModalOpen(false); setEditingId(null);}}><div className="bg-[#0b0e14] border border-white/10 w-full max-w-[900px] my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div><button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button><div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1"><h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3><form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2"><div className="grid grid-cols-1 md:grid-cols-[repeat(14,minmax(0,1fr))] gap-4 md:gap-8"><div className="md:col-span-6 flex flex-col gap-5 items-start"><div className="flex flex-row items-center justify-center gap-6 w-full"><div className="flex flex-col gap-4 flex-shrink-0"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">年份</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div></div><div className="flex flex-col items-center"><div tabIndex="0" onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>{formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}</div>{formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}</div></div><div className="flex flex-col gap-4 w-full"><div className="grid grid-cols-2 gap-4"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select><div className="flex flex-wrap gap-1 mt-1.5">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select><div className="flex flex-wrap gap-1 mt-1.5">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div></div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label><div className="flex flex-col gap-2"><div className="flex w-full gap-2 items-center"><div tabIndex="0" className={`source-icon-preview-box !w-8 !h-8 outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div></div><div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByRecent.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div></div></div></div><input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} /></div><div className="md:col-span-8 border-l border-white/5 md:pl-8"><div className="space-y-2"><div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><NameInputWithHighlight value={formData.name} onChange={(v) => setFormData({...formData, name: v})} games={games} editingId={editingId} isError={isNameDuplicate} placeholder="" /></div><div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div></div><div className="mt-4 grid grid-cols-2 gap-4"><ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, totalEpisodes: v})} /><ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, updatedEpisodes: v})} /></div><div className="mt-4 flex flex-row gap-6 items-end"><div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div></div><div className="mt-4 grid grid-cols-2 gap-4"><div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div><div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, paidProgress: v})} /></div></div><div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start"><div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div><div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-1 bg-black/40 p-1 rounded border border-white/5 w-fit"><input className="bg-transparent outline-none w-[90px] font-black text-[11px] px-1 text-center" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/30 hover:text-red-400 p-0.5 rounded-full transition-colors"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[120px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div></div><div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div><div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" disabled={isSaving} className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] transition-colors ${isSaving ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>{isSaving ? '處理中...' : '確認提交'}</button></div></div></div></form></div></div></div>)}
+                    {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
-                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
-                    {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><p className="text-xs text-white/40 mb-8">不可撤銷。</p><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
+                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
         }
