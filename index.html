@@ -658,6 +658,11 @@
             const [deleteSourceTarget, setDeleteSourceTarget] = useState(null), [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
             const [showAddCategoryModal, setShowAddCategoryModal] = useState(false), [newCategoryName, setNewCategoryName] = useState("");
             const [renameCategoryTarget, setRenameCategoryTarget] = useState(null), [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
+            
+            // 新增：修改用戶 ID 相關狀態
+            const [showEditUserModal, setShowEditUserModal] = useState(false);
+            const [tempNewUserName, setTempNewUserName] = useState("");
+
             const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
@@ -946,7 +951,6 @@
                 setDeleteMembershipTarget(null); showNotify("已移除");
             };
             
-            // 修正處：確保成功儲存後，強制關閉編輯狀態
             const handleSaveMemberships = async () => {
                 if(!user) return;
                 const nextMemberships = customMemberships.map((m, i) => {
@@ -969,7 +973,7 @@
                 try {
                     await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
                     showNotify("儲存完成");
-                    setIsEditingMemberships(false); // 修正：儲存成功後關閉編輯狀態
+                    setIsEditingMemberships(false); 
                 } catch(e) { showNotify("儲存失敗"); } finally {
                     setTempMembershipNames({}); setTempMembershipIcons({}); setTempMembershipTags({}); setTempMembershipDates({});
                 }
@@ -1010,6 +1014,18 @@
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { await deleteDoc(doc(getPublicCol('games'), id)); showNotify("已刪除"); } catch (e) {} };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("已清空"); } catch(e) {} };
+            
+            // 新增：修改本地用戶名稱邏輯
+            const handleUpdateUserName = () => {
+                const trimmed = tempNewUserName.trim();
+                if (!trimmed) return;
+                setUserName(trimmed);
+                localStorage.setItem('steam_user_name', trimmed);
+                showNotify(`已更改 ID 為: ${trimmed}`);
+                setShowEditUserModal(false);
+                setTempNewUserName("");
+            };
+
             const loadMoreSentinelRef = useRef(null);
             useEffect(() => {
                 if (!loadMoreSentinelRef.current) return;
@@ -1139,10 +1155,13 @@
                                     </div>
                                 </div>)}
                         </div>
-                        {!isEditLocked && (<div className="relative" ref={toolsDropdownRef}><button onClick={() => setShowToolsDropdown(!showToolsDropdown)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 border border-slate-500/30 text-slate-200 text-xs font-black rounded hover:bg-slate-700 uppercase transition-all shadow-lg"><Icon name="settings" className="w-4 h-4" /> 系統維護</button>{showToolsDropdown && (<div className="absolute right-0 top-full mt-2 w-36 bg-[#1c2533] border border-white/20 rounded-md shadow-2xl z-[700] flex flex-col py-1 animate-slide-down-fade"><button onClick={() => { handleRepairData(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-blue-600/20 text-blue-300 transition-colors w-full text-left"><Icon name="wrench" className="w-4 h-4 flex-shrink-0" /> 數據修復</button><button onClick={() => { handleReorderIndices(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-amber-600/20 text-amber-300 transition-colors w-full text-left"><Icon name="list-ordered" className="w-4 h-4 flex-shrink-0" /> 編號重排</button><div className="h-px bg-white/10 my-1"></div><button onClick={() => { setShowClearConfirm(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-red-600/20 text-red-400 transition-colors w-full text-left"><Icon name="trash-2" className="w-4 h-4 flex-shrink-0" /> 清除全部</button></div>)}</div>)}
+                        {!isEditLocked && (<div className="relative" ref={toolsDropdownRef}><button onClick={() => setShowToolsDropdown(!showToolsDropdown)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 border border-slate-500/30 text-slate-200 text-xs font-black rounded hover:bg-slate-700 uppercase transition-all shadow-lg"><Icon name="settings" className="w-4 h-4" /> 系統維護</button>{showToolsDropdown && (<div className="absolute right-0 top-full mt-2 w-44 bg-[#1c2533] border border-white/20 rounded-md shadow-2xl z-[700] flex flex-col py-1 animate-slide-down-fade"><button onClick={() => { handleRepairData(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-blue-600/20 text-blue-300 transition-colors w-full text-left"><Icon name="wrench" className="w-4 h-4 flex-shrink-0" /> 數據修復</button>
+                            {/* 新增：修改用戶 ID 按鈕 */}
+                            <button onClick={() => { setTempNewUserName(userName); setShowEditUserModal(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-[#ffbae9]/20 text-[#ffbae9] transition-colors w-full text-left"><Icon name="user-cog" className="w-4 h-4 flex-shrink-0" /> 修改用戶 ID</button>
+                            <button onClick={() => { handleReorderIndices(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-amber-600/20 text-amber-300 transition-colors w-full text-left"><Icon name="list-ordered" className="w-4 h-4 flex-shrink-0" /> 編號重排</button><div className="h-px bg-white/10 my-1"></div><button onClick={() => { setShowClearConfirm(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-red-600/20 text-red-400 transition-colors w-full text-left"><Icon name="trash-2" className="w-4 h-4 flex-shrink-0" /> 清除全部</button></div>)}</div>)}
                     </div>
                 </header>
-            ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown]);
+            ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName]);
 
             const activityLogsUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
@@ -1267,6 +1286,22 @@
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
                     <div className="w-full mx-auto">{headerUI}<div className="flex flex-col lg:flex-row gap-1 mb-4 px-1 md:px-2">{activityLogsUI}{membershipPanelUI}{statsPanelUI}</div>{toolbarUI}<article className="tab-content bg-black/10 border-b border-white/10 p-1 md:p-1.5 shadow-2xl">{categoryTabsUI}<div className="component-view"><ul>{gameListUI}</ul><div ref={loadMoreSentinelRef} className="h-12 w-full mt-4"></div></div></article></div>
+                    
+                    {/* 修改用戶 ID 模態視窗 */}
+                    {showEditUserModal && (
+                        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                            <div className="bg-[#0b0e14] border border-[#ffbae9]/30 w-full max-w-sm p-8 rounded shadow-2xl">
+                                <h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">修改用戶 ID</h4>
+                                <p className="text-[10px] text-white/40 mb-4 text-center">這將改變您在本機錄入內容時顯示的名稱</p>
+                                <input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入新名稱..." value={tempNewUserName} onChange={e=>setTempNewUserName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleUpdateUserName()} />
+                                <div className="flex gap-4">
+                                    <button onClick={() => setShowEditUserModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button>
+                                    <button onClick={handleUpdateUserName} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {showAddCategoryModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-[#ffbae9] font-black mb-4 uppercase text-center tracking-widest italic">新增分組類型</h4><input type="text" autoFocus className="modal-input-base w-full mb-6 text-center font-black" placeholder="輸入名稱..." value={newCategoryName} onChange={e=>setNewCategoryName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddCategory()} /><div className="flex gap-4"><button onClick={() => setShowAddCategoryModal(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddCategory} className="flex-1 py-3 bg-[#ffbae9] text-[#3f5968] text-[12px] font-black rounded-full uppercase">確認新增</button></div></div></div>)}
                     {showAddMembershipModal && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-8 rounded shadow-2xl"><h4 className="text-cyan-400 font-black mb-6 uppercase text-center tracking-widest italic">新增時限追蹤</h4><div className="flex w-full gap-3 items-center mb-4"><div className="source-icon-preview-box !w-12 !h-12 active bg-black/40" onClick={() => membershipFileInputRef.current?.click()}>{newMembershipIcon ? <img src={newMembershipIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-5 h-5 text-white/20" />}</div><div className="flex-1 flex flex-col gap-2"><input type="text" autoFocus className="modal-input-base w-full text-center font-black !text-[13px] !px-2 !py-1 !min-h-[32px]" placeholder="輸入平台名稱..." value={newMembershipName} onChange={e => setNewMembershipName(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /><input type="text" className="modal-input-base w-full text-center font-bold !text-[10px] !px-2 !py-1 !min-h-[24px] text-white/70" placeholder="獨立標籤 (選填，如: 家庭方案)" value={newMembershipTag} onChange={e => setNewMembershipTag(e.target.value)} onKeyPress={e=>e.key === 'Enter' && handleAddMembership()} /></div></div><div className="flex gap-4"><button onClick={() => { setShowAddMembershipModal(false); setNewMembershipTag(""); }} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={handleAddMembership} disabled={!newMembershipName.trim()} className={`flex-1 py-3 text-white text-[12px] font-black rounded-full uppercase transition-colors ${!newMembershipName.trim() ? 'bg-cyan-900/50 text-white/30 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'}`}>新增追蹤</button></div><input type="file" ref={membershipFileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const c = await compressImage(URL.createObjectURL(e.target.files[0]), 100); setNewMembershipIcon(c); e.target.value=""; } }} /></div></div>)}
                     {deleteMembershipTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">移除時限追蹤？</h4><p className="text-sm text-slate-300 mb-8 font-bold">不再追蹤 <span className="text-red-400">"{deleteMembershipTarget.name}"</span>？</p><div className="flex gap-4"><button onClick={() => setDeleteMembershipTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteMembership(deleteMembershipTarget.index)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定移除</button></div></div></div>)}
@@ -1277,7 +1312,7 @@
                     {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
                     {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
-                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
                     {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
