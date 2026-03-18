@@ -1208,7 +1208,8 @@
                 const observer = new IntersectionObserver((entries) => {
                     if (entries[0].isIntersecting) {
                         setDisplayLimit(prev => {
-                            if (prev >= filteredGamesLengthRef.current) return prev;
+                            // 改為 > 讓 limit 可以大於當前長度，確保新資料進來時不會被 slice 擋住
+                            if (prev > filteredGamesLengthRef.current) return prev;
                             return prev + CHUNK_SIZE;
                         });
                     }
@@ -1273,6 +1274,13 @@
             }, [games, deferredSearchQuery, activeTab, memberFilter]);
             
             useEffect(() => {
+                setDisplayLimit(prev => {
+                    // 若有新增檔案，且當前顯示上限剛好卡在舊資料長度，自動擴充上限，達到即時渲染效果
+                    if (filteredGames.length > filteredGamesLengthRef.current && prev <= filteredGamesLengthRef.current) {
+                        return prev + CHUNK_SIZE;
+                    }
+                    return prev;
+                });
                 filteredGamesLengthRef.current = filteredGames.length;
             }, [filteredGames.length]);
 
