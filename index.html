@@ -1094,9 +1094,10 @@
 
             const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
             
+            // 已更新：允許新增「同名稱但不同標籤」的時限追蹤
             const handleAddMembership = async () => {
                 const name = newMembershipName.trim(); if(!name || !user) return; 
-                if(customMemberships.some(m => m.name === name)) { showNotify("此平台已在追蹤中"); return; }
+                if(customMemberships.some(m => m.name === name && (m.tag || '') === newMembershipTag.trim())) { showNotify("此平台與標籤組合已在追蹤中"); return; }
                 const nextMemberships = [...customMemberships, { name, expiryDate: '', icon: newMembershipIcon || '', tag: newMembershipTag.trim() }];
                 await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
                 showNotify("已新增時限追蹤"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon(""); setNewMembershipTag("");
@@ -1336,7 +1337,8 @@
                                     if (typeof importedItem === 'string') {
                                         if (!nextConfig[key].includes(importedItem)) nextConfig[key].push(importedItem);
                                     } else if (typeof importedItem === 'object' && importedItem.name) {
-                                        const existingIdx = nextConfig[key].findIndex(ex => ex.name === importedItem.name);
+                                        // 已修復：比對 memberships 時，同時比對「名稱」與「標籤」
+                                        const existingIdx = nextConfig[key].findIndex(ex => key === 'memberships' ? (ex.name === importedItem.name && (ex.tag || '') === (importedItem.tag || '')) : ex.name === importedItem.name);
                                         if (existingIdx !== -1) { nextConfig[key][existingIdx] = { ...nextConfig[key][existingIdx], ...importedItem }; } else { nextConfig[key].push(importedItem); }
                                     }
                                 });
