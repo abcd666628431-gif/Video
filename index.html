@@ -472,12 +472,16 @@
         const NameInputWithHighlight = ({ value, onChange, games, editingId, isError, placeholder }) => {
             const textareaRef = useRef(null); 
             useEffect(() => { 
+                let rafId;
                 if (textareaRef.current) {
-                    requestAnimationFrame(() => {
-                        textareaRef.current.style.height = "auto"; 
-                        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; 
+                    rafId = requestAnimationFrame(() => {
+                        if (textareaRef.current) {
+                            textareaRef.current.style.height = "auto"; 
+                            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; 
+                        }
                     });
                 }
+                return () => { if (rafId) cancelAnimationFrame(rafId); };
             }, [value]);
             const [isFocused, setIsFocused] = useState(false);
             const [isHovered, setIsHovered] = useState(false);
@@ -578,12 +582,16 @@
         const AutoResizeTextarea = ({ value, onChange, className, isError, placeholder, required = false }) => {
             const textareaRef = useRef(null); 
             useEffect(() => { 
+                let rafId;
                 if (textareaRef.current) {
-                    requestAnimationFrame(() => {
-                        textareaRef.current.style.height = "auto"; 
-                        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; 
+                    rafId = requestAnimationFrame(() => {
+                        if (textareaRef.current) {
+                            textareaRef.current.style.height = "auto"; 
+                            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; 
+                        }
                     });
                 }
+                return () => { if (rafId) cancelAnimationFrame(rafId); };
             }, [value]);
             return <textarea ref={textareaRef} rows="1" className={`${className} overflow-hidden resize-none ${isError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />;
         };
@@ -659,7 +667,6 @@
             const [showAddCategoryModal, setShowAddCategoryModal] = useState(false), [newCategoryName, setNewCategoryName] = useState("");
             const [renameCategoryTarget, setRenameCategoryTarget] = useState(null), [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             
-            // 新增：修改用戶 ID 相關狀態
             const [showEditUserModal, setShowEditUserModal] = useState(false);
             const [tempNewUserName, setTempNewUserName] = useState("");
 
@@ -716,7 +723,13 @@
                 });
                 return customSources.filter(s => s.name !== "未知來源").sort((a, b) => (lastUsed[b.name] || 0) - (lastUsed[a.name] || 0));
             }, [games, customSources]);
-            const isNameDuplicate = useMemo(() => { const currentName = formData.name.trim(); if (!currentName) return false; return games.some(g => g.name.trim() === currentName && g.id !== editingId); }, [formData.name, games, editingId]);
+            
+            const isNameDuplicate = useMemo(() => { 
+                const currentName = formData.name.trim(); 
+                if (!currentName) return false; 
+                return games.some(g => (g.name || '').trim() === currentName && g.id !== editingId); 
+            }, [formData.name, games, editingId]);
+            
             const recentStatuses = useMemo(() => {
                 const seen = new Set(), result = []; const sorted = [...games].sort((a,b) => (b.updatedAt?.seconds || 0) - (a.timestamp?.seconds || 0));
                 for(const g of sorted) { if(g.airingStatus && !seen.has(g.airingStatus)) { seen.add(g.airingStatus); result.push(g.airingStatus); } if(result.length >= 3) break; }
@@ -916,11 +929,16 @@
                     if (updates.length > 0) await Promise.all(updates);
                 } catch (e) {}
             };
+            
             const handleAddCategory = async () => {
                 if(!newCategoryName.trim() || !user) return; if(customCategories.includes(newCategoryName.trim())) { showNotify("已存在"); return; }
-                const nextCats = [...customCategories, newCategoryName.trim()]; await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
-                showNotify("已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
+                const nextCats = [...customCategories, newCategoryName.trim()]; 
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true });
+                    showNotify("已新增"); setShowAddCategoryModal(false); setNewCategoryName("");
+                } catch(e) { showNotify("新增失敗"); }
             };
+            
             const handleRenameCategory = async () => {
                 if(!renameCategoryTarget || !renameCategoryNewValue.trim() || !user) return;
                 const oldName = renameCategoryTarget, newName = renameCategoryNewValue.trim();
@@ -933,22 +951,36 @@
                     const gamesToUpdate = games.filter(g => g.category === oldName);
                     if (gamesToUpdate.length > 0) { await Promise.all(gamesToUpdate.map(g => updateDoc(doc(getPublicCol('games'), g.id), { category: newName }))); }
                     showNotify("分類更新完成");
-                } catch(e) {} finally { setRenameCategoryTarget(null); setRenameCategoryNewValue(""); }
+                } catch(e) { showNotify("修改失敗"); } finally { setRenameCategoryTarget(null); setRenameCategoryNewValue(""); }
             };
-            const handleDeleteCategory = async (cat) => { if(!cat || !user) return; const nextCats = customCategories.filter(c => c !== cat); await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); showNotify("已刪除"); };
+            
+            const handleDeleteCategory = async (cat) => { 
+                if(!cat || !user) return; 
+                const nextCats = customCategories.filter(c => c !== cat); 
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { categories: nextCats }, { merge: true }); 
+                    showNotify("已刪除"); 
+                } catch(e) { showNotify("刪除失敗"); }
+            };
+            
             const handleAddMembership = async () => {
                 const name = newMembershipName.trim(); if(!name || !user) return; 
                 if(customMemberships.some(m => m.name === name && (m.tag || '') === newMembershipTag.trim())) { showNotify("此標籤已存在"); return; }
                 const nextMemberships = [...customMemberships, { name, expiryDate: '', icon: newMembershipIcon || '', tag: newMembershipTag.trim() }];
-                await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                showNotify("已新增"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon(""); setNewMembershipTag("");
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
+                    showNotify("已新增"); setShowAddMembershipModal(false); setNewMembershipName(""); setNewMembershipIcon(""); setNewMembershipTag("");
+                } catch(e) { showNotify("新增失敗"); }
             };
+            
             const handleDeleteMembership = async (index) => {
                 if(index === undefined || index === null || !user) return;
                 const nextMemberships = customMemberships.filter((_, i) => i !== index);
-                await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
-                if (isEditingMemberships) { setIsEditingMemberships(false); }
-                setDeleteMembershipTarget(null); showNotify("已移除");
+                try {
+                    await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: nextMemberships }, { merge: true });
+                    if (isEditingMemberships) { setIsEditingMemberships(false); }
+                    setDeleteMembershipTarget(null); showNotify("已移除");
+                } catch(e) { showNotify("移除失敗"); }
             };
             
             const handleSaveMemberships = async () => {
@@ -983,6 +1015,7 @@
                 if(!user) return; setShowClearMembershipsConfirm(false);
                 try { await setDoc(doc(getPublicCol('settings'), 'config'), { memberships: [] }, { merge: true }); showNotify("已清空"); } catch(e) {}
             };
+            
             const handleRepairData = useCallback(async () => {
                 if(!user) return; showNotify("資料遷移中...");
                 try {
@@ -1001,8 +1034,9 @@
                     }
                     await setDoc(doc(getPublicCol('settings'), 'config'), { sources: mergedSources }, { merge: true }); 
                     showNotify(`修復完成`);
-                } catch(e) {}
-            }, [user]);
+                } catch(e) { showNotify("修復失敗"); }
+            }, [user, showNotify]);
+            
             const handleReorderIndices = useCallback(async () => {
                 if (!user) return; showNotify("排列中...");
                 try {
@@ -1010,12 +1044,12 @@
                     const updates = sorted.map((g, index) => { const newOrder = index + 1; if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }); return null; }).filter(p => p !== null);
                     if (updates.length > 0) { await Promise.all(updates); showNotify(`完成！`); }
                 } catch (e) {}
-            }, [user]);
+            }, [user, showNotify]);
+            
             const handleDeleteGame = async (id) => { if(!user) return; setDeleteGameTarget(null); try { await deleteDoc(doc(getPublicCol('games'), id)); showNotify("已刪除"); } catch (e) {} };
             const handleDeleteSource = async (sn) => { if(!sn || !user) return; await setDoc(doc(getPublicCol('settings'), 'config'), { sources: customSources.filter(s => s.name !== sn) }, { merge: true }); showNotify("移除"); };
             const handleClearAllData = async () => { if(!user) return; setShowClearConfirm(false); try { const s = await getDocs(getPublicCol('games')); await Promise.all(s.docs.map(d => deleteDoc(d.ref))); showNotify("已清空"); } catch(e) {} };
             
-            // 新增：修改本地用戶名稱邏輯
             const handleUpdateUserName = () => {
                 const trimmed = tempNewUserName.trim();
                 if (!trimmed) return;
@@ -1093,7 +1127,7 @@
                     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `AnimeMatrix_Backup_${Date.now()}.json`; a.click();
                 } catch (e) {}
-            }, [user]);
+            }, [user, showNotify]);
             
             const handleImportData = useCallback(async (e) => {
                 const f = e.target.files[0]; e.target.value = ""; if(!f || !user) return; 
@@ -1122,7 +1156,7 @@
                         showNotify("還原成功！"); 
                     } catch(error) { showNotify("導入失敗"); } 
                 }; 
-            }, [user]);
+            }, [user, showNotify]);
 
             const headerUI = useMemo(() => (
                 <header className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
@@ -1156,12 +1190,11 @@
                                 </div>)}
                         </div>
                         {!isEditLocked && (<div className="relative" ref={toolsDropdownRef}><button onClick={() => setShowToolsDropdown(!showToolsDropdown)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 border border-slate-500/30 text-slate-200 text-xs font-black rounded hover:bg-slate-700 uppercase transition-all shadow-lg"><Icon name="settings" className="w-4 h-4" /> 系統維護</button>{showToolsDropdown && (<div className="absolute right-0 top-full mt-2 w-44 bg-[#1c2533] border border-white/20 rounded-md shadow-2xl z-[700] flex flex-col py-1 animate-slide-down-fade"><button onClick={() => { handleRepairData(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-blue-600/20 text-blue-300 transition-colors w-full text-left"><Icon name="wrench" className="w-4 h-4 flex-shrink-0" /> 數據修復</button>
-                            {/* 新增：修改用戶 ID 按鈕 */}
                             <button onClick={() => { setTempNewUserName(userName); setShowEditUserModal(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-[#ffbae9]/20 text-[#ffbae9] transition-colors w-full text-left"><Icon name="user-cog" className="w-4 h-4 flex-shrink-0" /> 修改用戶 ID</button>
                             <button onClick={() => { handleReorderIndices(); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-amber-600/20 text-amber-300 transition-colors w-full text-left"><Icon name="list-ordered" className="w-4 h-4 flex-shrink-0" /> 編號重排</button><div className="h-px bg-white/10 my-1"></div><button onClick={() => { setShowClearConfirm(true); setShowToolsDropdown(false); }} className="flex items-center gap-2 px-4 py-2.5 text-xs font-black hover:bg-red-600/20 text-red-400 transition-colors w-full text-left"><Icon name="trash-2" className="w-4 h-4 flex-shrink-0" /> 清除全部</button></div>)}</div>)}
                     </div>
                 </header>
-            ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName]);
+            ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName, handleRepairData, handleReorderIndices, handleAddWatchOrder, handleRemoveWatchOrder, handleSortDrop]);
 
             const activityLogsUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
@@ -1240,7 +1273,7 @@
                         </>
                     )}
                 </div>
-            ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft]);
+            ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft, handleSaveMemberships]);
 
             const statsPanelUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] relative flex flex-col w-full lg:flex-1 flex-shrink-0 min-w-0">
@@ -1267,12 +1300,12 @@
                         </table>
                     </div>
                 </div>
-            ), [memberStats, statMode, activeCategoriesInUse, activeSourcesInUse, memberFilter, games.length]);
+            ), [memberStats, statMode, activeCategoriesInUse, activeSourcesInUse, memberFilter, games.length, handleExportData, handleImportData]);
 
             const toolbarUI = useMemo(() => (
                 <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border-y border-white/10 overflow-hidden shadow-xl">
                     {!isEditLocked && <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-4 md:py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號(如1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                     {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
                     <div className="px-4 md:px-6 flex items-center justify-end py-4 md:py-0 gap-3"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all whitespace-nowrap ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
                 </div>
@@ -1310,9 +1343,9 @@
                     <div className="fab-btn-container"><div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>{!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}<div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div><div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div></div>
                     {isModalOpen && (<div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => {setIsModalOpen(false); setEditingId(null);}}><div className="bg-[#0b0e14] border border-white/10 w-full max-w-[900px] my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1 bg-[#ffbae9]"></div><button onClick={() => {setIsModalOpen(false); setEditingId(null);}} className="absolute right-4 top-4 text-slate-600 hover:text-white transition-all z-10"><Icon name="x" className="w-5 h-5" /></button><div className="p-2 md:p-4 overflow-y-auto custom-scrollbar flex-1"><h3 className="text-[10px] md:text-[12px] font-black italic mb-2 md:mb-3 underline decoration-[#ffbae9]/30 decoration-2 uppercase tracking-tighter px-2">{editingId ? '修改內容' : '錄入內容'}</h3><form onSubmit={(e) => { e.preventDefault(); if (isNameDuplicate && !showDuplicateConfirm) { setShowDuplicateConfirm(true); } else { proceedSave(); } }} className="space-y-4 md:space-y-6 px-2"><div className="grid grid-cols-1 md:grid-cols-[repeat(14,minmax(0,1fr))] gap-4 md:gap-8"><div className="md:col-span-6 flex flex-col gap-5 items-start"><div className="flex flex-row items-center justify-center gap-6 w-full"><div className="flex flex-col gap-4 flex-shrink-0"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">編號</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-sm !min-h-[32px]" value={formData.order} onChange={e=>setFormData({...formData, order: e.target.value})} /></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1">年份</label><input type="text" className="modal-input-base w-[60px] text-center font-black p-1 text-[11px] !min-h-[32px]" value={formData.year} onChange={e=>setFormData({...formData, year: e.target.value})} /></div></div><div className="flex flex-col items-center"><div tabIndex="0" onClick={() => { setLastSelectedImgZone('cover'); if (isMobileDevice()) fileInputRef.current?.click(); }} className={`w-24 md:w-28 aspect-[3/4] bg-black/20 border border-white/10 rounded flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-[#ffbae9] transition-all shadow-xl outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'cover' ? 'border-[#ffbae9] ring-2 ring-[#ffbae9]/20' : ''}`}>{formData.cover ? <img src={formData.cover} className="w-full h-full object-contain" /> : <div className="text-center p-2 text-[10px] text-white/20 group-hover:text-[#ffbae9] font-black uppercase leading-relaxed">{isMobileDevice() ? "點擊上傳封面" : "貼上圖"}</div>}</div>{formData.cover && <button type="button" onClick={() => setIsCropping(true)} className="mt-2 text-[11px] font-black uppercase text-white/40 hover:text-[#ffbae9] flex items-center gap-1"><Icon name="scissors" className="w-3 h-3" /> 裁剪優化</button>}</div></div><div className="flex flex-col gap-4 w-full"><div className="grid grid-cols-2 gap-4"><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">狀態</label><select className="modal-input-base w-full text-[11px] font-black px-2 !min-h-[32px]" value={formData.airingStatus} onChange={e=>setFormData({...formData, airingStatus: e.target.value})}><option value="連載中">連載中</option><option value="已完結">已完結</option><option value="待播出">待播出</option></select><div className="flex flex-wrap gap-1 mt-1.5">{recentStatuses.map(s => <button key={s} type="button" onClick={() => setFormData({...formData, airingStatus: s})} className={`quick-fill-btn ${formData.airingStatus === s ? 'active' : ''}`}>{s}</button>)}</div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5">分類</label><select className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}><option value=""></option>{customCategories.filter(c => c !== "未分類").map(c => <option key={c} value={c}>{c}</option>)}</select><div className="flex flex-wrap gap-1 mt-1.5">{recentCategories.map(c => <button key={c} type="button" onClick={() => setFormData({...formData, category: c})} className={`quick-fill-btn ${formData.category === c ? 'active' : ''}`}>{c}</button>)}</div></div></div><div><label className="block text-[10px] font-black text-white/40 uppercase mb-1.5 tracking-tighter">來源設定</label><div className="flex flex-col gap-2"><div className="flex w-full gap-2 items-center"><div tabIndex="0" className={`source-icon-preview-box !w-8 !h-8 outline-none focus:ring-2 focus:ring-[#ffbae9]/40 ${lastSelectedImgZone === 'source' ? 'active' : ''}`} onClick={() => { setLastSelectedImgZone('source'); if (isMobileDevice()) fileInputRef.current?.click(); }}>{formData.sourceIcon ? <img src={formData.sourceIcon} /> : <Icon name="image" className="w-3 h-3 text-white/20" />}</div><div className="flex-1"><input type="text" className="modal-input-base w-full text-[11px] font-bold px-2 !min-h-[32px]" value={formData.source} onChange={e => { const v = e.target.value; const ex = customSources.find(s => s.name === v); setFormData({ ...formData, source: v, sourceIcon: ex ? ex.icon : formData.sourceIcon }); }} /></div></div><div className="flex flex-wrap gap-1.5 w-full mt-1">{sortedSourcesByRecent.map(s => <div key={s.name} className={`relative group source-fill-tag !p-1.5 !text-[9px] w-fit ${formData.source === s.name ? 'active' : ''}`} onClick={() => setFormData({...formData, source: s.name, sourceIcon: s.icon})}>{s.icon && <img src={s.icon} className="w-3 h-3 object-contain" />}<span className="truncate max-w-[80px]">{s.name}</span><button type="button" className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1 text-red-500 font-black text-[12px]" onClick={(e) => { e.stopPropagation(); setDeleteSourceTarget(s.name); }}>×</button></div>)}</div></div></div></div><input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e)=>{ if(e.target.files[0]) { const isCover = lastSelectedImgZone === 'cover'; const c = await compressImage(URL.createObjectURL(e.target.files[0]), isCover ? 800 : 100); if(isCover) { setFormData(p=>({...p, cover: c})); setRawImageData(c); } else { setFormData(p=>({...p, sourceIcon: c})); } } }} /></div><div className="md:col-span-8 border-l border-white/5 md:pl-8"><div className="space-y-2"><div><label className={`block text-[11px] font-black ${isNameDuplicate ? 'text-red-500' : 'text-[#ffbae9]/60'} uppercase mb-1`}>-名稱-</label><NameInputWithHighlight value={formData.name} onChange={(v) => setFormData({...formData, name: v})} games={games} editingId={editingId} isError={isNameDuplicate} placeholder="" /></div><div><label className="block text-[11px] font-black text-white/40 uppercase mb-1">-備註-</label><AutoResizeTextarea className="modal-input-base w-full font-black text-[11px]" value={formData.notes || ""} onChange={v => setFormData({...formData, notes: v})} placeholder="" required={false} /></div></div><div className="mt-4 grid grid-cols-2 gap-4"><ProgressInputField label="總集數" value={formData.totalEpisodes} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, totalEpisodes: v})} /><ProgressInputField label="更新至" value={formData.updatedEpisodes} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, updatedEpisodes: v})} /></div><div className="mt-4 flex flex-row gap-6 items-end"><div className="flex-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-更新星期-</label>{showTimeSettings ? <div className="flex flex-col gap-2"><div className="flex flex-row flex-nowrap gap-1 overflow-x-auto custom-scrollbar pb-1">{['一','二','三','四','五','六','日'].map(d => <button key={d} type="button" onClick={() => { const current = Array.isArray(formData.updateDay) ? formData.updateDay : []; const next = current.includes(d) ? current.filter(x => x !== d) : [...current, d]; setFormData({...formData, updateDay: next}); }} className={`watcher-tag !py-1 !px-2 !text-[9px] flex-shrink-0 ${Array.isArray(formData.updateDay) && formData.updateDay.includes(d) ? 'active' : ''}`}>{d}</button>)}</div></div> : <div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div><div className="flex-1"><label className="block text-[11px] font-black text-[#ffbae9]/80 uppercase mb-2">-時間-</label>{showTimeSettings ? (<TimeSelector value={formData.updateTime} onChange={(nt) => { setFormData({...formData, updateTime: nt}); if(!nt && (!formData.updateDay || formData.updateDay.length === 0)) setShowTimeSettings(false); }} />) : (<div className="plus-toggle-btn" onClick={() => setShowTimeSettings(true)}><Icon name="plus" className="w-4 h-4" /></div>)}</div></div><div className="mt-4 grid grid-cols-2 gap-4"><div className="col-span-1"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-誰在看-</label><div className="inline-flex flex-wrap gap-1.5 p-1.5 bg-black/30 border border-white/5 rounded min-h-[36px] w-fit max-w-full">{displayMembers.map(name => <div key={name} onClick={() => { const list = Array.isArray(formData.watchingBy) ? formData.watchingBy : []; const isSelected = list.includes(name); const newList = isSelected ? list.filter(n => n !== name) : [...list, name]; const newWP = { ...formData.watchedProgress }; if (!isSelected && !newWP[name]) newWP[name] = { ...emptyProgress }; setFormData({...formData, watchingBy: newList, watchedProgress: newWP}); }} className={`watcher-tag !py-1 !px-3 ${formData.watchingBy.includes(name) ? 'active' : ''}`}>{name}</div>)}</div></div><div className="space-y-4"><ProgressInputField label="已付費至" labelClass="text-yellow-400" value={formData.paidProgress} unitSuggestions={unitSuggestions} onChange={v=>setFormData({...formData, paidProgress: v})} /></div></div><div className="mt-4 grid grid-cols-1 md:grid-cols-10 gap-4 items-start"><div className="md:col-span-6 p-4 bg-cyan-400/5 border border-cyan-400/20 rounded space-y-4"><span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest">成員進度</span>{formData.watchingBy.map(name => <ProgressInputField key={name} label={`${name} 的進度`} labelStyle={{ color: nameColorMap[name] || '#22d3ee' }} value={formData.watchedProgress[name] || { ...emptyProgress }} unitSuggestions={unitSuggestions} onChange={v => setFormData({ ...formData, watchedProgress: { ...formData.watchedProgress, [name]: v } })} />)}</div><div className="md:col-span-4 space-y-4 md:pl-6"><label className="block text-[10px] font-black text-white/30 uppercase tracking-tighter mb-2">-更新日期-</label>{showManualUpdateInput ? <div className="flex items-center gap-1 bg-black/40 p-1 rounded border border-white/5 w-fit"><input className="bg-transparent outline-none w-[90px] font-black text-[11px] px-1 text-center" value={formData.manualUpdatedAt} onChange={e=>setFormData({...formData, manualUpdatedAt: e.target.value})} /><button type="button" onClick={() => setShowManualUpdateInput(false)} className="text-white/30 hover:text-red-400 p-0.5 rounded-full transition-colors"><Icon name="x" className="w-3.5 h-3.5" /></button></div> : <div className="plus-toggle-btn !w-full max-w-[120px]" onClick={() => setShowManualUpdateInput(true)}><Icon name="plus" className="w-4 h-4" /></div>}</div></div><div className="mt-4 w-full"><label className="block text-[11px] font-black text-white/40 uppercase mb-2">-連結-</label><input className="modal-input-base w-full font-mono text-[11px] text-cyan-500 pr-10 truncate" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} /></div><div className="pt-4 flex flex-col md:flex-row gap-2 md:gap-4 border-t border-white/5 mt-4"><button type="button" onClick={() => setIsModalOpen(false)} className="order-2 md:order-1 flex-1 py-3 bg-white/5 text-[11px] font-black rounded uppercase transition-all hover:bg-white/10">取消修改</button><button type="submit" disabled={isSaving} className={`order-1 md:order-2 flex-[2] py-3 font-black rounded shadow-lg uppercase text-[11px] transition-colors ${isSaving ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-[#ffbae9] text-[#3f5968] hover:bg-white'}`}>{isSaving ? '處理中...' : '確認提交'}</button></div></div></div></form></div></div></div>)}
                     {deleteSourceTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除來源？</h4><div className="flex gap-4"><button onClick={() => setDeleteSourceTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => { handleDeleteSource(deleteSourceTarget); setDeleteSourceTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
-                    {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
+                    {showDuplicateConfirm && (<div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4><p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p><div className="flex gap-4"><button onClick={() => setShowDuplicateConfirm(false)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">返回</button><button onClick={proceedSave} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">儲存</button></div></div></div>)}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
-                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
+                    {deleteGameTarget && (<div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4><p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p><div className="flex gap-4"><button onClick={() => setDeleteGameTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded-full uppercase">取消</button><button onClick={() => handleDeleteGame(deleteGameTarget.id)} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded-full uppercase">確定</button></div></div></div>)}
                     {showClearConfirm && (<div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"><div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center"><h4 className="text-red-500 font-black mb-4 uppercase">警告：清空全部</h4><div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 bg-white/5 text-[11px] font-black rounded">取消</button><button onClick={handleClearAllData} className="flex-1 py-2 bg-red-600 text-white text-[11px] font-black rounded">確定</button></div></div></div>)}
                 </div>
             );
