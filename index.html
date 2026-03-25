@@ -1375,39 +1375,78 @@
                 observer.observe(loadMoreSentinelRef.current); return () => observer.disconnect();
             }, []);
             
+            // 新增：客製化平滑滑動到最頂部 (安全動畫)
+            const handleScrollToTop = useCallback(() => {
+                if (isAutoScrollingRef.current) return;
+                isAutoScrollingRef.current = true;
+                
+                const scrollUp = () => {
+                    const curY = window.scrollY;
+                    if (curY > 5) {
+                        window.scrollTo(0, curY - Math.max(curY / 6, 30));
+                        requestAnimationFrame(scrollUp);
+                    } else {
+                        window.scrollTo(0, 0);
+                        isAutoScrollingRef.current = false;
+                    }
+                };
+                requestAnimationFrame(scrollUp);
+            }, []);
+
+            // 更新：客製化平滑滑動到底部 (安全動畫 + 分段加載)
             const handleScrollToBottom = useCallback(() => {
                 if (isAutoScrollingRef.current) return; 
                 const total = filteredGamesLengthRef.current;
                 
+                const animateScrollDown = (targetY, onComplete) => {
+                    const scrollDown = () => {
+                        const curY = window.scrollY;
+                        if (targetY - curY > 5) {
+                            window.scrollTo(0, curY + Math.max((targetY - curY) / 5, 40));
+                            requestAnimationFrame(scrollDown);
+                        } else {
+                            window.scrollTo(0, targetY);
+                            if (onComplete) onComplete();
+                        }
+                    };
+                    requestAnimationFrame(scrollDown);
+                };
+
                 if (!isMobileDevice() || displayLimit >= total) {
                     setDisplayLimit(total);
-                    setTimeout(() => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: isMobileDevice() ? 'auto' : 'smooth' }); }, 150);
+                    isAutoScrollingRef.current = true;
+                    setTimeout(() => { 
+                        animateScrollDown(document.documentElement.scrollHeight, () => {
+                            isAutoScrollingRef.current = false;
+                        });
+                    }, 50);
                     return;
                 }
 
-                // 手機版防崩潰機制：一鍵啟動「自動分段加載」，讓瀏覽器有時間渲染，避免 OOM 閃退
                 isAutoScrollingRef.current = true;
-                let current = displayLimit;
-                const chunkSize = 60; // 每次自動分段加載的數量
+                let currentLimit = displayLimit;
+                const chunkSize = 48; // 稍微縮小每段數量，確保動畫過程順暢不卡
 
-                const stepLoad = () => {
-                    current += chunkSize;
-                    if (current >= total) {
+                const stepLoadAndScroll = () => {
+                    currentLimit += chunkSize;
+                    if (currentLimit >= total) {
                         setDisplayLimit(total);
                         setTimeout(() => { 
-                            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }); 
-                            isAutoScrollingRef.current = false;
-                        }, 150);
+                            animateScrollDown(document.documentElement.scrollHeight, () => {
+                                isAutoScrollingRef.current = false;
+                            });
+                        }, 50);
                     } else {
-                        setDisplayLimit(current);
+                        setDisplayLimit(currentLimit);
                         setTimeout(() => {
-                            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
-                            setTimeout(stepLoad, 100); // 給予 GPU 渲染及記憶體釋放的喘息時間
-                        }, 20);
+                            animateScrollDown(document.documentElement.scrollHeight, () => {
+                                setTimeout(stepLoadAndScroll, 20); 
+                            });
+                        }, 50);
                     }
                 };
                 
-                stepLoad();
+                stepLoadAndScroll();
             }, [displayLimit]);
             
             const memberStats = useMemo(() => {
@@ -1767,7 +1806,7 @@
                     {deleteCategoryTarget && (<div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"><div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-6 md:p-10 rounded-sm text-center shadow-2xl"><Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" /><h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除分組？</h4><p className="text-sm text-slate-300 mb-8 font-bold">確定要移除分類 <span className="text-red-400">"{deleteCategoryTarget}"</span> 嗎？</p><div className="flex gap-4"><button onClick={() => setDeleteCategoryTarget(null)} className="flex-1 py-3 bg-white/5 text-[12px] font-black rounded uppercase">取消</button><button onClick={() => { handleDeleteCategory(deleteCategoryTarget); setDeleteCategoryTarget(null); }} className="flex-1 py-3 bg-red-600 text-white text-[12px] font-black rounded uppercase">確定刪除</button></div></div></div>)}
                     
                     <div className="fab-btn-container">
-                        <div className="fab-btn-sub" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><Icon name="chevron-up" className="w-6 h-6" /></div>
+                        <div className="fab-btn-sub" onClick={handleScrollToTop} title="直接到最頂"><Icon name="chevron-up" className="w-6 h-6" /></div>
                         {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
                         <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div>
                         <div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div>
