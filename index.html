@@ -1375,15 +1375,20 @@
                 observer.observe(loadMoreSentinelRef.current); return () => observer.disconnect();
             }, []);
             
-            // 新增：客製化平滑滑動到最頂部 (安全動畫)
+            // 更新：手機版瞬間回到頂部，桌面版保留平滑動畫
             const handleScrollToTop = useCallback(() => {
                 if (isAutoScrollingRef.current) return;
-                isAutoScrollingRef.current = true;
                 
+                if (isMobileDevice()) {
+                    window.scrollTo({ top: 0, behavior: 'auto' });
+                    return;
+                }
+
+                isAutoScrollingRef.current = true;
                 const scrollUp = () => {
                     const curY = window.scrollY;
                     if (curY > 5) {
-                        window.scrollTo(0, curY - Math.max(curY / 5, 60)); // 加快單次回滾速度，減少耗能
+                        window.scrollTo(0, curY - Math.max(curY / 5, 60));
                         requestAnimationFrame(scrollUp);
                     } else {
                         window.scrollTo(0, 0);
@@ -1393,19 +1398,26 @@
                 requestAnimationFrame(scrollUp);
             }, []);
 
-            // 更新：極致防崩潰客製化平滑滑動到底部 (修正到底無限下滑問題)
+            // 更新：手機版隱藏滑動過程，背景加載後「瞬間跳轉」到底部
             const handleScrollToBottom = useCallback(() => {
                 if (isAutoScrollingRef.current) return; 
                 const total = filteredGamesLengthRef.current;
                 
                 const animateScrollDown = (onComplete) => {
-                    let lastY = -1; // 記錄上一次的捲動位置
+                    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+                    
+                    if (isMobileDevice()) {
+                        // 手機版：瞬間跳轉，沒有任何滑動動畫
+                        window.scrollTo({ top: maxScroll, behavior: 'auto' });
+                        if (onComplete) onComplete();
+                        return;
+                    }
+
+                    let lastY = -1;
                     const scrollDown = () => {
-                        // 正確計算底部極限值：整頁高度 - 螢幕可視高度
                         const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
                         const curY = window.scrollY;
                         
-                        // 如果距離底部大於 5px 且畫面的確有在移動 (防止硬體四捨五入卡死)
                         if (maxScroll - curY > 5 && curY !== lastY) {
                             lastY = curY;
                             window.scrollTo(0, curY + Math.max((maxScroll - curY) / 5, 50));
@@ -1431,29 +1443,39 @@
 
                 isAutoScrollingRef.current = true;
                 let currentLimit = displayLimit;
-                const chunkSize = 36; // 調整：每次載入 36 筆
+                const chunkSize = 36;
+                
+                // 提示用戶正在加載，避免以為畫面卡住
+                showNotify("跳轉至底部...");
 
                 const stepLoadAndScroll = () => {
                     currentLimit += chunkSize;
                     if (currentLimit >= total) {
                         setDisplayLimit(total);
                         setTimeout(() => { 
+                            // 最終完全載入後，瞬間跳轉到底部
                             animateScrollDown(() => {
                                 isAutoScrollingRef.current = false;
                             });
-                        }, 100); // 排版緩衝 100 毫秒
+                        }, 100); 
                     } else {
                         setDisplayLimit(currentLimit);
                         setTimeout(() => {
-                            animateScrollDown(() => {
-                                setTimeout(stepLoadAndScroll, 100); // 滑動後暫停 100 毫秒以釋放記憶體
-                            });
-                        }, 100); // 排版緩衝 100 毫秒
+                            if (isMobileDevice()) {
+                                // 手機版：中途不進行捲動，只在背景安靜擴充卡片避免崩潰
+                                stepLoadAndScroll();
+                            } else {
+                                // 桌面版保留分段滑動
+                                animateScrollDown(() => {
+                                    setTimeout(stepLoadAndScroll, 100); 
+                                });
+                            }
+                        }, isMobileDevice() ? 40 : 100); // 40ms 給予 React 處理 DOM 渲染的喘息時間
                     }
                 };
                 
                 stepLoadAndScroll();
-            }, [displayLimit]);
+            }, [displayLimit, showNotify]);
             
             const memberStats = useMemo(() => {
                 const sm = {}; 
