@@ -1393,19 +1393,25 @@
                 requestAnimationFrame(scrollUp);
             }, []);
 
-            // 更新：極致防崩潰客製化平滑滑動到底部 (微量分段 + 長延遲加載)
+            // 更新：極致防崩潰客製化平滑滑動到底部 (修正到底無限下滑問題)
             const handleScrollToBottom = useCallback(() => {
                 if (isAutoScrollingRef.current) return; 
                 const total = filteredGamesLengthRef.current;
                 
-                const animateScrollDown = (targetY, onComplete) => {
+                const animateScrollDown = (onComplete) => {
+                    let lastY = -1; // 記錄上一次的捲動位置
                     const scrollDown = () => {
+                        // 正確計算底部極限值：整頁高度 - 螢幕可視高度
+                        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
                         const curY = window.scrollY;
-                        if (targetY - curY > 5) {
-                            window.scrollTo(0, curY + Math.max((targetY - curY) / 5, 50)); // 保持滑動順暢
+                        
+                        // 如果距離底部大於 5px 且畫面的確有在移動 (防止硬體四捨五入卡死)
+                        if (maxScroll - curY > 5 && curY !== lastY) {
+                            lastY = curY;
+                            window.scrollTo(0, curY + Math.max((maxScroll - curY) / 5, 50));
                             requestAnimationFrame(scrollDown);
                         } else {
-                            window.scrollTo(0, targetY);
+                            window.scrollTo(0, maxScroll);
                             if (onComplete) onComplete();
                         }
                     };
@@ -1416,7 +1422,7 @@
                     setDisplayLimit(total);
                     isAutoScrollingRef.current = true;
                     setTimeout(() => { 
-                        animateScrollDown(document.documentElement.scrollHeight, () => {
+                        animateScrollDown(() => {
                             isAutoScrollingRef.current = false;
                         });
                     }, 100);
@@ -1425,24 +1431,24 @@
 
                 isAutoScrollingRef.current = true;
                 let currentLimit = displayLimit;
-                const chunkSize = 16; // 大幅減少：每次只載入 16 筆，極致降低記憶體爆衝機率
+                const chunkSize = 36; // 調整：每次載入 36 筆
 
                 const stepLoadAndScroll = () => {
                     currentLimit += chunkSize;
                     if (currentLimit >= total) {
                         setDisplayLimit(total);
                         setTimeout(() => { 
-                            animateScrollDown(document.documentElement.scrollHeight, () => {
+                            animateScrollDown(() => {
                                 isAutoScrollingRef.current = false;
                             });
-                        }, 150); // 給予 React 更新 DOM 的時間
+                        }, 100); // 排版緩衝 100 毫秒
                     } else {
                         setDisplayLimit(currentLimit);
                         setTimeout(() => {
-                            animateScrollDown(document.documentElement.scrollHeight, () => {
-                                setTimeout(stepLoadAndScroll, 200); // 大幅拉長休息時間：滑動後暫停 200ms 讓 GPU 釋放記憶體
+                            animateScrollDown(() => {
+                                setTimeout(stepLoadAndScroll, 100); // 滑動後暫停 100 毫秒以釋放記憶體
                             });
-                        }, 150); // 狀態更新後暫停 150ms 讓圖片排版完成
+                        }, 100); // 排版緩衝 100 毫秒
                     }
                 };
                 
