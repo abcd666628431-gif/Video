@@ -786,6 +786,7 @@
             const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
+            const isAutoScrollingRef = useRef(false);
             
             const gamesRef = useRef(games);
             const customSourcesRef = useRef(customSources);
@@ -1375,9 +1376,39 @@
             }, []);
             
             const handleScrollToBottom = useCallback(() => {
-                setDisplayLimit(filteredGamesLengthRef.current);
-                setTimeout(() => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); }, 100);
-            }, []);
+                if (isAutoScrollingRef.current) return; 
+                const total = filteredGamesLengthRef.current;
+                
+                if (!isMobileDevice() || displayLimit >= total) {
+                    setDisplayLimit(total);
+                    setTimeout(() => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: isMobileDevice() ? 'auto' : 'smooth' }); }, 150);
+                    return;
+                }
+
+                // 手機版防崩潰機制：一鍵啟動「自動分段加載」，讓瀏覽器有時間渲染，避免 OOM 閃退
+                isAutoScrollingRef.current = true;
+                let current = displayLimit;
+                const chunkSize = 60; // 每次自動分段加載的數量
+
+                const stepLoad = () => {
+                    current += chunkSize;
+                    if (current >= total) {
+                        setDisplayLimit(total);
+                        setTimeout(() => { 
+                            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }); 
+                            isAutoScrollingRef.current = false;
+                        }, 150);
+                    } else {
+                        setDisplayLimit(current);
+                        setTimeout(() => {
+                            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+                            setTimeout(stepLoad, 100); // 給予 GPU 渲染及記憶體釋放的喘息時間
+                        }, 20);
+                    }
+                };
+                
+                stepLoad();
+            }, [displayLimit]);
             
             const memberStats = useMemo(() => {
                 const sm = {}; 
