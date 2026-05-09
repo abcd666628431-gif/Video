@@ -801,7 +801,8 @@
             useEffect(() => { userNameRef.current = userName; }, [userName]);
             
             const [isExpiryCollapsed, setIsExpiryCollapsed] = useState(false);
-            const [showAddMembershipModal, setShowAddMembershipModal] = useState(false);
+            const [isExpiredExpanded, setIsExpiredExpanded] = useState(false);
+            const [showAddMembershipModal, setShowAddMembershipModal] = useState(false);
             const [newMembershipName, setNewMembershipName] = useState("");
             const [newMembershipIcon, setNewMembershipIcon] = useState("");
             const [newMembershipTag, setNewMembershipTag] = useState("");
@@ -1726,76 +1727,108 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 ), [activityLogs, nameColorMap]);
 
             const membershipPanelUI = useMemo(() => (
-                <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[270px]'}`}>
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
-                    {isExpiryCollapsed ? (
-                        <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /></div>
-                    ) : (
-                        <>
-                            <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase">
-                                <div className="flex items-center"><Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限</div>
-                                <div className="flex items-center gap-1">
-                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => {
-                                        if (isEditingMemberships) { handleSaveMemberships(); } else {
-                                            const tempN = {}, tempI = {}, tempT = {}, tempD = {};
-                                            customMemberships.forEach((m, i) => { tempN[i] = m.name; tempI[i] = m.icon; tempT[i] = m.tag || ''; tempD[i] = m.expiryDate || ''; });
-                                            setTempMembershipNames(tempN); setTempMembershipIcons(tempI); setTempMembershipTags(tempT); setTempMembershipDates(tempD); setIsEditingMemberships(true);
-                                        }
-                                    }} title={isEditingMemberships ? "儲存修改" : "編輯"}>
-                                        <Icon name={isEditingMemberships ? "check" : "settings"} className={`w-4 h-4 transition-colors ${isEditingMemberships ? 'text-green-400 animate-pulse' : 'text-white/30 group-hover:text-cyan-400'}`} />
-                                    </div>
-                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { setNewMembershipName(""); setNewMembershipIcon(""); setShowAddMembershipModal(true); }} title="新增"><Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400" /></div>
-                                    <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起"><Icon name="chevron-left" className="w-4 h-4 text-white/30" /></div>
-                                </div>
-                            </div>
-                            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1" style={{ gap: '0.5px' }}>
-                                {sortedMemberships.map(m => {
-                                    const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
-                                    const sourceFallback = customSources.find(s => s.name === m.name);
-                                    let displayIcon = m.icon || sourceFallback?.icon;
-                                    if (isEditingMemberships && tempMembershipIcons[m._originalIndex] !== undefined) { displayIcon = tempMembershipIcons[m._originalIndex]; }
-                                    const currentRenamingName = tempMembershipNames[m._originalIndex] !== undefined ? tempMembershipNames[m._originalIndex] : m.name;
-                                    if (isEditingMemberships) {
-                                        return (
-                                            <div key={m._originalIndex} className="flex justify-between items-center bg-black/40 py-0.5 px-1.5 rounded border border-cyan-400/30 my-[1px] shadow-sm">
-                                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                                    <div className="relative">
-                                                        <div className="w-4 h-4 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer overflow-hidden flex-shrink-0 group/icon" onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} title="點擊貼上圖標">
-                                                            {displayIcon ? <img src={displayIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
-                                                        </div>
-                                                        <input type="file" id={`icon-upload-${m._originalIndex}`} className="hidden" accept="image/*" onChange={(e) => handleIconFileSelect(e, m._originalIndex)} />
-                                                    </div>
-                                                    <div className="flex items-center gap-1 flex-1 min-w-0">
-                                                        <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full min-w-0 font-black" value={currentRenamingName} onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} data-membership-index={m._originalIndex} placeholder="名稱" />
-                                                        <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[36px] flex-shrink-0 font-bold" value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} placeholder="標籤" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center flex-shrink-0 ml-1.5 gap-1.5">
-                                                    <AutoJumpDateInput value={tempMembershipDates[m._originalIndex] !== undefined ? tempMembershipDates[m._originalIndex] : (m.expiryDate || '')} onChange={(val) => setTempMembershipDates({ ...tempMembershipDates, [m._originalIndex]: val })} />
-                                                    <Icon name="trash-2" className="w-3.5 h-3.5 text-red-400/50 hover:text-red-400 flex-shrink-0" onClick={() => { setDeleteMembershipTarget({ index: m._originalIndex, name: m.name }); }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-                                    return (
-                                        <div key={m._originalIndex} className="flex justify-between items-center bg-black/20 py-0.5 px-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
-                                            <div className="flex items-center gap-1.5 overflow-hidden flex-1">
-                                                {displayIcon ? <img src={displayIcon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
-                                                <div className="flex items-center gap-1.5 truncate flex-1"><span className="truncate font-black text-white/90 text-[11px]">{m.name}</span>{m.tag && <span className="flex-shrink-0 border border-white/10 bg-white/5 text-white/50 px-1.5 py-[1px] rounded-[3px] text-[9px] font-black">{m.tag}</span>}</div>
-                                            </div>
-                                            <div className="flex items-center flex-shrink-0 ml-2">
-                                                <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
-                                                    {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日" : `剩 ${daysLeft} 天`}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
-                </div>
-            ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft, handleSaveMemberships]);
+                <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[270px]'}`}>
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400"></div>
+                    {isExpiryCollapsed ? (
+                        <div className="w-full h-full flex flex-row lg:flex-col items-center justify-center cursor-pointer group gap-2" onClick={() => setIsExpiryCollapsed(false)} title="展開"><Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" /></div>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase">
+                                <div className="flex items-center"><Icon name="clock" className="w-4 h-4 text-cyan-400 mr-2" /> 會員時限</div>
+                                <div className="flex items-center gap-1">
+                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => {
+                                        if (isEditingMemberships) { handleSaveMemberships(); } else {
+                                            const tempN = {}, tempI = {}, tempT = {}, tempD = {};
+                                            customMemberships.forEach((m, i) => { tempN[i] = m.name; tempI[i] = m.icon; tempT[i] = m.tag || ''; tempD[i] = m.expiryDate || ''; });
+                                            setTempMembershipNames(tempN); setTempMembershipIcons(tempI); setTempMembershipTags(tempT); setTempMembershipDates(tempD); setIsEditingMemberships(true);
+                                        }
+                                    }} title={isEditingMemberships ? "儲存修改" : "編輯"}>
+                                        <Icon name={isEditingMemberships ? "check" : "settings"} className={`w-4 h-4 transition-colors ${isEditingMemberships ? 'text-green-400 animate-pulse' : 'text-white/30 group-hover:text-cyan-400'}`} />
+                                    </div>
+                                    <div className="p-0.5 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => { setNewMembershipName(""); setNewMembershipIcon(""); setShowAddMembershipModal(true); }} title="新增"><Icon name="plus" className="w-4 h-4 text-white/30 group-hover:text-cyan-400" /></div>
+                                    <div className="p-0.5 -mr-1 hover:bg-white/10 rounded cursor-pointer transition-colors group" onClick={() => setIsExpiryCollapsed(true)} title="收起"><Icon name="chevron-left" className="w-4 h-4 text-white/30" /></div>
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1" style={{ gap: '0.5px' }}>
+                                {(() => {
+                                    // 計算有多少個已過期
+                                    const expiredCount = sortedMemberships.filter(m => {
+                                        const d = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
+                                        return d !== null && d < 0;
+                                    }).length;
+
+                                    return (
+                                        <>
+                                            {/* 頂部展開按鈕 (只有在有過期項目的時候才顯示) */}
+                                            {expiredCount > 0 && (
+                                                <div 
+                                                    className="flex justify-center items-center py-1 mb-1 cursor-pointer bg-white/5 hover:bg-white/10 rounded transition-colors"
+                                                    onClick={() => setIsExpiredExpanded(!isExpiredExpanded)}
+                                                >
+                                                    <span className="text-[10px] font-black text-red-400 tracking-wider">
+                                                        {isExpiredExpanded ? "收起已過期" : `顯示已過期 (${expiredCount})`}
+                                                    </span>
+                                                    <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5 text-red-400 ml-1" />
+                                                </div>
+                                            )}
+
+                                            {/* 輸出列表 */}
+                                            {sortedMemberships.map(m => {
+                                                const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
+                                                const isExpired = daysLeft !== null && daysLeft < 0;
+                                                
+                                                // 如果已過期且目前沒有展開，就不渲染
+                                                if (isExpired && !isExpiredExpanded) return null;
+
+                                                const sourceFallback = customSources.find(s => s.name === m.name);
+                                                let displayIcon = m.icon || sourceFallback?.icon;
+                                                if (isEditingMemberships && tempMembershipIcons[m._originalIndex] !== undefined) { displayIcon = tempMembershipIcons[m._originalIndex]; }
+                                                const currentRenamingName = tempMembershipNames[m._originalIndex] !== undefined ? tempMembershipNames[m._originalIndex] : m.name;
+                                                
+                                                if (isEditingMemberships) {
+                                                    return (
+                                                        <div key={m._originalIndex} className="flex justify-between items-center bg-black/40 py-0.5 px-1.5 rounded border border-cyan-400/30 my-[1px] shadow-sm">
+                                                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                                <div className="relative">
+                                                                    <div className="w-4 h-4 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer overflow-hidden flex-shrink-0 group/icon" onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} title="點擊貼上圖標">
+                                                                        {displayIcon ? <img src={displayIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
+                                                                    </div>
+                                                                    <input type="file" id={`icon-upload-${m._originalIndex}`} className="hidden" accept="image/*" onChange={(e) => handleIconFileSelect(e, m._originalIndex)} />
+                                                                </div>
+                                                                <div className="flex items-center gap-1 flex-1 min-w-0">
+                                                                    <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full min-w-0 font-black" value={currentRenamingName} onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} data-membership-index={m._originalIndex} placeholder="名稱" />
+                                                                    <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[36px] flex-shrink-0 font-bold" value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} placeholder="標籤" />
+                                                                </div>
+                                                        </div>
+                                                        <div className="flex items-center flex-shrink-0 ml-1.5 gap-1.5">
+                                                            <AutoJumpDateInput value={tempMembershipDates[m._originalIndex] !== undefined ? tempMembershipDates[m._originalIndex] : (m.expiryDate || '')} onChange={(val) => setTempMembershipDates({ ...tempMembershipDates, [m._originalIndex]: val })} />
+                                                            <Icon name="trash-2" className="w-3.5 h-3.5 text-red-400/50 hover:text-red-400 flex-shrink-0" onClick={() => { setDeleteMembershipTarget({ index: m._originalIndex, name: m.name }); }} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div key={m._originalIndex} className="flex justify-between items-center bg-black/20 py-0.5 px-1.5 rounded border border-white/5 group hover:border-white/10 transition-colors">
+                                                    <div className="flex items-center gap-1.5 overflow-hidden flex-1">
+                                                        {displayIcon ? <img src={displayIcon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
+                                                        <div className="flex items-center gap-1.5 truncate flex-1"><span className="truncate font-black text-white/90 text-[11px]">{m.name}</span>{m.tag && <span className="flex-shrink-0 border border-white/10 bg-white/5 text-white/50 px-1.5 py-[1px] rounded-[3px] text-[9px] font-black">{m.tag}</span>}</div>
+                                                    </div>
+                                                    <div className="flex items-center flex-shrink-0 ml-2">
+                                                        <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
+                                                            {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日" : `剩 ${daysLeft} 天`}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </>
+                )}
+            </div>
+        ), [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft, handleSaveMemberships, isExpiredExpanded, customSources]);
 
             const statsPanelUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] relative flex flex-col w-full lg:flex-1 flex-shrink-0 min-w-0">
