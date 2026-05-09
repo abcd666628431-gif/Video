@@ -924,12 +924,19 @@
                 });
             }, [customMemberships, calculateDaysLeft]);
             
-            const logActivity = useCallback(async (action, gameName, gameOrder) => { 
-                if(!user) return; 
-                try { 
-                    await addDoc(getPublicCol('activity_logs'), { userName: userNameRef.current, action, gameName, gameOrder: gameOrder || '', timestamp: serverTimestamp() }); 
-                } catch(e) {} 
-            }, [user]);
+            const logActivity = useCallback(async (action, gameName, gameOrder, extraDetail = "") => { 
+    if(!user) return; 
+    try { 
+        await addDoc(getPublicCol('activity_logs'), { 
+            userName: userNameRef.current, 
+            action, 
+            gameName, 
+            gameOrder: gameOrder || '', 
+            extraDetail, // 新增這個欄位
+            timestamp: serverTimestamp() 
+        }); 
+    } catch(e) {} 
+}, [user]);
             
             useEffect(() => {
                 if (!user) return;
@@ -1126,14 +1133,46 @@
                         } 
                     }
                     const finalData = sanitizePayload(rawPayload);
-                    if(editingId) { 
-                        await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
-                        logActivity("修改", finalData.name, to); 
-                    } else { 
-                        await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
-                        logActivity("錄入", finalData.name, to); 
-                    }
-                    showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
+
+// ========== 新增：對比觀看進度變化 ==========
+let extraDetail = "";
+if (editingId) {
+    const existingGame = currentGames.find(g => g.id === editingId);
+    if (existingGame) {
+        const oldProg = existingGame.watchedProgress || {};
+        const newProg = finalData.watchedProgress || {};
+        let progressChanges = [];
+        
+        // 抓出所有有進度的成員來對比
+        const allWatchers = new Set([...Object.keys(oldProg), ...Object.keys(newProg)]);
+        allWatchers.forEach(member => {
+            const oldV1 = oldProg[member]?.v1 || '';
+            const newV1 = newProg[member]?.v1 || '';
+            
+            // 若進度數值有變動才記錄
+            if (oldV1 !== newV1 && newV1 !== '') {
+                const oldStr = oldV1 ? formatProgressText(oldProg[member]) : `0${oldProg[member]?.u1 || '集'}`;
+                const newStr = formatProgressText(newProg[member]);
+                progressChanges.push(`${oldStr}>${newStr}`);
+            }
+        });
+        
+        if (progressChanges.length > 0) {
+            extraDetail = `觀看進度 ${progressChanges.join(', ')}`;
+        }
+    }
+}
+// ========== 新增結束 ==========
+
+// 這裡保留原有的儲存邏輯，只在修改的 logActivity 中加入了 extraDetail
+if(editingId) { 
+    await setDoc(doc(getPublicCol('games'), editingId), finalData, { merge: true }); 
+    logActivity("修改", finalData.name, to, extraDetail); // <--- 這裡多傳了一個 extraDetail
+} else { 
+    await addDoc(getPublicCol('games'), { ...finalData, createdAt: serverTimestamp() }); 
+    logActivity("錄入", finalData.name, to); 
+}
+showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 } catch(e) { 
                     showNotify(`操作失敗：${e.message}`); 
                 } finally { 
@@ -1661,11 +1700,30 @@
             ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName, handleRepairData, handleReorderIndices, handleAddWatchOrder, handleRemoveWatchOrder, handleSortDrop]);
 
             const activityLogsUI = useMemo(() => (
-                <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">{activityLogs.map(l => (<div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center"><span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> {l.action === "系統" ? <span className="font-black text-green-400">{l.gameName}</span> : <><span className="mr-1">{l.action}</span> <span className="font-black">{l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"</span></>}</div>))}</div>
+    <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
+        <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+            {activityLogs.map(l => (
+                <div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center">
+                    <span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
+                    <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                    {l.action === "系統" ? (
+                        <span className="font-black text-green-400">{l.gameName}</span> 
+                    ) : (
+                        <>
+                            <span className="mr-1">{l.action}</span> 
+                            <span className="font-black">
+                                {l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"
+                            </span>
+                            {/* 新增這行：如果有進度變更紀錄，就顯示出來 */}
+                            {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5">{l.extraDetail}</span>}
+                        </>
+                    )}
                 </div>
-            ), [activityLogs, nameColorMap]);
+            ))}
+        </div>
+    </div>
+), [activityLogs, nameColorMap]);
 
             const membershipPanelUI = useMemo(() => (
                 <div className={`dashboard-panel overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out flex-shrink-0 ${isExpiryCollapsed ? '!p-2 h-[48px] lg:h-[220px] w-full lg:w-[44px]' : 'w-full h-[220px] lg:w-[270px]'}`}>
