@@ -53,7 +53,18 @@
         .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
 
-        .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 0.5rem; padding: 0; list-style: none; }
+       .component-view ul { 
+            display: grid; 
+            grid-template-columns: repeat(1, minmax(0, 1fr)); 
+            gap: 0.5rem; 
+            padding: 0; 
+            list-style: none;
+            
+            /* --- 新增這三行 --- */
+            contain: content;           /* 核心優化：限制渲染邊界，不影響外部佈局 */
+            perspective: 1000px;        /* 輔助 3D 硬體加速 */
+            transform-style: preserve-3d; 
+        }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(400px, 1fr)); } }
         .component-view li { 
             background: rgba(0, 0, 0, 0.2); 
@@ -1516,7 +1527,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 if (!loadMoreSentinelRef.current) return;
                 const observer = new IntersectionObserver((entries) => {
                     if (entries[0].isIntersecting) { setDisplayLimit(prev => (prev > filteredGamesLengthRef.current) ? prev : prev + CHUNK_SIZE); }
-                }, { rootMargin: '400px' });
+                }, { rootMargin: '1000px' });
                 observer.observe(loadMoreSentinelRef.current); return () => observer.disconnect();
             }, []);
             
