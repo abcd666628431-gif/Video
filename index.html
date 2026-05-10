@@ -1419,8 +1419,17 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             
             const handleDeleteGame = async (id) => { 
                 if(!user) return; 
+                // 在刪除前先抓取該筆資料的名稱與編號
+                const target = gamesRef.current.find(g => g.id === id);
                 setDeleteGameTarget(null); 
-                try { await deleteDoc(doc(getPublicCol('games'), id)); showNotify("已刪除"); } catch (e) {} 
+                try { 
+                    await deleteDoc(doc(getPublicCol('games'), id)); 
+                    showNotify("已刪除"); 
+                    if (target) {
+                        // 寫入移除日誌
+                        logActivity("移除", target.name, target.order);
+                    }
+                } catch (e) {} 
             };
             
             const handleDeleteSource = async (sn) => { 
@@ -1434,8 +1443,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 setShowClearConfirm(false); 
                 try { 
                     const s = await getDocs(getPublicCol('games')); 
+                    const count = s.size; // 獲取被刪除的總筆數
                     await Promise.all(s.docs.map(d => deleteDoc(d.ref))); 
                     showNotify("已清空"); 
+                    // 寫入系統日誌
+                    logActivity("系統", `執行清空全庫操作 (共 ${count} 筆)`, "");
                 } catch(e) {} 
             };
             
