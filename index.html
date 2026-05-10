@@ -12,6 +12,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
     <style>
+        /* 當 body 帶有 scrolling 類名時，禁止所有卡片的滑鼠事件 */
+body.scrolling .component-view li {
+    pointer-events: none;
+}
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { 
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
@@ -877,7 +881,31 @@ const formatBracketTitle = (text) => {
 
             useEffect(() => {
                 const hasOpenModal = isModalOpen || showAddCategoryModal || showAddMembershipModal || isCropping || showEditUserModal || deleteGameTarget || deleteMembershipTarget || deleteCategoryTarget || deleteSourceTarget || showClearConfirm || showDuplicateConfirm;
-                
+                // --- 新增：捲動時禁用 Hover 以提升效能 ---
+            useEffect(() => {
+                let timer;
+                const handleScroll = () => {
+                    // 1. 只要一捲動，就給 body 加上 'scrolling' 標籤
+                    if (!document.body.classList.contains('scrolling')) {
+                        document.body.classList.add('scrolling');
+                    }
+                    
+                    // 2. 清除舊的計時器
+                    clearTimeout(timer);
+                    
+                    // 3. 設定新計時器：停止捲動 150 毫秒後，移除標籤恢復 Hover
+                    timer = setTimeout(() => {
+                        document.body.classList.remove('scrolling');
+                    }, 150);
+                };
+
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                return () => {
+                    window.removeEventListener('scroll', handleScroll);
+                    clearTimeout(timer);
+                };
+            }, []);
+            // --- 新增結束 ---
                 if (hasOpenModal) {
                     // 1. 精準計算當前使用者的滾動條寬度
                     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
