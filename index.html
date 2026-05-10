@@ -350,7 +350,15 @@
                 <path d="M20.132 10.496C20.259 10.153 20.323 9.981 20.385 9.901C20.648 9.562 21.16 9.562 21.423 9.901C21.485 9.981 21.549 10.153 21.676 10.496C22.384 12.408 23.891 13.916 25.803 14.624C26.147 14.751 26.319 14.814 26.399 14.877C26.737 15.14 26.737 15.651 26.399 15.915C26.319 15.977 26.147 16.041 25.803 16.168C23.891 16.875 22.384 18.383 21.676 20.295C21.549 20.639 21.485 20.81 21.423 20.891C21.16 21.229 20.648 21.229 20.385 20.891C20.323 20.81 20.259 20.639 20.132 20.295C19.424 18.383 17.917 16.875 16.005 16.168C15.661 16.041 15.489 15.977 15.409 15.915C15.071 15.651 15.071 15.14 15.409 14.877C15.489 14.814 15.661 14.751 16.005 14.624C17.917 13.916 19.424 12.408 20.132 10.496z" fill="#FDDE80"></path>
             </svg>
         );
-
+const formatBracketTitle = (text) => {
+                if (!text) return "";
+                const trimmed = text.replace(/\s*【\s*/g, '【').replace(/\s*】\s*/g, '】');
+                return trimmed.split(/(【|】)/).map((part, i) => {
+                    if (part === '【') return <span key={i} className="inline-block -ml-[0.25em]">【</span>;
+                    if (part === '】') return <span key={i} className="inline-block -mr-[0.25em]">】</span>;
+                    return part;
+                });
+            };
         const GameCard = memo(({ g, onOpenEdit, isEditLocked, onDelete, nameColorMap, allSources, className }) => {
             const [isNotesExpanded, setIsNotesExpanded] = useState(false);
             const addedByColor = nameColorMap?.[g.addedBy] || '#ffffff';
@@ -387,8 +395,8 @@
                         </div>
                         <div className="title-container">
                             <div className="title-link" title={g.name} onClick={(e) => { if (g.url) { e.stopPropagation(); window.open(g.url, '_blank'); } }}>
-                                <span className="id-label">{g.order || 0}</span>{g.name}
-                            </div> 
+    <span className="id-label">{g.order || 0}</span>{formatBracketTitle(g.name)}
+</div> 
                             <div 
                                 className={`notes-section text-[13px] text-slate-400 mt-0.5 font-bold cursor-pointer transition-all ${isNotesExpanded ? 'break-words whitespace-pre-wrap' : 'line-clamp-1 h-5 hover:text-slate-300'}`}
                                 onClick={(e) => { e.stopPropagation(); setIsNotesExpanded(!isNotesExpanded); }}
@@ -1700,44 +1708,26 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 </header>
             ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName, handleRepairData, handleReorderIndices, handleAddWatchOrder, handleRemoveWatchOrder, handleSortDrop]);
 
-            const activityLogsUI = useMemo(() => {
-                // 專門處理【】括號空白的小工具
-                const formatTitle = (text) => {
-                    if (!text) return "";
-                    // 1. 清除使用者輸入時不小心多打的真實空白
-                    const trimmed = text.replace(/\s*【\s*/g, '【').replace(/\s*】\s*/g, '】');
-                    
-                    // 2. 切割字串，精準消除全形符號預設的單邊留白
-                    return trimmed.split(/(【|】)/).map((part, i) => {
-                        // 消除 【 "左邊" 的預設空白
-                        if (part === '【') return <span key={i} className="inline-block -ml-[0.35em]">【</span>;
-                        // 消除 】 "右邊" 的預設空白
-                        if (part === '】') return <span key={i} className="inline-block -mr-[0.35em]">】</span>;
-                        return part;
-                    });
-                };
-
-                return (
-                    <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[40%] flex-shrink-0">
-                        <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
-                            {activityLogs.map(l => (
-                                <div key={l.id} className="border-b border-white/5 py-1 flex items-center w-full group transition-all">
-                                    <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
-                                    <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
-                                    {l.action === "系統" ? (
-                                        <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all pr-2" title={l.gameName}>{formatTitle(l.gameName)}</span> 
-                                    ) : (
-                                        <>
-                                            <span className="mr-0.5 flex-shrink-0 text-[10.5px] opacity-80">{l.action}</span><span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all" title={l.gameName}>{l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}{formatTitle(l.gameName)}</span>{l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
-                                        </>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+            const activityLogsUI = useMemo(() => (
+                <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[40%] flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+                        {activityLogs.map(l => (
+                            <div key={l.id} className="border-b border-white/5 py-1 flex items-center w-full group transition-all">
+                                <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
+                                <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                                {l.action === "系統" ? (
+                                    <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all pr-2" title={l.gameName}>{formatBracketTitle(l.gameName)}</span> 
+                                ) : (
+                                    <>
+                                        <span className="mr-0.5 flex-shrink-0 text-[10.5px] opacity-80">{l.action}</span><span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all" title={l.gameName}>{l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}{formatBracketTitle(l.gameName)}</span>{l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
+                                    </>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                );
-            }, [activityLogs, nameColorMap]);
+                </div>
+            ), [activityLogs, nameColorMap]);
             const membershipPanelUI = useMemo(() => {
                 // 計算已過期的數量
                 const expiredCount = sortedMemberships.filter(m => {
