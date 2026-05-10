@@ -1705,24 +1705,23 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
                         {activityLogs.map(l => (
-                            // 加上 group 讓這整行可以偵測滑鼠 Hover，並改用 items-start 讓展開時排版不跑掉
-                            <div key={l.id} className="border-b border-white/5 pb-1 pt-0.5 flex items-start w-full group transition-all">
-                                {/* 移除 [] 符號，並稍微調整垂直對齊 */}
-                                <span className="text-white/30 text-[10px] mr-1.5 mt-[2px] flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
+                            // 這裡將 items-start 改回 items-center，確保整行文字垂直置中
+                            <div key={l.id} className="border-b border-white/5 pb-1 pt-0.5 flex items-center w-full group transition-all">
+                                {/* 移除了手動加的 mt-[2px] */}
+                                <span className="text-white/30 text-[10px] mr-1.5 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
                                 <span className="font-bold mr-1.5 flex-shrink-0" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
                                 {l.action === "系統" ? (
-                                    <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all mt-[1px] leading-snug">{l.gameName}</span> 
+                                    // 移除了手動加的 mt-[1px]
+                                    <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all leading-snug" title={l.gameName}>{l.gameName}</span> 
                                 ) : (
                                     <>
                                         <span className="mr-1.5 flex-shrink-0">{l.action}</span> 
-                                        {/* 1. 字體縮小為 11.5px 
-                                            2. 移除 flex-1 避免推開進度，改用 shrink 剛好包覆
-                                            3. 加上 group-hover 系列屬性，讓滑鼠移過去時自動破除省略號並往下展開 */}
-                                        <span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all mt-[1px] leading-snug">
+                                        {/* 移除了手動加的 mt-[1px] */}
+                                        <span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all leading-snug" title={l.gameName}>
                                             {l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}{l.gameName}
                                         </span>
-                                        {/* 因為標題不再霸佔空間，現在這裡會緊緊貼在標題後面了！ */}
-                                        {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5 flex-shrink-0 mt-[1px]">{l.extraDetail}</span>}
+                                        {/* 移除了手動加的 mt-[1px] */}
+                                        {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5 flex-shrink-0">{l.extraDetail}</span>}
                                     </>
                                 )}
                             </div>
