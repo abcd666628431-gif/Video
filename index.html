@@ -381,10 +381,9 @@ body.scrolling .component-view li {
         const TitleIcon = () => (
             <svg className="w-14 h-14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.741 28.343L28.255 28.343C29.448 28.343 30.415 27.376 30.415 26.183L30.415 9.51C30.415 8.318 29.448 7.35 28.255 7.35L7.741 7.35C6.548 7.35 5.581 8.318 5.581 9.51L5.581 26.183C5.581 27.376 6.548 28.343 7.741 28.343z" fill="#9796ED"></path>
-                {/* 下面這 6 行的座標，我已經把引起崩潰的隱形 L 剔除了！ */}
                 <path d="M8.238 10.727C8.238 11.323 8.721 11.807 9.318 11.807L11.308 11.807C11.905 11.807 12.388 11.323 12.388 10.727C12.388 10.13 11.905 9.647 11.308 9.647L9.318 9.647C8.721 9.647 8.238 10.13 8.238 10.727z" fill="#6D69E4"></path>
                 <path d="M16.035 10.727C16.035 11.323 16.518 11.807 17.115 11.807L19.105 11.807C19.701 11.807 20.185 11.323 20.185 10.727C20.185 10.13 19.701 9.647 19.105 9.647L17.115 9.647C16.518 9.647 16.035 10.13 16.035 10.727z" fill="#6D69E4"></path>
-                <path d="M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 24.911 9.647C24.315 9.647 23.831 10.13 23.831 10.727z" fill="#6D69E4"></path>
+                <path d="M23.831 10.727C23.831 11.323 24.315 11.807 24.911 11.807L26.901 11.807C27.498 11.807 27.981 11.323 27.981 10.727C27.981 10.13 27.498 9.647 24.911 9.647L23.831 9.647C23.831 9.647 23.831 10.13 23.831 10.727z" fill="#6D69E4"></path>
                 <path d="M8.238 25.721C8.238 26.318 8.721 26.801 9.318 26.801L11.308 26.801C11.905 26.801 12.388 26.318 12.388 25.721C12.388 25.125 11.905 24.641 11.308 24.641L9.318 24.641C8.721 24.641 8.238 25.125 8.238 25.721z" fill="#6D69E4"></path>
                 <path d="M16.035 25.721C16.035 26.318 16.518 26.801 17.115 26.801L19.105 26.801C19.701 26.801 20.185 25.721C20.185 25.125 19.701 24.641 19.105 24.641L17.115 24.641C16.518 24.641 16.035 25.125 16.035 25.721z" fill="#6D69E4"></path>
                 <path d="M23.831 25.721C23.831 26.318 24.315 26.801 24.911 26.801L26.901 26.801C27.498 26.801 27.981 26.318 27.981 25.721C27.981 25.125 27.498 24.641 26.901 24.641L24.911 24.641C24.315 24.641 23.831 25.125 23.831 25.721z" fill="#6D69E4"></path>
@@ -932,7 +931,26 @@ const formatBracketTitle = (text) => {
                     const fab = document.querySelector('.fab-btn-container');
                     if (fab) fab.style.transform = '';
                 };
-            }, [isModalOpen, showAddCategoryModal, showAddMembershipModal, isCropping, showEditUserModal, deleteGameTarget, deleteMembershipTarget, deleteCategoryTarget, deleteSourceTarget, showClearConfirm, showDuplicateConfirm]);
+           }, [isModalOpen, showAddCategoryModal, showAddMembershipModal, isCropping, showEditUserModal, deleteGameTarget, deleteMembershipTarget, deleteCategoryTarget, deleteSourceTarget, showClearConfirm, showDuplicateConfirm]);
+
+            // --- 就在這裡插入新的優化邏輯 ---
+            useEffect(() => {
+                let timer;
+                const handleScroll = () => {
+                    if (!document.body.classList.contains('scrolling')) {
+                        document.body.classList.add('scrolling');
+                    }
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        document.body.classList.remove('scrolling');
+                    }, 150);
+                };
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                return () => {
+                    window.removeEventListener('scroll', handleScroll);
+                    clearTimeout(timer);
+                };
+            }, []);
 
             const handleIconFileSelect = async (e, membershipIndex) => {
                 if(e.target.files[0]) {
