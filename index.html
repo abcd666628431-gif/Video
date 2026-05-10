@@ -1767,18 +1767,24 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 
                                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1 space-y-0.5">
                                     {/* 頂部展開按鈕 */}
-                                    {!isEditingMemberships && expiredCount > 0 && (
-                                        <div 
-                                            className="flex items-center justify-center py-1 mb-0.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded cursor-pointer transition-colors flex-shrink-0"
-                                            onClick={() => setIsExpiredExpanded(!isExpiredExpanded)}
-                                        >
-                                            <span className="text-[10px] font-black text-red-400 tracking-wider">
-                                                {isExpiredExpanded ? "收起已過期" : `顯示已過期 (${expiredCount})`}
-                                            </span>
-                                            <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5 text-red-400 ml-1 flex-shrink-0" />
-                                        </div>
-                                    )}
-
+{!isEditingMemberships && expiredCount > 0 && (
+    <div 
+        className="flex items-center w-full py-1 mb-1 cursor-pointer group flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+        onClick={() => setIsExpiredExpanded(!isExpiredExpanded)}
+        title={isExpiredExpanded ? "收起已過期" : `有 ${expiredCount} 個已過期項目 (點擊展開)`}
+    >
+        {/* 左邊的線條 */}
+        <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/60 transition-colors"></div>
+        
+        {/* 中間的下拉/收起符號 */}
+        <div className="px-2 text-red-500/60 group-hover:text-red-400 transition-colors">
+            <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5" />
+        </div>
+        
+        {/* 右邊的線條 */}
+        <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/60 transition-colors"></div>
+    </div>
+)}
                                     {/* 輸出列表 */}
                                     {sortedMemberships.map(m => {
                                         const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
