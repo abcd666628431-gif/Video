@@ -1112,7 +1112,10 @@ const formatBracketTitle = (text) => {
                             if(item) { chain.push(item); check++; } else break; 
                         }
                         chain.reverse(); 
-                        await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: item.parsedOrder + 1 }, { merge: true })));
+                        await Promise.all(chain.map(item => setDoc(doc(getPublicCol('games'), item.id), { order: (item.parsedOrder + 1).toString() }, { merge: true })));
+                        
+                        // ===== 新增：記錄自動順延的系統操作 =====
+                        logActivity("系統", `因新編號 [${to}] 插隊，自動順延了 ${chain.length} 筆檔案`, "");
                     }
                     if(formData.source.trim()) { 
                         let sources = [...customSourcesRef.current]; 
@@ -1192,7 +1195,14 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 
             const handleUpdateWatchOrder = async (id, val) => { 
                 if(!user) return; 
-                try { await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); } catch(e) {} 
+                try { 
+                    const targetGame = gamesRef.current.find(g => g.id === id);
+                    await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); 
+                    if (targetGame) {
+                        // 新增：寫入操作日誌
+                        logActivity("修改", targetGame.name, targetGame.order, `觀看順序改為 [${val}]`);
+                    }
+                } catch(e) {} 
             };
             
             const watchListGames = useMemo(() => { 
@@ -1256,7 +1266,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         } 
                         return null; 
                     }).filter(p => p !== null);
-                    if (updates.length > 0) await Promise.all(updates);
+                    if (updates.length > 0) { 
+                        await Promise.all(updates); 
+                        // 新增：寫入拖曳重排日誌
+                        logActivity("系統", `更新觀看順序排列 (變動 ${updates.length} 筆)`, "");
+                    }
                 } catch (e) {}
             };
             
@@ -1374,14 +1388,23 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 if (!user) return; showNotify("排列中...");
                 try {
                     const sorted = [...gamesRef.current].sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-                    const updates = sorted.map((g, index) => { 
-                        const newOrder = index + 1; 
-                        if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder }, { merge: true }); 
-                        return null; 
+                    const updates = sorted.map((g, index) => {
+                        const newOrder = index + 1;
+                        // 統一轉成字串儲存
+                        if (extractFirstNumber(g.order) !== newOrder) return setDoc(doc(getPublicCol('games'), g.id), { order: newOrder.toString() }, { merge: true });
+                        return null;
                     }).filter(p => p !== null);
-                    if (updates.length > 0) { await Promise.all(updates); showNotify(`完成！`); }
+                    
+                    if (updates.length > 0) { 
+                        await Promise.all(updates); 
+                        showNotify(`完成！共更新 ${updates.length} 筆編號`); 
+                        // 寫入操作日誌
+                        logActivity("系統", `執行全庫編號重排 (共 ${updates.length} 筆)`, "");
+                    } else {
+                        showNotify("已是完美連號，無須重排！");
+                    }
                 } catch (e) {}
-            }, [user, showNotify]);
+            }, [user, showNotify, logActivity]);
             
             const handleDeleteGame = async (id) => { 
                 if(!user) return; 
