@@ -1767,17 +1767,21 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 
                                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1 space-y-0.5">
                                     {/* 頂部展開按鈕 */}
+{/* 頂部展開按鈕 (超緊湊 + 加入過期數量版) */}
 {!isEditingMemberships && expiredCount > 0 && (
     <div 
-        className="flex items-center w-full py-1 mb-1 cursor-pointer group flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+        className="flex items-center w-full py-0 mb-0.5 cursor-pointer group flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity" // 移除 py-1，mb-1 改為 mb-0.5（與列表項標準間距一致）
         onClick={() => setIsExpiredExpanded(!isExpiredExpanded)}
         title={isExpiredExpanded ? "收起已過期" : `有 ${expiredCount} 個已過期項目 (點擊展開)`}
     >
         {/* 左邊的線條 */}
         <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/60 transition-colors"></div>
         
-        {/* 中間的下拉/收起符號 */}
-        <div className="px-2 text-red-500/60 group-hover:text-red-400 transition-colors">
+        {/* 中間：過期數量 + 圖標符號 (緊湊排列) */}
+        <div className="flex items-center gap-1 px-1 text-red-500/60 group-hover:text-red-400 transition-colors"> {/* gap-1 緊密連接數量和圖標，減少 px-2 -> px-1 */}
+            {/* 數量 (使用與線條圖標相同的暗紅色，字體稍小) */}
+            <span className="text-[10px] font-bold">({expiredCount})</span>
+            {/* 圖標 (保持 3.5x3.5) */}
             <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5" />
         </div>
         
