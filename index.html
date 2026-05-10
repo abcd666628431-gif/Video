@@ -1705,23 +1705,22 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
                         {activityLogs.map(l => (
-                            // 這裡將 items-start 改回 items-center，確保整行文字垂直置中
                             <div key={l.id} className="border-b border-white/5 pb-1 pt-0.5 flex items-center w-full group transition-all">
-                                {/* 移除了手動加的 mt-[2px] */}
                                 <span className="text-white/30 text-[10px] mr-1.5 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
                                 <span className="font-bold mr-1.5 flex-shrink-0" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
                                 {l.action === "系統" ? (
-                                    // 移除了手動加的 mt-[1px]
                                     <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all leading-snug" title={l.gameName}>{l.gameName}</span> 
                                 ) : (
                                     <>
-                                        <span className="mr-1.5 flex-shrink-0">{l.action}</span> 
-                                        {/* 移除了手動加的 mt-[1px] */}
+                                        {/* 1. 動作文字 (修改/錄入) 加上 text-[11.5px] */}
+                                        <span className="mr-1.5 flex-shrink-0 text-[11.5px]">{l.action}</span> 
+                                        
                                         <span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all leading-snug" title={l.gameName}>
                                             {l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}{l.gameName}
                                         </span>
-                                        {/* 移除了手動加的 mt-[1px] */}
-                                        {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5 flex-shrink-0">{l.extraDetail}</span>}
+                                        
+                                        {/* 2. 為了視覺統一，右邊的附加資訊 (如進度改變) 也加上 text-[11.5px] */}
+                                        {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5 flex-shrink-0 text-[11.5px]">{l.extraDetail}</span>}
                                     </>
                                 )}
                             </div>
