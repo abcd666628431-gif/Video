@@ -1770,27 +1770,24 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-1 space-y-0.5">
-                                    {/* 頂部展開按鈕 (終極極窄版) */}
+                                    {/* 頂部展開按鈕 (緊湊 + 加入過期數量版) */}
                                     {!isEditingMemberships && expiredCount > 0 && (
                                         <div 
-                                            // 1. 強制鎖定高度為 h-3 (12px)，並將下邊距縮減至極限 mb-[1px]
-                                            className="flex items-center w-full h-3 mb-[1px] cursor-pointer group flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+                                            className="flex items-center w-full py-0 mb-0.5 cursor-pointer group flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
                                             onClick={() => setIsExpiredExpanded(!isExpiredExpanded)}
                                             title={isExpiredExpanded ? "收起已過期" : `有 ${expiredCount} 個已過期項目 (點擊展開)`}
                                         >
                                             {/* 左邊的線條 */}
-                                            <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/80 transition-colors"></div>
+                                            <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/60 transition-colors"></div>
                                             
-                                            {/* 中間：極限縮小的數字與圖標 */}
-                                            <div className="flex items-center gap-0.5 px-1 text-red-500/50 group-hover:text-red-400 transition-colors">
-                                                {/* 2. 字體縮至極限 8px，並移除行高 leading-none */}
-                                                <span className="text-[8px] font-black leading-none">({expiredCount})</span>
-                                                {/* 3. 圖標縮小至 12px (w-3 h-3) */}
-                                                <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3 h-3" />
+                                            {/* 中間：過期數量 + 圖標符號 */}
+                                            <div className="flex items-center gap-1 px-1 text-red-500/60 group-hover:text-red-400 transition-colors">
+                                                <span className="text-[10px] font-bold">({expiredCount})</span>
+                                                <Icon name={isExpiredExpanded ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5" />
                                             </div>
                                             
                                             {/* 右邊的線條 */}
-                                            <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/80 transition-colors"></div>
+                                            <div className="flex-1 h-px bg-red-500/30 group-hover:bg-red-500/60 transition-colors"></div>
                                         </div>
                                     )}
                                     {/* 輸出列表 */}
