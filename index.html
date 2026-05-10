@@ -13,7 +13,16 @@
     <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
     <style>
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; background-color: #3f5968; color: #fff; margin: 0; overflow-x: hidden; font-size: 16px; user-select: text; }
+        body { 
+            font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
+            background-color: #3f5968; 
+            color: #fff; 
+            margin: 0; 
+            overflow-x: hidden; 
+            overflow-y: scroll; /* 新增這一行：永遠保留右側滾動軌道，防止刪除資料時畫面左右跳動 */
+            font-size: 16px; 
+            user-select: text; 
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
@@ -828,21 +837,30 @@ const formatBracketTitle = (text) => {
                 const hasOpenModal = isModalOpen || showAddCategoryModal || showAddMembershipModal || isCropping || showEditUserModal || deleteGameTarget || deleteMembershipTarget || deleteCategoryTarget || deleteSourceTarget || showClearConfirm || showDuplicateConfirm;
                 
                 if (hasOpenModal) {
-                    // 1. 計算當前瀏覽器滾動條的寬度
+                    // 1. 精準計算當前使用者的滾動條寬度
                     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-                    // 2. 把寬度補到 body 的右邊距，防止畫面因為滾動條消失而發生跳動
+                    
+                    // 2. 把寬度補到 body 的右側，防止背景畫面往右跳動
                     document.body.style.paddingRight = `${scrollbarWidth}px`;
                     document.body.style.overflow = 'hidden';
+                    
+                    // 3. 連右下角的懸浮按鈕 (FAB) 也一起向左平移，防止它跟著跳動
+                    const fab = document.querySelector('.fab-btn-container');
+                    if (fab) fab.style.transform = `translateX(-${scrollbarWidth}px)`;
                 } else {
-                    // 關閉視窗時，把補償的寬度和鎖定狀態還原
+                    // 關閉視窗時，瞬間清除所有墊片與鎖定狀態
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
+                    const fab = document.querySelector('.fab-btn-container');
+                    if (fab) fab.style.transform = '';
                 }
                 
-                // 確保組件卸載時也能安全還原
+                // 確保組件異常卸載時也能安全還原
                 return () => { 
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = ''; 
+                    const fab = document.querySelector('.fab-btn-container');
+                    if (fab) fab.style.transform = '';
                 };
             }, [isModalOpen, showAddCategoryModal, showAddMembershipModal, isCropping, showEditUserModal, deleteGameTarget, deleteMembershipTarget, deleteCategoryTarget, deleteSourceTarget, showClearConfirm, showDuplicateConfirm]);
 
