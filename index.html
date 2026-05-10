@@ -1701,30 +1701,34 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName, handleRepairData, handleReorderIndices, handleAddWatchOrder, handleRemoveWatchOrder, handleSortDrop]);
 
             const activityLogsUI = useMemo(() => (
-    <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
-        <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
-            {activityLogs.map(l => (
-                <div key={l.id} className="border-b border-white/5 pb-0.5 flex flex-wrap items-center">
-                    <span className="text-white/30 text-[10px] mr-1">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
-                    <span className="font-bold mr-1" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
-                    {l.action === "系統" ? (
-                        <span className="font-black text-green-400">{l.gameName}</span> 
-                    ) : (
-                        <>
-                            <span className="mr-1">{l.action}</span> 
-                            <span className="font-black">
-                                {l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"
-                            </span>
-                            {/* 新增這行：如果有進度變更紀錄，就顯示出來 */}
-                            {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5">{l.extraDetail}</span>}
-                        </>
-                    )}
+                <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[calc(35%+10px)] flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+                        {activityLogs.map(l => (
+                            // 1. 移除 flex-wrap，加入 w-full overflow-hidden 強制維持單行
+                            <div key={l.id} className="border-b border-white/5 pb-0.5 flex items-center w-full overflow-hidden">
+                                {/* 2. 將時間、使用者名稱、動作都設為 flex-shrink-0，保證它們不會被壓縮變形 */}
+                                <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">[{formatDate(l.timestamp).split(' ')[1]}]</span> 
+                                <span className="font-bold mr-1 flex-shrink-0" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                                {l.action === "系統" ? (
+                                    // 3. 系統通知的標題：加入 flex-1 min-w-0 truncate 實現自動 ... 截斷
+                                    <span className="font-black text-green-400 truncate flex-1 min-w-0" title={l.gameName}>{l.gameName}</span> 
+                                ) : (
+                                    <>
+                                        <span className="mr-1 flex-shrink-0">{l.action}</span> 
+                                        {/* 4. 一般操作的標題：加入 flex-1 min-w-0 truncate，並加上 title 屬性讓游標懸浮時可看全名 */}
+                                        <span className="font-black truncate flex-1 min-w-0" title={l.gameName}>
+                                            {l.gameOrder && <span className="text-[#ffbae9] mr-0.5">[{l.gameOrder}]</span>}"{l.gameName}"
+                                        </span>
+                                        {/* 5. 狀態變更紀錄：同樣給予 flex-shrink-0 保證顯示，並加入稍微防爆的 max-w-[45%] truncate */}
+                                        {l.extraDetail && <span className="text-cyan-300 font-bold ml-1.5 flex-shrink-0 truncate max-w-[45%]" title={l.extraDetail}>{l.extraDetail}</span>}
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            ))}
-        </div>
-    </div>
-), [activityLogs, nameColorMap]);
+            ), [activityLogs, nameColorMap]);
 
             const membershipPanelUI = useMemo(() => {
                 // 計算已過期的數量
