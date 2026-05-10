@@ -355,7 +355,7 @@ const formatBracketTitle = (text) => {
                 const trimmed = text.replace(/\s*【\s*/g, '【').replace(/\s*】\s*/g, '】');
                 return trimmed.split(/(【|】)/).map((part, i) => {
                     if (part === '【') return <span key={i} className="inline-block -ml-[0.5em]">【</span>;
-                    if (part === '】') return <span key={i} className="inline-block -mr-[0.4em]">】</span>;
+                    if (part === '】') return <span key={i} className="inline-block -mr-[0.45em]">】</span>;
                     return part;
                 });
             };
