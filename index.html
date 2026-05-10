@@ -1742,10 +1742,10 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                 <Icon name="chevron-right" className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform flex-shrink-0" />
                             </div>
                         ) : (
-                            <>
-                                {/* 標題列：移除了多餘的包裹層，並改回 div 來避免預設樣式干擾對齊 */}
+                            // 使用標準 div 並加上 flex-1 min-h-0，解決 Babel 報錯與高度撐開的問題
+                            <div className="flex flex-col flex-1 min-h-0 w-full">
                                 <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 flex-shrink-0">
-                                    <div className="flex items-center gap-2 text-white/50 text-xs font-black uppercase whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5 text-white/50 text-xs font-black uppercase whitespace-nowrap">
                                         <Icon name="clock" className="w-4 h-4 text-cyan-400 flex-shrink-0" /> 會員時限
                                     </div>
                                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -1767,10 +1767,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                     </div>
                                 </div>
 
-                                {/* 列表區塊 */}
                                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-[2px] pr-1">
-                                    
-                                    {/* 下拉控制按鈕 (有過期項目且非編輯模式才顯示) */}
                                     {!isEditingMemberships && expiredCount > 0 && (
                                         <div 
                                             className="flex items-center justify-center py-1 mb-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded cursor-pointer transition-colors flex-shrink-0"
@@ -1783,12 +1780,10 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                         </div>
                                     )}
 
-                                    {/* 會員項目 */}
                                     {sortedMemberships.map(m => {
                                         const daysLeft = m.expiryDate ? calculateDaysLeft(m.expiryDate) : null;
                                         const isExpired = daysLeft !== null && daysLeft < 0;
-
-                                        // 核心邏輯：如果是非編輯模式，且項目已過期，又沒有展開，就隱藏
+                                        
                                         if (!isEditingMemberships && isExpired && !isExpiredExpanded) return null;
 
                                         const sourceFallback = customSources.find(s => s.name === m.name);
@@ -1796,36 +1791,34 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                         if (isEditingMemberships && tempMembershipIcons[m._originalIndex] !== undefined) { displayIcon = tempMembershipIcons[m._originalIndex]; }
                                         const currentRenamingName = tempMembershipNames[m._originalIndex] !== undefined ? tempMembershipNames[m._originalIndex] : m.name;
                                         
-                                        // 編輯模式的行
                                         if (isEditingMemberships) {
                                             return (
-                                                <div key={m._originalIndex} className="flex items-center justify-between bg-black/40 py-1 px-1.5 rounded border border-cyan-400/30 shadow-sm flex-shrink-0 mb-0.5">
+                                                <div key={m._originalIndex} className="flex items-center justify-between bg-black/40 py-0.5 px-1.5 rounded border border-cyan-400/30 my-[1px] shadow-sm flex-shrink-0">
                                                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                                         <div className="relative flex-shrink-0">
-                                                            <div className="w-5 h-5 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer overflow-hidden group/icon" onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} title="點擊貼上圖標">
+                                                            <div className="w-4 h-4 flex items-center justify-center bg-white/5 border border-white/20 rounded cursor-pointer overflow-hidden group/icon" onClick={() => document.getElementById(`icon-upload-${m._originalIndex}`).click()} title="點擊貼上圖標">
                                                                 {displayIcon ? <img src={displayIcon} className="w-full h-full object-contain" /> : <Icon name="image" className="w-3 h-3 text-white/20" />}
                                                             </div>
                                                             <input type="file" id={`icon-upload-${m._originalIndex}`} className="hidden" accept="image/*" onChange={(e) => handleIconFileSelect(e, m._originalIndex)} />
                                                         </div>
-                                                        <div className="flex flex-col flex-1 min-w-0 gap-0.5">
-                                                            <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full font-black min-w-0" value={currentRenamingName} onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} placeholder="名稱" />
-                                                            <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[40px] font-bold" value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} placeholder="標籤" />
+                                                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                                                            <input type="text" className="bg-transparent border-b border-cyan-400/50 px-0.5 py-0 text-[11px] text-white outline-none w-full min-w-0 font-black" value={currentRenamingName} onChange={(e) => setTempMembershipNames({ ...tempMembershipNames, [m._originalIndex]: e.target.value })} placeholder="名稱" />
+                                                            <input type="text" className="bg-transparent border-b border-white/20 px-0.5 py-0 text-[9px] text-white/70 outline-none w-[36px] flex-shrink-0 font-bold" value={tempMembershipTags[m._originalIndex] !== undefined ? tempMembershipTags[m._originalIndex] : (m.tag || '')} onChange={(e) => setTempMembershipTags({ ...tempMembershipTags, [m._originalIndex]: e.target.value })} placeholder="標籤" />
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center flex-shrink-0 ml-1.5 gap-1">
+                                                    <div className="flex items-center flex-shrink-0 ml-1.5 gap-1.5">
                                                         <AutoJumpDateInput value={tempMembershipDates[m._originalIndex] !== undefined ? tempMembershipDates[m._originalIndex] : (m.expiryDate || '')} onChange={(val) => setTempMembershipDates({ ...tempMembershipDates, [m._originalIndex]: val })} />
-                                                        <button onClick={() => setDeleteMembershipTarget({ index: m._originalIndex, name: m.name })} className="text-red-400/50 hover:text-red-400 p-0.5 ml-0.5 transition-colors">
-                                                            <Icon name="trash-2" className="w-3.5 h-3.5 flex-shrink-0" />
-                                                        </button>
+                                                        <div className="cursor-pointer p-0.5" onClick={() => setDeleteMembershipTarget({ index: m._originalIndex, name: m.name })}>
+                                                            <Icon name="trash-2" className="w-3 h-3 text-red-400/50 hover:text-red-400 flex-shrink-0" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
                                         }
 
-                                        // 正常顯示的行
                                         return (
-                                            <div key={m._originalIndex} className="flex justify-between items-center bg-black/20 py-1 px-1.5 rounded border border-white/5 hover:border-white/10 transition-colors flex-shrink-0 mb-0.5">
-                                                <div className="flex items-center gap-2 overflow-hidden flex-1">
+                                            <div key={m._originalIndex} className="flex justify-between items-center bg-black/20 py-0.5 px-1.5 rounded border border-white/5 hover:border-white/10 transition-colors flex-shrink-0">
+                                                <div className="flex items-center gap-1.5 overflow-hidden flex-1">
                                                     {displayIcon ? <img src={displayIcon} className="w-4 h-4 object-contain flex-shrink-0" /> : <Icon name="image" className="w-4 h-4 text-white/20 flex-shrink-0" />}
                                                     <div className="flex items-center gap-1.5 truncate flex-1">
                                                         <span className="truncate font-black text-white/90 text-[11px]">{m.name}</span>
@@ -1833,7 +1826,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center flex-shrink-0 ml-2">
-                                                    <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[48px] ${daysLeft === null ? 'bg-white/5 text-white/30' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
+                                                    <div className={`text-[9px] font-black px-1.5 py-0.5 rounded border text-center min-w-[50px] ${daysLeft === null ? 'bg-white/5 text-white/30' : daysLeft < 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' : daysLeft <= 7 ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'}`}>
                                                         {daysLeft === null ? "未設定" : daysLeft < 0 ? "已過期" : daysLeft === 0 ? "今日" : `剩 ${daysLeft} 天`}
                                                     </div>
                                                 </div>
@@ -1841,12 +1834,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                         );
                                     })}
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 );
             }, [isExpiryCollapsed, isEditingMemberships, sortedMemberships, tempMembershipNames, tempMembershipTags, tempMembershipDates, tempMembershipIcons, calculateDaysLeft, handleSaveMemberships, isExpiredExpanded, customSources]);
-
             const statsPanelUI = useMemo(() => (
                 <div className="dashboard-panel h-[220px] relative flex flex-col w-full lg:flex-1 flex-shrink-0 min-w-0">
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ffbae9]"></div>
