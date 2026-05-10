@@ -1968,7 +1968,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 </nav> 
             ), [customCategories, activeTab, isEditLocked]);
 
-            // 👇👇👇 請從這裡開始貼上 👇👇👇
             return (
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
@@ -1989,15 +1988,16 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </article>
                     </div>
                     
-                    <div className="fab-btn-container">
+                    {/* 右下角懸浮按鈕 (FAB) */}
+                    <div className="fab-btn-container transition-transform duration-300">
                         <div className="fab-btn-sub" onClick={handleScrollToTop} title="直接到最頂"><Icon name="chevron-up" className="w-6 h-6" /></div>
                         {!isEditLocked && <div className="fab-btn-sub !bg-red-600/40 !text-white" onClick={() => setIsEditLocked(true)}><Icon name="lock" className="w-5 h-5" /></div>}
                         <div className="fab-btn-main" onClick={() => isEditLocked ? setIsEditLocked(false) : handleOpenAddModal()}>{isEditLocked ? <Icon key="lock" name="lock" className="w-8 h-8" /> : <Icon key="plus" name="plus" className="w-8 h-8" />}</div>
                         <div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div>
                     </div>
 
-                    {/* ================= 以下是所有彈出視窗 (完美修復版) ================= */}
-                    
+                    {/* ================= 所有彈出視窗 (效能優化毛玻璃版) ================= */}
+
                     {/* 修改用戶 ID */}
                     {showEditUserModal && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
@@ -2050,7 +2050,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 移除時限追蹤 */}
+                    {/* 移除時限追蹤確認 */}
                     {deleteMembershipTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2079,7 +2079,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 刪除分類 */}
+                    {/* 刪除分類確認 */}
                     {deleteCategoryTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2094,7 +2094,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 刪除來源 */}
+                    {/* 刪除來源確認 */}
                     {deleteSourceTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2108,10 +2108,10 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 檔案同名警告 */}
+                    {/* 同名警告 */}
                     {showDuplicateConfirm && (
                         <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-circle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <h4 className="text-red-500 font-black mb-2 uppercase text-lg">同名項目</h4>
                                 <p className="text-sm text-slate-300 mb-8">確定要儲存名為 <span className="text-red-400">"{formData.name}"</span> 的同名項目嗎？</p>
@@ -2123,13 +2123,13 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 裁剪圖片 */}
+                    {/* 圖片裁剪 */}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
 
-                    {/* 刪除單一檔案 */}
+                    {/* 刪除單一檔案確認 */}
                     {deleteGameTarget && (
                         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
-                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
+                            <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
                                 <Icon name="alert-triangle" className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <h4 className="text-red-500 font-black mb-2 uppercase text-lg">確認刪除？</h4>
                                 <p className="text-sm text-slate-300 mb-8 font-bold">{deleteGameTarget.name}</p>
@@ -2141,7 +2141,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 清空全庫 */}
+                    {/* 清空全庫確認 */}
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center">
@@ -2154,7 +2154,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 主編輯視窗 */}
+                    {/* 主錄入與編輯視窗 */}
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu overflow-y-auto transition-all duration-300" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }} onClick={() => { setIsModalOpen(false); setEditingId(null); }}>
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-[900px] my-auto md:my-8 overflow-hidden relative shadow-2xl rounded-sm max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -2266,7 +2266,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     )}
                 </div>
             );
-        } // <-- 這是 App function 的結尾括號
+        }
         
         const root = ReactDOM.createRoot(document.getElementById('root')); 
         root.render(<App />);
