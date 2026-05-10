@@ -1700,27 +1700,41 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 </header>
             ), [games, showWatchOrderList, watchOrderSearchQuery, isWatchOrderSearchFocused, watchOrderSuggestions, watchListGames, nameColorMap, isEditLocked, showToolsDropdown, userName, handleRepairData, handleReorderIndices, handleAddWatchOrder, handleRemoveWatchOrder, handleSortDrop]);
 
-            const activityLogsUI = useMemo(() => (
-                // 在這裡把寬度改成了 lg:w-[40%]
-                <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[40%] flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
-                        {activityLogs.map(l => (
-                            <div key={l.id} className="border-b border-white/5 py-1 flex items-center w-full group transition-all">
-                                <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
-                                <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
-                                {l.action === "系統" ? (
-                                    <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all pr-2" title={l.gameName}>{l.gameName}</span> 
-                                ) : (
-                                    <>
-                                        <span className="mr-0.5 flex-shrink-0 text-[10.5px] opacity-80">{l.action}</span><span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all" title={l.gameName}>{l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}{l.gameName}</span>{l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
-                                    </>
-                                )}
-                            </div>
-                        ))}
+            const activityLogsUI = useMemo(() => {
+                // 專門處理【】括號空白的小工具
+                const formatTitle = (text) => {
+                    if (!text) return "";
+                    // 1. 清除使用者輸入的多餘空白 (例如 " 【 " 變 "【")
+                    const trimmed = text.replace(/\s*【\s*/g, '【').replace(/\s*】\s*/g, '】');
+                    // 2. 利用 React 切割字串，針對全形括號給予「負邊距」，直接吃掉字體內建的空白！
+                    return trimmed.split(/(【|】)/).map((part, i) => {
+                        if (part === '【') return <span key={i} className="inline-block -mr-[0.3em] -ml-[0.1em]">【</span>;
+                        if (part === '】') return <span key={i} className="inline-block -ml-[0.3em] -mr-[0.1em]">】</span>;
+                        return part;
+                    });
+                };
+
+                return (
+                    <div className="dashboard-panel h-[220px] overflow-hidden flex flex-col w-full lg:w-[40%] flex-shrink-0">
+                        <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
+                            {activityLogs.map(l => (
+                                <div key={l.id} className="border-b border-white/5 py-1 flex items-center w-full group transition-all">
+                                    <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
+                                    <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                                    {l.action === "系統" ? (
+                                        <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all pr-2" title={l.gameName}>{formatTitle(l.gameName)}</span> 
+                                    ) : (
+                                        <>
+                                            <span className="mr-0.5 flex-shrink-0 text-[10.5px] opacity-80">{l.action}</span><span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all" title={l.gameName}>{l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}{formatTitle(l.gameName)}</span>{l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ), [activityLogs, nameColorMap]);
+                );
+            }, [activityLogs, nameColorMap]);
             const membershipPanelUI = useMemo(() => {
                 // 計算已過期的數量
                 const expiredCount = sortedMemberships.filter(m => {
