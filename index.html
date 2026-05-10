@@ -825,12 +825,24 @@ const formatBracketTitle = (text) => {
 
             useEffect(() => {
                 const hasOpenModal = isModalOpen || showAddCategoryModal || showAddMembershipModal || isCropping || showEditUserModal || deleteGameTarget || deleteMembershipTarget || deleteCategoryTarget || deleteSourceTarget || showClearConfirm || showDuplicateConfirm;
+                
                 if (hasOpenModal) {
+                    // 1. 計算當前瀏覽器滾動條的寬度
+                    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                    // 2. 把寬度補到 body 的右邊距，防止畫面因為滾動條消失而發生跳動
+                    document.body.style.paddingRight = `${scrollbarWidth}px`;
                     document.body.style.overflow = 'hidden';
                 } else {
+                    // 關閉視窗時，把補償的寬度和鎖定狀態還原
+                    document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
                 }
-                return () => { document.body.style.overflow = ''; };
+                
+                // 確保組件卸載時也能安全還原
+                return () => { 
+                    document.body.style.paddingRight = '';
+                    document.body.style.overflow = ''; 
+                };
             }, [isModalOpen, showAddCategoryModal, showAddMembershipModal, isCropping, showEditUserModal, deleteGameTarget, deleteMembershipTarget, deleteCategoryTarget, deleteSourceTarget, showClearConfirm, showDuplicateConfirm]);
 
             const handleIconFileSelect = async (e, membershipIndex) => {
