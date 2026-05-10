@@ -1704,12 +1704,15 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 // 專門處理【】括號空白的小工具
                 const formatTitle = (text) => {
                     if (!text) return "";
-                    // 1. 清除使用者輸入的多餘空白 (例如 " 【 " 變 "【")
+                    // 1. 清除使用者輸入時不小心多打的真實空白
                     const trimmed = text.replace(/\s*【\s*/g, '【').replace(/\s*】\s*/g, '】');
-                    // 2. 利用 React 切割字串，針對全形括號給予「負邊距」，直接吃掉字體內建的空白！
+                    
+                    // 2. 切割字串，精準消除全形符號預設的單邊留白
                     return trimmed.split(/(【|】)/).map((part, i) => {
-                        if (part === '【') return <span key={i} className="inline-block -mr-[0.3em] -ml-[0.1em]">【</span>;
-                        if (part === '】') return <span key={i} className="inline-block -ml-[0.3em] -mr-[0.1em]">】</span>;
+                        // 消除 【 "左邊" 的預設空白
+                        if (part === '【') return <span key={i} className="inline-block -ml-[0.35em]">【</span>;
+                        // 消除 】 "右邊" 的預設空白
+                        if (part === '】') return <span key={i} className="inline-block -mr-[0.35em]">】</span>;
                         return part;
                     });
                 };
