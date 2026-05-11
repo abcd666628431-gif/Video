@@ -12,10 +12,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
     <style>
-        /* 當 body 帶有 scrolling 類名時，禁止所有卡片的滑鼠事件 */
-body.scrolling .component-view li {
-    pointer-events: none;
-}
         @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { 
             font-family: 'Noto Sans TC', 'Noto Sans SC', sans-serif; 
@@ -57,18 +53,7 @@ body.scrolling .component-view li {
         .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
 
-       .component-view ul { 
-            display: grid; 
-            grid-template-columns: repeat(1, minmax(0, 1fr)); 
-            gap: 0.5rem; 
-            padding: 0; 
-            list-style: none;
-            
-            /* --- 新增這三行 --- */
-            contain: content;           /* 核心優化：限制渲染邊界，不影響外部佈局 */
-            perspective: 1000px;        /* 輔助 3D 硬體加速 */
-            transform-style: preserve-3d; 
-        }
+        .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 0.5rem; padding: 0; list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(400px, 1fr)); } }
         .component-view li { 
             background: rgba(0, 0, 0, 0.2); 
@@ -881,31 +866,7 @@ const formatBracketTitle = (text) => {
 
             useEffect(() => {
                 const hasOpenModal = isModalOpen || showAddCategoryModal || showAddMembershipModal || isCropping || showEditUserModal || deleteGameTarget || deleteMembershipTarget || deleteCategoryTarget || deleteSourceTarget || showClearConfirm || showDuplicateConfirm;
-                // --- 新增：捲動時禁用 Hover 以提升效能 ---
-            useEffect(() => {
-                let timer;
-                const handleScroll = () => {
-                    // 1. 只要一捲動，就給 body 加上 'scrolling' 標籤
-                    if (!document.body.classList.contains('scrolling')) {
-                        document.body.classList.add('scrolling');
-                    }
-                    
-                    // 2. 清除舊的計時器
-                    clearTimeout(timer);
-                    
-                    // 3. 設定新計時器：停止捲動 150 毫秒後，移除標籤恢復 Hover
-                    timer = setTimeout(() => {
-                        document.body.classList.remove('scrolling');
-                    }, 150);
-                };
-
-                window.addEventListener('scroll', handleScroll, { passive: true });
-                return () => {
-                    window.removeEventListener('scroll', handleScroll);
-                    clearTimeout(timer);
-                };
-            }, []);
-            // --- 新增結束 ---
+                
                 if (hasOpenModal) {
                     // 1. 精準計算當前使用者的滾動條寬度
                     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -1555,7 +1516,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 if (!loadMoreSentinelRef.current) return;
                 const observer = new IntersectionObserver((entries) => {
                     if (entries[0].isIntersecting) { setDisplayLimit(prev => (prev > filteredGamesLengthRef.current) ? prev : prev + CHUNK_SIZE); }
-                }, { rootMargin: '1000px' });
+                }, { rootMargin: '400px' });
                 observer.observe(loadMoreSentinelRef.current); return () => observer.disconnect();
             }, []);
             
