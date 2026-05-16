@@ -2139,7 +2139,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                 🎉 進度全滿！目前沒有落後的劇
                                             </div>
                                         ) : (
-                                            /* 👇 加入了 CSS Grid 自動排版魔法 👇 */
                                             <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))' }}>
                                                 {reminderGames.map(g => {
                                                     const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
@@ -2181,6 +2180,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                             </div>
                                         )}
                                     </div>
+                                </div>
                                 {/* 👆👆👆 追劇更新提醒面板 👆👆👆 */}
                                 
                             </div>
@@ -2203,9 +2203,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         <div className="fab-btn-sub" onClick={handleScrollToBottom} title="直接到底部"><Icon name="chevron-down" className="w-6 h-6" /></div>
                     </div>
 
-                    {/* ================= 所有彈出視窗 (效能優化毛玻璃版) ================= */}
-
-                    {/* 修改用戶 ID */}
+                    {/* ================= 所有彈出視窗 ================= */}
                     {showEditUserModal && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-[#ffbae9]/30 w-full max-w-sm p-6 md:p-8 rounded shadow-2xl">
@@ -2220,7 +2218,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 新增分類 */}
                     {showAddCategoryModal && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-6 md:p-8 rounded shadow-2xl">
@@ -2234,7 +2231,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 新增時限追蹤 */}
                     {showAddMembershipModal && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-cyan-400/30 w-full max-w-sm p-6 md:p-8 rounded shadow-2xl">
@@ -2257,7 +2253,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 移除時限追蹤確認 */}
                     {deleteMembershipTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2272,7 +2267,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 修改分類名稱 */}
                     {renameCategoryTarget && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-white/10 w-full max-w-sm p-6 md:p-8 rounded shadow-2xl">
@@ -2286,7 +2280,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 刪除分類確認 */}
                     {deleteCategoryTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2301,7 +2294,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 刪除來源確認 */}
                     {deleteSourceTarget && (
                         <div className="fixed inset-0 z-[750] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-w-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2315,7 +2307,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 同名警告 */}
                     {showDuplicateConfirm && (
                         <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2330,10 +2321,8 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 圖片裁剪 */}
                     {isCropping && <ImageCropperModal imageSrc={rawImageData || formData.cover} onCrop={(c) => { setFormData(p => ({ ...p, cover: c })); setIsCropping(false); showNotify("優化成功"); }} onCancel={() => setIsCropping(false)} />}
 
-                    {/* 刪除單一檔案確認 */}
                     {deleteGameTarget && (
                         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/50 w-full max-sm p-6 md:p-10 rounded-sm text-center shadow-2xl">
@@ -2348,7 +2337,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                     )}
 
-                    {/* 清空全庫確認 */}
                     {showClearConfirm && (
                         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md transform-gpu" style={{ willChange: 'opacity, backdrop-filter', WebkitBackdropFilter: 'blur(12px)' }}>
                             <div className="bg-[#0b0e14] border border-red-500/30 w-full max-w-xs p-8 rounded-sm shadow-2xl text-center">
@@ -2473,8 +2461,8 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     )}
                 </div>
             );
-        }
-        
+        } // <-- App 結尾
+
         const root = ReactDOM.createRoot(document.getElementById('root')); 
         root.render(<App />);
     </script>
