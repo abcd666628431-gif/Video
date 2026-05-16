@@ -2058,10 +2058,15 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 return mostRecent;
             };
 
-            // 2. 篩選需要提醒的追劇清單 (包含進度落後或新集數上架)
+            // 2. 篩選需要提醒的追劇清單 (必須有設定每週更新時間的連載劇才會進入)
             const reminderGames = useMemo(() => {
                 return games.filter(g => {
                     if (g.airingStatus !== "連載中") return false;
+                    
+                    // 👇👇👇 新增關卡：如果沒有設定每週更新星期或具體時間，直接跳過不提醒 👇👇👇
+                    if (!g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) {
+                        return false;
+                    }
                     
                     const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
                     const curWatch = parseFloat(myProg.v1) || 0;
