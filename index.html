@@ -37,7 +37,7 @@
         .animate-slide-down-fade { animation: slideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-origin: top right; }
 
         .tab-content { width: 100%; margin-top: 0.5rem; }
-        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 1rem; gap: 0.75rem; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tab-bar { display: flex; flex-wrap: wrap; align-items: center; position: relative; margin-bottom: 0.25rem; gap: 0.75rem; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
         .tab { 
             font-weight: 900; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 0.85rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-transform: uppercase; background: rgba(255, 255, 255, 0.05); padding: 8px 20px; border-radius: 9999px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); position: relative; display: flex; align-items: center; gap: 10px; 
@@ -53,7 +53,12 @@
         .tab-icon-btn.btn-trash:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .tab.active .tab-icon-btn:hover { background: rgba(255,255,255,0.3); }
 
-        .component-view ul { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 0.5rem; padding: 0; list-style: none; }
+        .component-view ul { 
+    display: grid; 
+    grid-template-columns: repeat(1, minmax(0, 1fr)); 
+    gap: 0.25rem; 
+    padding: 0; 
+    list-style: none; }
         @media (min-width: 1024px) { .component-view ul { grid-template-columns: repeat(2, minmax(400px, 1fr)); } }
         .component-view li { 
             background: rgba(0, 0, 0, 0.2); 
@@ -1768,7 +1773,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             }, [user, showNotify]);
 
             const headerUI = useMemo(() => (
-                <header className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
+                <header className="mb-1 flex flex-col md:flex-row items-center justify-between gap-4 relative z-[400] px-1 md:px-2">
                     <div className="flex items-center gap-6"><TitleIcon /><div><div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 bg-[#ffbae9]"></div><span className="text-xs font-black text-white/60 tracking-widest uppercase">Anime Matrix v11.6.21</span></div><h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">影片 <span className="animate-text-shimmer">庫統計系統</span></h1></div></div>
                     <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 relative">
                         <div className="flex items-center gap-2 px-4 py-2 border rounded text-xs font-black bg-black/20 border-white/20"><Icon name="refresh-cw" className="w-4 h-4" /> <div className="flex flex-col"><span className="uppercase text-[10px]">即時同步中</span><span className="text-[10px] text-white/40 font-bold">{formatDate(new Date())}</span></div></div>
@@ -2002,12 +2007,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 
             const toolbarUI = useMemo(() => (
                 <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border-y border-white/10 overflow-hidden shadow-xl">
-                    {!isEditLocked && <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-4 md:py-5 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-4 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號(如1)或分類..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                    {memberFilter && <div className="px-4 py-2"><button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">{memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" /></button></div>}
-                    <div className="px-4 md:px-6 flex items-center justify-end py-4 md:py-0 gap-3"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all whitespace-nowrap ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50 bg-[#ffbae9]/10' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}><Icon name={isEditLocked ? "lock" : "unlock"} className="w-3 h-3 mr-2 inline" /> {isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
+                    {!isEditLocked && <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-3 md:py-3 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
+                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-2 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                    <div className="px-4 md:px-6 flex items-center justify-end py-2 md:py-0"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}>{isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
                 </div>
-            ), [isEditLocked, searchQuery, memberFilter, handleOpenAddModal]);
+            ), [isEditLocked, searchQuery, handleOpenAddModal]);
 
             const categoryTabsUI = useMemo(() => (
                 <nav className="tab-bar">
@@ -2031,7 +2035,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
                     <div className="w-full mx-auto">
                         {headerUI}
-                        <div className="flex flex-col lg:flex-row gap-1 mb-4 px-1 md:px-2 lg:h-[285px]">
+                        <div className="flex flex-col lg:flex-row gap-1 mb-1 px-1 md:px-2 lg:h-[285px]">
                             {activityLogsUI}
                             {membershipPanelUI}
                             
