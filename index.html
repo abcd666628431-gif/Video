@@ -2029,7 +2029,91 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     {!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類"><Icon name="plus" className="w-5 h-5" /></div>)}
                 </nav> 
             ), [customCategories, activeTab, isEditLocked]);
+// ==========================================
+            // 新增：追劇提醒助手核心邏輯與自動時間戳計算
+            // ==========================================
+            
+            // 1. 計算上一次更新播出時間的輔助函式
+            const getLastAiringDate = (updateDays, updateTimeStr) => {
+                if (!updateDays || !updateTimeStr) return null;
+                const days = Array.isArray(updateDays) ? updateDays : [updateDays];
+                const [targetH, targetM] = updateTimeStr.split(':').map(Number);
+                const now = new Date();
+                let mostRecent = null;
 
+                // 往前推算 7 天，找出最接近當前時間的播出時間點
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                    const checkDayStr = ['日', '一', '二', '三', '四', '五', '六'][checkDate.getDay()];
+                    
+                    if (days.includes(checkDayStr)) {
+                        const airingDateTime = new Date(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate(), targetH, targetM, 0);
+                        if (airingDateTime <= now) {
+                            if (!mostRecent || airingDateTime > mostRecent) {
+                                mostRecent = airingDateTime;
+                            }
+                        }
+                    }
+                }
+                return mostRecent;
+            };
+
+            // 2. 篩選需要提醒的追劇清單 (包含進度落後或新集數上架)
+            const reminderGames = useMemo(() => {
+                return games.filter(g => {
+                    if (g.airingStatus !== "連載中") return false;
+                    
+                    const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
+                    const curWatch = parseFloat(myProg.v1) || 0;
+                    const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
+                    
+                    // 條件 A：如果看過的集數小於目前已知的最新集數 -> 提示落後
+                    if (curWatch < curUpdate) return true;
+                    
+                    // 條件 B：定時推算。如果到了更新時間，且該檔案在播出後尚未被更新過進度 -> 提示新集數釋出
+                    const lastAiring = getLastAiringDate(g.updateDay, g.updateTime);
+                    if (lastAiring) {
+                        const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
+                        if (docUpdatedAt < lastAiring) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+            }, [games, userName]);
+
+            // 3. 處理點擊 +1 集的快速更新函式 (自動更新 Firebase 伺服器時間戳以實現銷帳)
+            const handleQuickProgressPlusOne = async (e, g) => {
+                e.stopPropagation();
+                if (!user || isSaving) return;
+                try {
+                    const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
+                    const curWatch = parseFloat(myProg.v1) || 0;
+                    const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
+                    
+                    const nextWatchV1 = curWatch + 1;
+                    // 如果點擊 +1 時更新進度超越了原本的最新集數，連動將最新集數往上推進
+                    const nextUpdateV1 = Math.max(curUpdate, nextWatchV1);
+                    
+                    const payload = {
+                        watchedProgress: {
+                            ...g.watchedProgress,
+                            [userName]: { ...ensureP(myProg), v1: nextWatchV1.toString() }
+                        },
+                        updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: nextUpdateV1.toString() },
+                        updatedAt: serverTimestamp() // 強制刷新時間戳，讓它立刻從面板消失
+                    };
+                    
+                    await setDoc(doc(getPublicCol('games'), g.id), payload, { merge: true });
+                    logActivity("修改", g.name, g.order, `快速追更 +1 集 (看到第 ${nextWatchV1} 集)`);
+                    showNotify(`《${g.name}》已成功加 1 集！`);
+                } catch (err) {
+                    showNotify(`快速更新失敗：${err.message}`);
+                }
+            };
+            // ==========================================
+            // 核心邏輯置入結束
+            // ==========================================
             return (
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
@@ -2043,22 +2127,64 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                             <div className="flex flex-col gap-1 w-full lg:flex-1 flex-shrink-0 min-w-0 h-auto lg:h-full">
                                 {statsPanelUI}
                                 
-                                {/* 👇👇👇 新板塊預留區 👇👇👇 */}
+                                {/* 👇👇👇 追劇更新提醒面板 👇👇👇 */}
                                 <div className="dashboard-panel flex-1 min-h-[140px] lg:min-h-0 relative flex flex-col w-full min-w-0">
                                     <div className="absolute top-0 left-0 w-full h-[2px] bg-green-400"></div>
-                                    <div className="flex justify-between items-center mb-2 text-xs font-black text-white/50 uppercase tracking-widest">
+                                    <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1 text-xs font-black text-white/50 uppercase tracking-widest flex-shrink-0">
                                         <div className="flex items-center gap-2">
-                                            <Icon name="layout-grid" className="w-4 h-4 text-green-400" />
-                                            <span>新功能板塊</span>
+                                            <Icon name="bell" className="w-4 h-4 text-green-400" />
+                                            <span>追劇更新提醒 ({reminderGames.length})</span>
                                         </div>
                                     </div>
                                     
-                                    {/* 這裡面的內容可以自由替換成你未來的新功能 */}
-                                    <div className="flex-1 overflow-auto custom-scrollbar flex items-center justify-center text-white/20 text-sm font-black border border-dashed border-white/10 rounded tracking-widest bg-white/5">
-                                        預留空間 (NEW PANEL)
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-0.5">
+                                        {reminderGames.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-white/20 text-xs font-black border border-dashed border-white/10 rounded tracking-widest bg-white/5 py-8">
+                                                🎉 進度全滿！目前沒有落後的劇
+                                            </div>
+                                        ) : (
+                                            reminderGames.map(g => {
+                                                const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
+                                                const curWatch = parseFloat(myProg.v1) || 0;
+                                                const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
+                                                // 判斷是否為時間戳觸發的新一集釋出
+                                                const isNewEpisodeReleased = curWatch >= curUpdate;
+                                                
+                                                return (
+                                                    <div key={g.id} className="flex items-center justify-between bg-white/5 border border-white/5 p-1.5 rounded hover:border-green-500/30 transition-colors gap-2 transform-gpu">
+                                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                            {g.cover ? (
+                                                                <img src={g.cover} className="w-[27px] h-[36px] object-cover rounded flex-shrink-0 bg-black/20" alt="" />
+                                                            ) : (
+                                                                <div className="w-[27px] h-[36px] bg-black/40 rounded flex items-center justify-center text-white/10 flex-shrink-0"><Icon name="image" className="w-3 h-3" /></div>
+                                                            )}
+                                                            <div className="min-w-0 flex-1">
+                                                                <span className="font-black text-[12px] text-white truncate block leading-tight mb-0.5">{g.name}</span>
+                                                                {isNewEpisodeReleased ? (
+                                                                    <span className="text-amber-400 font-black text-[10px] animate-pulse flex items-center gap-0.5">
+                                                                        🔥 新的一集出了，快去看！
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-red-400 font-bold text-[10px] block truncate">
+                                                                        落後 {curUpdate - curWatch} 集 (已看 {curWatch}/{curUpdate})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => handleQuickProgressPlusOne(e, g)} 
+                                                            className="bg-green-600 hover:bg-white hover:text-[#3f5968] text-white font-black text-[10px] px-2.5 py-1 rounded shadow transition-colors flex-shrink-0"
+                                                        >
+                                                            +1 集
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 </div>
-                                {/* 👆👆👆 新板塊預留區 👆👆👆 */}
+                                {/* 👆👆👆 追劇更新提醒面板 👆👆👆 */}
                                 
                             </div>
                         </div>
