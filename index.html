@@ -836,7 +836,8 @@ const formatBracketTitle = (text) => {
             const [renameCategoryNewValue, setRenameCategoryNewValue] = useState("");
             const [showEditUserModal, setShowEditUserModal] = useState(false);
             const [tempNewUserName, setTempNewUserName] = useState("");
-
+const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新增：追劇面板成員切換狀態 ('全部' / '糖糖' / '雲雲')
+            
             const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
@@ -2021,90 +2022,135 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             ), [customCategories, activeTab, isEditLocked]);
 
             // ==========================================
-            // 新增：追劇提醒助手核心邏輯與自動時間戳計算
+            // ==========================================
+            // 新增：追劇提醒助手核心邏輯與自動時間戳計算 (動態看人篩選版)
             // ==========================================
             
-            // 1. 計算上一次更新播出時間的輔助函式
-            const getLastAiringDate = (updateDays, updateTimeStr) => {
-                if (!updateDays || !updateTimeStr) return null;
-                const days = Array.isArray(updateDays) ? updateDays : [updateDays];
+            // 1. 計算在給定時間段內，該劇更新了多少集
+            const countAiringEvents = useCallback((startDate, endDate, updateDays, updateTimeStr) => {
+                if (!startDate || !endDate || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
+                const daysMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+                const targetDays = (Array.isArray(updateDays) ? updateDays : [updateDays]).map(d => daysMap[d]).filter(d => d !== undefined);
+                if (targetDays.length === 0) return 0;
+                
                 const [targetH, targetM] = updateTimeStr.split(':').map(Number);
-                const now = new Date();
-                let mostRecent = null;
-
-                // 往前推算 7 天，找出最接近當前時間的播出時間點
-                for (let i = 0; i < 7; i++) {
-                    const checkDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-                    const checkDayStr = ['日', '一', '二', '三', '四', '五', '六'][checkDate.getDay()];
-                    
-                    if (days.includes(checkDayStr)) {
-                        const airingDateTime = new Date(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate(), targetH, targetM, 0);
-                        if (airingDateTime <= now) {
-                            if (!mostRecent || airingDateTime > mostRecent) {
-                                mostRecent = airingDateTime;
-                            }
-                        }
-                    }
+                let count = 0;
+                
+                let current = new Date(startDate.getTime());
+                current.setHours(targetH, targetM, 0, 0);
+                
+                if (current <= startDate) {
+                    current.setDate(current.getDate() + 1);
                 }
-                return mostRecent;
-            };
 
-            // 2. 篩選需要提醒的追劇清單 (必須有設定每週更新時間的連載劇才會進入)
+                while (current <= endDate) {
+                    if (targetDays.includes(current.getDay())) {
+                        count++;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+                return count;
+            }, []);
+
+            // 2. 智慧過濾：根據「誰在看」與切換標籤篩選清單
             const reminderGames = useMemo(() => {
-                return games.filter(g => {
-                    if (g.airingStatus !== "連載中") return false;
+                return games.map(g => {
+                    if (g.airingStatus !== "連載中") return null;
+                    if (!g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) return null;
                     
-                    // 👇👇👇 新增關卡：如果沒有設定每週更新星期或具體時間，直接跳過不提醒 👇👇👇
-                    if (!g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) {
-                        return false;
+                    const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
+                    
+                    // 根據切換開關，決定目前要比對誰的進度
+                    let activeTrackUsers = [];
+                    if (reminderUserFilter === "全部") {
+                        activeTrackUsers = ["糖糖", "雲雲"];
+                    } else {
+                        activeTrackUsers = [reminderUserFilter];
                     }
                     
-                    const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
-                    const curWatch = parseFloat(myProg.v1) || 0;
-                    const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
-                    
-                    // 條件 A：如果看過的集數小於目前已知的最新集數 -> 提示落後
-                    if (curWatch < curUpdate) return true;
-                    
-                    // 條件 B：定時推算。如果到了更新時間，且該檔案在播出後尚未被更新過進度 -> 提示新集數釋出
-                    const lastAiring = getLastAiringDate(g.updateDay, g.updateTime);
-                    if (lastAiring) {
-                        const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
-                        if (docUpdatedAt < lastAiring) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-            }, [games, userName]);
+                    // 只檢查真正有在看這部劇的成員
+                    activeTrackUsers = activeTrackUsers.filter(u => watchers.includes(u));
+                    if (activeTrackUsers.length === 0) return null;
 
-            // 3. 處理點擊 +1 集的快速更新函式 (自動更新 Firebase 伺服器時間戳以實現銷帳)
+                    const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
+                    const now = new Date();
+                    const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
+                    const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
+                    const virtualUpdate = curUpdateDB + missedEpisodes;
+
+                    let needsReminder = false;
+                    const userStatuses = [];
+
+                    activeTrackUsers.forEach(u => {
+                        const myProg = g.watchedProgress?.[u] || { v1: '0', u1: '集' };
+                        const curWatch = parseFloat(myProg.v1) || 0;
+                        const behindCount = virtualUpdate - curWatch;
+                        
+                        if (behindCount > 0) {
+                            needsReminder = true;
+                            const isNew = curWatch >= curUpdateDB && missedEpisodes > 0;
+                            userStatuses.push({
+                                user: u,
+                                watch: curWatch,
+                                behind: behindCount,
+                                isNew: isNew
+                            });
+                        }
+                    });
+
+                    if (needsReminder) {
+                        return {
+                            ...g,
+                            _virtualUpdate: virtualUpdate,
+                            _userStatuses: userStatuses
+                        };
+                    }
+                    return null;
+                }).filter(Boolean).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+            }, [games, reminderUserFilter, countAiringEvents]);
+
+            // 3. 一鍵追更：智慧判斷單人 +1 或雙人同步 +1
             const handleQuickProgressPlusOne = async (e, g) => {
                 e.stopPropagation();
                 if (!user || isSaving) return;
                 try {
-                    const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
-                    const curWatch = parseFloat(myProg.v1) || 0;
-                    const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
-                    
-                    const nextWatchV1 = curWatch + 1;
-                    // 如果點擊 +1 時更新進度超越了原本的最新集數，連動將最新集數往上推進
-                    const nextUpdateV1 = Math.max(curUpdate, nextWatchV1);
-                    
+                    let usersToUpdate = [];
+                    if (reminderUserFilter === "全部") {
+                        usersToUpdate = ["糖糖", "雲雲"];
+                    } else {
+                        usersToUpdate = [reminderUserFilter];
+                    }
+
+                    // 防呆：只更新有在看這部劇的成員進度
+                    const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
+                    usersToUpdate = usersToUpdate.filter(u => watchers.includes(u));
+                    if (usersToUpdate.length === 0) return;
+
+                    const updatedWatchedProgress = { ...g.watchedProgress };
+                    let maxNextWatchV1 = 0;
+
+                    usersToUpdate.forEach(u => {
+                        const uProg = updatedWatchedProgress[u] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
+                        const curWatch = parseFloat(uProg.v1) || 0;
+                        const nextWatchV1 = curWatch + 1;
+                        maxNextWatchV1 = Math.max(maxNextWatchV1, nextWatchV1);
+                        updatedWatchedProgress[u] = { ...ensureP(uProg), v1: nextWatchV1.toString() };
+                    });
+
+                    // 確保伺服器的最新總集數會跟著往前推
+                    const nextUpdateV1 = Math.max(g._virtualUpdate, maxNextWatchV1);
+
                     const payload = {
-                        watchedProgress: {
-                            ...g.watchedProgress,
-                            [userName]: { ...ensureP(myProg), v1: nextWatchV1.toString() }
-                        },
+                        watchedProgress: updatedWatchedProgress,
                         updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: nextUpdateV1.toString() },
-                        updatedAt: serverTimestamp() // 強制刷新時間戳，讓它立刻從面板消失
+                        updatedAt: serverTimestamp() // 刷新時間戳以實現自動銷帳
                     };
                     
                     await setDoc(doc(getPublicCol('games'), g.id), payload, { merge: true });
-                    logActivity("修改", g.name, g.order, `快速追更 +1 集 (看到第 ${nextWatchV1} 集)`);
-                    showNotify(`《${g.name}》已成功加 1 集！`);
+                    logActivity("修改", g.name, g.order, `快速追更 +1 集 (${usersToUpdate.join(" & ")} 進度已連動)`);
+                    showNotify(`進度更新成功！`);
                 } catch (err) {
-                    showNotify(`快速更新失敗：${err.message}`);
+                    showNotify(`更新失敗：${err.message}`);
                 }
             };
             // ==========================================
@@ -2131,6 +2177,20 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                             <Icon name="bell" className="w-4 h-4 text-green-400" />
                                             <span>追劇更新提醒 ({reminderGames.length})</span>
                                         </div>
+                                        
+                                        {/* 🎯 右上角：切換顯示選項 */}
+                                        <div className="flex items-center bg-black/40 p-0.5 rounded border border-white/10 text-[9px] font-black tracking-normal">
+                                            {["全部", "糖糖", "雲雲"].map(mode => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setReminderUserFilter(mode); }}
+                                                    className={`px-1.5 py-0.5 rounded transition-all ${reminderUserFilter === mode ? 'bg-green-600 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
+                                                >
+                                                    {mode === "全部" ? "雙人" : mode}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     
                                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-0.5">
@@ -2140,43 +2200,38 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                             </div>
                                         ) : (
                                             <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))' }}>
-                                                {reminderGames.map(g => {
-                                                    const myProg = g.watchedProgress?.[userName] || { v1: '0', u1: '集' };
-                                                    const curWatch = parseFloat(myProg.v1) || 0;
-                                                    const curUpdate = parseFloat(g.updatedEpisodes?.v1) || 0;
-                                                    const isNewEpisodeReleased = curWatch >= curUpdate;
-                                                    
-                                                    return (
-                                                        <div key={g.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded hover:border-green-500/30 transition-colors transform-gpu overflow-hidden pr-2">
-                                                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                {g.cover ? (
-                                                                    <img src={g.cover} className="w-[28px] h-[38px] object-cover flex-shrink-0 bg-black/20" alt="" />
-                                                                ) : (
-                                                                    <div className="w-[28px] h-[38px] bg-black/40 flex items-center justify-center text-white/10 flex-shrink-0"><Icon name="image" className="w-3 h-3" /></div>
-                                                                )}
-                                                                <div className="min-w-0 flex-1 py-0.5">
-                                                                    <span className="font-black text-[11px] text-white truncate block leading-tight mb-0.5">{g.name}</span>
-                                                                    {isNewEpisodeReleased ? (
-                                                                        <span className="text-amber-400 font-black text-[9px] animate-pulse flex items-center gap-0.5">
-                                                                            🔥 新集數釋出！
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-red-400 font-bold text-[9px] block truncate">
-                                                                            落後 {curUpdate - curWatch} 集 ({curWatch}/{curUpdate})
-                                                                        </span>
-                                                                    )}
+                                                {reminderGames.map(g => (
+                                                    <div key={g.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded hover:border-green-500/30 transition-colors transform-gpu overflow-hidden pr-2">
+                                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                            {g.cover ? (
+                                                                <img src={g.cover} className="w-[28px] h-[38px] object-cover flex-shrink-0 bg-black/20" alt="" />
+                                                            ) : (
+                                                                <div className="w-[28px] h-[38px] bg-black/40 flex items-center justify-center text-white/10 flex-shrink-0"><Icon name="image" className="w-3 h-3" /></div>
+                                                            )}
+                                                            <div className="min-w-0 flex-1 py-0.5">
+                                                                <span className="font-black text-[11px] text-white truncate block leading-tight mb-0.5">{g.name}</span>
+                                                                <div className="text-[9px] font-bold block truncate space-x-1">
+                                                                    {g._userStatuses.map((s, idx) => {
+                                                                        const colorClass = s.isNew ? 'text-amber-400 animate-pulse' : 'text-red-400';
+                                                                        return (
+                                                                            <span key={s.user} className={colorClass}>
+                                                                                {s.user}{s.isNew ? '🔥新' : `-${s.behind}`}
+                                                                                {idx < g._userStatuses.length - 1 && <span className="text-white/20 ml-1">|</span>}
+                                                                            </span>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
-                                                            <button 
-                                                                type="button" 
-                                                                onClick={(e) => handleQuickProgressPlusOne(e, g)} 
-                                                                className="bg-green-600 hover:bg-white hover:text-[#3f5968] text-white font-black text-[11px] px-2 py-0.5 rounded shadow transition-colors flex-shrink-0 ml-1"
-                                                            >
-                                                                +1
-                                                            </button>
                                                         </div>
-                                                    );
-                                                })}
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => handleQuickProgressPlusOne(e, g)} 
+                                                            className="bg-green-600 hover:bg-white hover:text-[#3f5968] text-white font-black text-[11px] px-2 py-0.5 rounded shadow transition-colors flex-shrink-0 ml-1"
+                                                        >
+                                                            +1
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
