@@ -2009,10 +2009,27 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             const toolbarUI = useMemo(() => (
                 <div className="flex flex-col md:flex-row items-stretch md:items-center bg-black/20 border-y border-white/10 overflow-hidden shadow-xl">
                     {!isEditLocked && <button onClick={handleOpenAddModal} className="px-6 md:px-10 py-3 md:py-3 bg-[#ffbae9] text-[#3f5968] font-black border-l-8 border-white uppercase tracking-widest text-sm transition-all hover:bg-white">+ 錄入新內容</button>}
-                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-2 md:py-0"><Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" /><input type="text" placeholder="搜尋標題、編號..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                    <div className="px-4 md:px-6 flex items-center justify-end py-2 md:py-0"><button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}>{isEditLocked ? "唯讀模式" : "管理模式"}</button></div>
+                    <div className="flex-grow flex items-center px-4 md:px-6 border-y md:border-y-0 border-white/5 py-2 md:py-0">
+                        <Icon name="search" className="w-5 h-5 text-white/40 mr-4 flex-shrink-0" />
+                        <input type="text" placeholder="搜尋標題、編號..." className="bg-transparent outline-none uppercase font-black tracking-widest text-sm flex-grow placeholder:text-white/20 min-w-0" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                    
+                    {/* 👇 補回這裡！被遺忘的篩選標籤 👇 */}
+                    {memberFilter && (
+                        <div className="px-4 py-2">
+                            <button onClick={() => setMemberFilter(null)} className="px-3 py-1 bg-[#ffbae9]/10 border border-[#ffbae9]/30 text-[#ffbae9] text-[10px] font-black rounded flex items-center gap-2">
+                                {memberFilter.name ? `篩選: ${memberFilter.name}` : `全局篩選: ${memberFilter.value}`} <Icon name="x" className="w-3 h-3" />
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="px-4 md:px-6 flex items-center justify-end py-2 md:py-0">
+                        <button onClick={() => setIsEditLocked(!isEditLocked)} className={`px-6 py-2 rounded-full font-black text-xs border transition-all ${isEditLocked ? 'text-[#ffbae9] border-[#ffbae9]/50' : 'text-green-300 border-green-500/50 bg-green-500/10'}`}>
+                            {isEditLocked ? "唯讀模式" : "管理模式"}
+                        </button>
+                    </div>
                 </div>
-            ), [isEditLocked, searchQuery, handleOpenAddModal]);
+            ), [isEditLocked, searchQuery, memberFilter, handleOpenAddModal]);
 
             const categoryTabsUI = useMemo(() => (
                 <nav className="tab-bar">
