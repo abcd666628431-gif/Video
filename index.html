@@ -2038,29 +2038,30 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     {customCategories.map((cat, idx) => (
                         <div 
                             key={idx} 
-                            // 👇 這裡加上了動態覆寫：在管理模式 (!isEditLocked) 時，把左右內距、上下內距和間隔全部縮小 👇
-                            className={`tab group ${activeTab === cat ? 'active' : ''} ${!isEditLocked ? '!pl-3 !pr-1.5 !py-1 !gap-1.5' : ''}`} 
+                            // 固定一個比較適中的內距，避免切換模式時 padding 突變導致拉扯
+                            className={`tab group ${activeTab === cat ? 'active' : ''} !px-3 !py-1.5`} 
                             onClick={() => setActiveTab(prev => prev === cat ? null : cat)}
                         >
-                            <span>{cat}</span>
-                            {!isEditLocked && (
-                                // 👇 這裡把兩個圖標之間的距離 (!gap-0) 和左側分隔線的距離 (!pl-1.5) 壓縮 👇
-                                <div className="tab-action-group !pl-1.5 !ml-0 !gap-0">
-                                    <div className="tab-icon-btn !w-6 !h-6" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}>
-                                        <Icon name="pencil" className="w-3 h-3" />
-                                    </div>
-                                    <div className="tab-icon-btn btn-trash !w-6 !h-6" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}>
-                                        <Icon name="trash-2" className="w-3 h-3" />
-                                    </div>
+                            <span className="whitespace-nowrap relative top-[1px]">{cat}</span>
+                            
+                            {/* 將瞬間插入 DOM 改為 CSS 的 max-width 平滑展開，達成完美的抽屜滑出效果 */}
+                            <div className={`flex items-center overflow-hidden transition-all duration-300 ease-out ${isEditLocked ? 'max-w-0 opacity-0 border-none ml-0 pl-0 gap-0' : 'max-w-[60px] opacity-100 border-l border-white/20 ml-2 pl-1.5 gap-0'}`}>
+                                <div className="tab-icon-btn !w-6 !h-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}>
+                                    <Icon name="pencil" className="w-3 h-3" />
                                 </div>
-                            )}
+                                <div className="tab-icon-btn btn-trash !w-6 !h-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}>
+                                    <Icon name="trash-2" className="w-3 h-3" />
+                                </div>
+                            </div>
                         </div>
                     ))}
-                    {!isEditLocked && (
-                        <div className="plus-toggle-btn !w-8 !h-8 !rounded-full shadow-lg ml-1" onClick={() => setShowAddCategoryModal(true)} title="新增分類">
+                    
+                    {/* 最右邊的新增分類按鈕也做平滑展開 */}
+                    <div className={`overflow-hidden transition-all duration-300 ease-out flex items-center ${isEditLocked ? 'max-w-0 opacity-0' : 'max-w-[40px] opacity-100'}`}>
+                        <div className="plus-toggle-btn !w-8 !h-8 !rounded-full shadow-lg ml-1 flex-shrink-0" onClick={() => setShowAddCategoryModal(true)} title="新增分類">
                             <Icon name="plus" className="w-4 h-4" />
                         </div>
-                    )}
+                    </div>
                 </nav> 
             ), [customCategories, activeTab, isEditLocked]);
 
