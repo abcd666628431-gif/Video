@@ -2036,17 +2036,31 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             const categoryTabsUI = useMemo(() => (
                 <nav className="tab-bar">
                     {customCategories.map((cat, idx) => (
-                        <div key={idx} className={`tab group ${activeTab === cat ? 'active' : ''}`} onClick={() => setActiveTab(prev => prev === cat ? null : cat)}>
+                        <div 
+                            key={idx} 
+                            // 👇 這裡加上了動態覆寫：在管理模式 (!isEditLocked) 時，把左右內距、上下內距和間隔全部縮小 👇
+                            className={`tab group ${activeTab === cat ? 'active' : ''} ${!isEditLocked ? '!pl-3 !pr-1.5 !py-1 !gap-1.5' : ''}`} 
+                            onClick={() => setActiveTab(prev => prev === cat ? null : cat)}
+                        >
                             <span>{cat}</span>
                             {!isEditLocked && (
-                                <div className="tab-action-group">
-                                    <div className="tab-icon-btn" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}><Icon name="pencil" className="w-3 h-3" /></div>
-                                    <div className="tab-icon-btn btn-trash" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}><Icon name="trash-2" className="w-3 h-3" /></div>
+                                // 👇 這裡把兩個圖標之間的距離 (!gap-0) 和左側分隔線的距離 (!pl-1.5) 壓縮 👇
+                                <div className="tab-action-group !pl-1.5 !ml-0 !gap-0">
+                                    <div className="tab-icon-btn !w-6 !h-6" onClick={(e) => { e.stopPropagation(); setRenameCategoryTarget(cat); setRenameCategoryNewValue(cat); }}>
+                                        <Icon name="pencil" className="w-3 h-3" />
+                                    </div>
+                                    <div className="tab-icon-btn btn-trash !w-6 !h-6" onClick={(e) => { e.stopPropagation(); setDeleteCategoryTarget(cat); }}>
+                                        <Icon name="trash-2" className="w-3 h-3" />
+                                    </div>
                                 </div>
                             )}
                         </div>
                     ))}
-                    {!isEditLocked && (<div className="plus-toggle-btn !w-9 !h-9 !rounded-full shadow-lg" onClick={() => setShowAddCategoryModal(true)} title="新增分類"><Icon name="plus" className="w-5 h-5" /></div>)}
+                    {!isEditLocked && (
+                        <div className="plus-toggle-btn !w-8 !h-8 !rounded-full shadow-lg ml-1" onClick={() => setShowAddCategoryModal(true)} title="新增分類">
+                            <Icon name="plus" className="w-4 h-4" />
+                        </div>
+                    )}
                 </nav> 
             ), [customCategories, activeTab, isEditLocked]);
 
