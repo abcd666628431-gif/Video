@@ -2242,7 +2242,9 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         </div>
                         {toolbarUI}
                         <article className="tab-content bg-black/10 border-b border-white/10 p-1 md:p-1.5 !pt-0 shadow-2xl">
+                            {/* 👇 這一行就是分類標籤，把它補回去！ 👇 */}
                             {categoryTabsUI}
+                            
                             <div className="component-view">
                                 <ul>{gameListUI}</ul>
                                 <div ref={loadMoreSentinelRef} className="h-12 w-full mt-4"></div>
