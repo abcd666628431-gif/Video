@@ -1260,6 +1260,104 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 }
             };
 
+            const countAiringEvents = useCallback((startDate, endDate, updateDays, updateTimeStr) => {
+
+                if (!startDate || !endDate || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
+
+                const daysMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+
+                const targetDays = (Array.isArray(updateDays) ? updateDays : [updateDays]).map(d => daysMap[d]).filter(d => d !== undefined);
+
+                if (targetDays.length === 0) return 0;
+
+                
+
+                const [targetH, targetM] = updateTimeStr.split(':').map(Number);
+
+                let count = 0;
+
+                let current = new Date(startDate.getTime());
+
+                current.setHours(targetH, targetM, 0, 0);
+
+                
+
+                if (current <= startDate) current.setDate(current.getDate() + 1);
+
+
+
+                while (current <= endDate) {
+
+                    if (targetDays.includes(current.getDay())) count++;
+
+                    current.setDate(current.getDate() + 1);
+
+                }
+
+                return count;
+
+            }, []);
+
+
+
+            // 1.5 🌟 全域智慧資料庫攔截器：讓「更新至」在所有卡片、統計中都會跟著時間自動增加！
+
+            const smartGames = useMemo(() => {
+
+                const now = new Date();
+
+                return games.map(g => {
+
+                    if (g.airingStatus !== "連載中" || !g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) {
+
+                        return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
+
+                    }
+
+                    const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
+
+                    const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
+
+                    
+
+                    if (missedEpisodes > 0) {
+
+                        const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
+
+                        const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
+
+                        
+
+                        // 【防呆保護】確保時間自動推算的最新集數，絕對不會超過總集數
+
+                        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total);
+
+                        
+
+                        return {
+
+                            ...g,
+
+                            // 覆蓋原本的 updatedEpisodes，讓全系統的 UI 都讀到這個最新推算結果
+
+                            updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: virtualUpdate.toString() },
+
+                            _rawUpdatedEpisodes: g.updatedEpisodes, // 偷偷把原始真實資料庫數據藏起來備用
+
+                            _virtualUpdate: virtualUpdate,
+
+                            _missedEpisodes: missedEpisodes
+
+                        };
+
+                    }
+
+                    return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
+
+                });
+
+            }, [games, countAiringEvents]);
+            
             const handleUpdateWatchOrder = async (id, val) => { 
                 if(!user) return; 
                 try { 
@@ -2079,55 +2177,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             // ==========================================
             
             // 1. 計算在給定時間段內，該劇更新了多少集
-            const countAiringEvents = useCallback((startDate, endDate, updateDays, updateTimeStr) => {
-                if (!startDate || !endDate || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
-                const daysMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
-                const targetDays = (Array.isArray(updateDays) ? updateDays : [updateDays]).map(d => daysMap[d]).filter(d => d !== undefined);
-                if (targetDays.length === 0) return 0;
-                
-                const [targetH, targetM] = updateTimeStr.split(':').map(Number);
-                let count = 0;
-                let current = new Date(startDate.getTime());
-                current.setHours(targetH, targetM, 0, 0);
-                
-                if (current <= startDate) current.setDate(current.getDate() + 1);
-
-                while (current <= endDate) {
-                    if (targetDays.includes(current.getDay())) count++;
-                    current.setDate(current.getDate() + 1);
-                }
-                return count;
-            }, []);
-
-            // 1.5 🌟 全域智慧資料庫攔截器：讓「更新至」在所有卡片、統計中都會跟著時間自動增加！
-            const smartGames = useMemo(() => {
-                const now = new Date();
-                return games.map(g => {
-                    if (g.airingStatus !== "連載中" || !g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) {
-                        return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
-                    }
-                    const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
-                    const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
-                    
-                    if (missedEpisodes > 0) {
-                        const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
-                        const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
-                        
-                        // 【防呆保護】確保時間自動推算的最新集數，絕對不會超過總集數
-                        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total);
-                        
-                        return {
-                            ...g,
-                            // 覆蓋原本的 updatedEpisodes，讓全系統的 UI 都讀到這個最新推算結果
-                            updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: virtualUpdate.toString() },
-                            _rawUpdatedEpisodes: g.updatedEpisodes, // 偷偷把原始真實資料庫數據藏起來備用
-                            _virtualUpdate: virtualUpdate,
-                            _missedEpisodes: missedEpisodes
-                        };
-                    }
-                    return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
-                });
-            }, [games, countAiringEvents]);
+            
 
             // 2. 智慧過濾：根據「誰在看」與切換標籤篩選清單
             const reminderGames = useMemo(() => {
