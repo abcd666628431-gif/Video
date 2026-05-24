@@ -837,6 +837,15 @@ const formatBracketTitle = (text) => {
             const [tempNewUserName, setTempNewUserName] = useState("");
 const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新增：追劇面板成員切換狀態 ('全部' / '糖糖' / '雲雲')
             
+            // 👇🌟 新增：系統內部時鐘引擎 🌟👇
+            const [systemTick, setSystemTick] = useState(0);
+            useEffect(() => {
+                // 每 60 秒 (60000 毫秒) 觸發一次心跳，推動全系統時間前進
+                const clock = setInterval(() => setSystemTick(t => t + 1), 60000);
+                return () => clearInterval(clock);
+            }, []);
+            // 👆🌟 新增結束 🌟👆
+            
             const CHUNK_SIZE = 36;
             const [displayLimit, setDisplayLimit] = useState(CHUNK_SIZE);
             const filteredGamesLengthRef = useRef(0);
@@ -1350,12 +1359,10 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         };
 
                     }
-
                     return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
-
                 });
-
-            }, [games, countAiringEvents]);
+            // 👇 這裡加上了 systemTick，只要時鐘一跳，大腦就會自動重新計算集數 👇
+            }, [games, countAiringEvents, systemTick]);
             
             const handleUpdateWatchOrder = async (id, val) => { 
                 if(!user) return; 
