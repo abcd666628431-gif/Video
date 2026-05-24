@@ -1266,27 +1266,28 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     const targetGame = gamesRef.current.find(g => g.id === id);
                     await setDoc(doc(getPublicCol('games'), id), { watchOrder: val }, { merge: true }); 
                     if (targetGame) {
-                        // 新增：寫入操作日誌
                         logActivity("修改", targetGame.name, targetGame.order, `觀看順序改為 [${val}]`);
                     }
                 } catch(e) {} 
             };
             
+            // 🔴 變更點：改用 smartGames
             const watchListGames = useMemo(() => { 
-                return [...games].filter(g => g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "").sort((a, b) => parseFloat(a.watchOrder) - parseFloat(b.watchOrder)); 
-            }, [games]);
+                return [...smartGames].filter(g => g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "").sort((a, b) => parseFloat(a.watchOrder) - parseFloat(b.watchOrder)); 
+            }, [smartGames]);
             
             const deferredWatchOrderSearchQuery = useDeferredValue(watchOrderSearchQuery);
             const watchOrderSuggestions = useMemo(() => {
                 if (!deferredWatchOrderSearchQuery.trim()) return [];
                 const qNorm = toSimplified(deferredWatchOrderSearchQuery).toLowerCase();
-                return games.filter(g => {
+                // 🔴 變更點：改用 smartGames
+                return smartGames.filter(g => {
                     if (g.watchOrder !== undefined && g.watchOrder !== null && g.watchOrder !== "") return false; 
                     const matchId = String(extractFirstNumber(g.order)) === deferredWatchOrderSearchQuery.trim();
                     const gSearch = g.searchName || toSimplified(g.name || "").toLowerCase();
                     return matchId || gSearch.includes(qNorm);
                 }).slice(0, 10);
-            }, [games, deferredWatchOrderSearchQuery]);
+            }, [smartGames, deferredWatchOrderSearchQuery]);
 
             const handleAddWatchOrder = async (gameOrIdStr) => {
                 if (!user) return;
@@ -1297,10 +1298,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     const query = watchOrderSearchQuery.trim(); 
                     if (!query) return;
                     const targetNum = parseInt(query.replace(/[^0-9]/g, ''));
+                    // 🔴 變更點：改用 smartGames 搜尋
                     if (!isNaN(targetNum) && String(targetNum) === query) { 
-                        targetGame = games.find(g => extractFirstNumber(g.order) === targetNum && (!g.watchOrder)); 
+                        targetGame = smartGames.find(g => extractFirstNumber(g.order) === targetNum && (!g.watchOrder)); 
                     }
-                    if (!targetGame && watchOrderSuggestions.length > 0) { 
+                    if (!targetGame && watchOrderSuggestions.length > 0) {
                         targetGame = watchOrderSuggestions[0]; 
                     }
                 }
@@ -1624,13 +1626,13 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         }, isMobileDevice() ? 40 : 100); // 40ms 給予 React 處理 DOM 渲染的喘息時間
                     }
                 };
-                
                 stepLoadAndScroll();
             }, [displayLimit, showNotify]);
             
+            // 🔴 變更點：改用 smartGames
             const memberStats = useMemo(() => {
                 const sm = {}; 
-                games.forEach(g => { 
+                smartGames.forEach(g => { 
                     const w = Array.isArray(g.watchingBy) ? g.watchingBy : (g.watchingBy ? [g.watchingBy] : []); 
                     w.forEach(n => { 
                         if(!sm[n]) sm[n] = { total: 0, unstarted: 0, watching: 0, completed: 0, cats: {}, sources: {} }; 
@@ -1645,7 +1647,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     }); 
                 }); 
                 return Object.keys(sm).sort().map(n => ({ name: n, color: nameColorMap[n] || '#ffffff', stats: sm[n] }));
-            }, [games, nameColorMap]);
+            }, [smartGames, nameColorMap]);
             
             const activeCategoriesInUse = useMemo(() => { 
                 const sums = {}; 
@@ -1668,8 +1670,9 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             }, []);
             
             const deferredSearchQuery = useDeferredValue(searchQuery);
+            // 🔴 變更點：改用 smartGames
             const filteredGames = useMemo(() => {
-                let l = [...games]; 
+                let l = [...smartGames]; 
                 const q = deferredSearchQuery.toLowerCase().trim(); 
                 if(q) {
                     const qNorm = toSimplified(q); const isNumSearch = /^\d+$/.test(q); const numToSearch = isNumSearch ? parseInt(q) : null;
@@ -1712,7 +1715,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     l.sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order)); 
                 }
                 return l;
-            }, [games, deferredSearchQuery, activeTab, memberFilter]);
+            }, [smartGames, deferredSearchQuery, activeTab, memberFilter]);
             
             useEffect(() => { 
                 setDisplayLimit(prev => (filteredGames.length > filteredGamesLengthRef.current && prev <= filteredGamesLengthRef.current) ? prev + CHUNK_SIZE : prev); 
@@ -2071,6 +2074,11 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
             // ==========================================
             
             // 1. 計算在給定時間段內，該劇更新了多少集
+            // ==========================================
+            // 新增：追劇提醒助手核心邏輯與自動時間戳計算 (動態看人篩選版)
+            // ==========================================
+            
+            // 1. 計算在給定時間段內，該劇更新了多少集
             const countAiringEvents = useCallback((startDate, endDate, updateDays, updateTimeStr) => {
                 if (!startDate || !endDate || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
                 const daysMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
@@ -2079,103 +2087,128 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 
                 const [targetH, targetM] = updateTimeStr.split(':').map(Number);
                 let count = 0;
-                
                 let current = new Date(startDate.getTime());
                 current.setHours(targetH, targetM, 0, 0);
                 
-                if (current <= startDate) {
-                    current.setDate(current.getDate() + 1);
-                }
+                if (current <= startDate) current.setDate(current.getDate() + 1);
 
                 while (current <= endDate) {
-                    if (targetDays.includes(current.getDay())) {
-                        count++;
-                    }
+                    if (targetDays.includes(current.getDay())) count++;
                     current.setDate(current.getDate() + 1);
                 }
                 return count;
             }, []);
 
-            // 2. 篩選需要提醒的追劇清單
-const reminderGames = useMemo(() => {
-    return games.map(g => {
-        if (g.airingStatus !== "連載中") return null;
-        if (!g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) return null;
-        
-        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
-        let activeTrackUsers = (reminderUserFilter === "全部") ? ["糖糖", "雲雲"] : [reminderUserFilter];
-        activeTrackUsers = activeTrackUsers.filter(u => watchers.includes(u));
-        if (activeTrackUsers.length === 0) return null;
+            // 1.5 🌟 全域智慧資料庫攔截器：讓「更新至」在所有卡片、統計中都會跟著時間自動增加！
+            const smartGames = useMemo(() => {
+                const now = new Date();
+                return games.map(g => {
+                    if (g.airingStatus !== "連載中" || !g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) {
+                        return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
+                    }
+                    const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
+                    const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
+                    
+                    if (missedEpisodes > 0) {
+                        const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
+                        const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
+                        
+                        // 【防呆保護】確保時間自動推算的最新集數，絕對不會超過總集數
+                        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total);
+                        
+                        return {
+                            ...g,
+                            // 覆蓋原本的 updatedEpisodes，讓全系統的 UI 都讀到這個最新推算結果
+                            updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: virtualUpdate.toString() },
+                            _rawUpdatedEpisodes: g.updatedEpisodes, // 偷偷把原始真實資料庫數據藏起來備用
+                            _virtualUpdate: virtualUpdate,
+                            _missedEpisodes: missedEpisodes
+                        };
+                    }
+                    return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
+                });
+            }, [games, countAiringEvents]);
 
-        const docUpdatedAt = g.updatedAt?.toDate ? g.updatedAt.toDate() : (g.updatedAt?.seconds ? new Date(g.updatedAt.seconds * 1000) : (g.timestamp?.seconds ? new Date(g.timestamp.seconds * 1000) : new Date(0)));
-        const now = new Date();
-        const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
-        const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
-        const total = parseFloat(g.totalEpisodes?.v1) || Infinity; // 獲取總集數，若無則為無限
-        
-        // 【核心優化】虛擬最新集數不能超過總集數
-        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total);
+            // 2. 智慧過濾：根據「誰在看」與切換標籤篩選清單
+            const reminderGames = useMemo(() => {
+                return smartGames.map(g => { // 🔴 改用充滿智慧的 smartGames
+                    if (g.airingStatus !== "連載中" || !g.updateDay || (Array.isArray(g.updateDay) ? g.updateDay.length === 0 : !g.updateDay) || !g.updateTime) return null;
+                    
+                    const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
+                    let activeTrackUsers = (reminderUserFilter === "全部") ? ["糖糖", "雲雲"] : [reminderUserFilter];
+                    activeTrackUsers = activeTrackUsers.filter(u => watchers.includes(u));
+                    if (activeTrackUsers.length === 0) return null;
 
-        let needsReminder = false;
-        const userStatuses = [];
+                    const virtualUpdate = g._virtualUpdate;
+                    const curUpdateDB = g._rawUpdatedEpisodes ? (parseFloat(g._rawUpdatedEpisodes.v1) || 0) : virtualUpdate;
+                    const missedEpisodes = g._missedEpisodes;
 
-        activeTrackUsers.forEach(u => {
-            const myProg = g.watchedProgress?.[u] || { v1: '0', u1: '集' };
-            const curWatch = parseFloat(myProg.v1) || 0;
-            const behindCount = Math.max(0, virtualUpdate - curWatch);
-            
-            if (behindCount > 0) {
-                needsReminder = true;
-                const isNew = curWatch >= curUpdateDB && missedEpisodes > 0;
-                userStatuses.push({ user: u, watch: curWatch, behind: behindCount, isNew: isNew });
-            }
-        });
+                    let needsReminder = false;
+                    const userStatuses = [];
 
-        if (needsReminder) {
-            return { ...g, _virtualUpdate: virtualUpdate, _userStatuses: userStatuses };
-        }
-        return null;
-    }).filter(Boolean).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
-}, [games, reminderUserFilter, countAiringEvents]);
+                    activeTrackUsers.forEach(u => {
+                        const myProg = g.watchedProgress?.[u] || { v1: '0', u1: '集' };
+                        const curWatch = parseFloat(myProg.v1) || 0;
+                        const behindCount = Math.max(0, virtualUpdate - curWatch);
+                        
+                        if (behindCount > 0) {
+                            needsReminder = true;
+                            const isNew = curWatch >= curUpdateDB && missedEpisodes > 0;
+                            userStatuses.push({ user: u, watch: curWatch, behind: behindCount, isNew: isNew });
+                        }
+                    });
 
-            // 3. 一鍵追更：智慧判斷單人 +1 或雙人同步 +1，且不超過總集數
-const handleQuickProgressPlusOne = async (e, g) => {
-    e.stopPropagation();
-    if (!user || isSaving) return;
-    try {
-        const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
-        let usersToUpdate = (reminderUserFilter === "全部") ? ["糖糖", "雲雲"] : [reminderUserFilter];
-        const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
-        usersToUpdate = usersToUpdate.filter(u => watchers.includes(u));
-        if (usersToUpdate.length === 0) return;
+                    if (needsReminder) {
+                        return { ...g, _userStatuses: userStatuses };
+                    }
+                    return null;
+                }).filter(Boolean).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
+            }, [smartGames, reminderUserFilter]);
 
-        const updatedWatchedProgress = { ...g.watchedProgress };
-        let maxNextWatchV1 = 0;
+            // 3. 一鍵追更：防超量保護機制
+            const handleQuickProgressPlusOne = async (e, g) => {
+                e.stopPropagation();
+                if (!user || isSaving) return;
+                try {
+                    const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
+                    let usersToUpdate = (reminderUserFilter === "全部") ? ["糖糖", "雲雲"] : [reminderUserFilter];
+                    const watchers = Array.isArray(g.watchingBy) ? g.watchingBy : [];
+                    usersToUpdate = usersToUpdate.filter(u => watchers.includes(u));
+                    if (usersToUpdate.length === 0) return;
 
-        usersToUpdate.forEach(u => {
-            const uProg = updatedWatchedProgress[u] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
-            const curWatch = parseFloat(uProg.v1) || 0;
-            // 【核心優化】進度 +1 但不能超過總集數
-            const nextWatchV1 = Math.min(curWatch + 1, total);
-            maxNextWatchV1 = Math.max(maxNextWatchV1, nextWatchV1);
-            updatedWatchedProgress[u] = { ...ensureP(uProg), v1: nextWatchV1.toString() };
-        });
+                    const updatedWatchedProgress = { ...g.watchedProgress };
+                    let maxNextWatchV1 = 0;
 
-        const nextUpdateV1 = Math.min(Math.max(g._virtualUpdate, maxNextWatchV1), total);
+                    usersToUpdate.forEach(u => {
+                        const uProg = updatedWatchedProgress[u] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
+                        const curWatch = parseFloat(uProg.v1) || 0;
+                        
+                        // 【上限保護】進度 +1 但絕對不能超過總集數
+                        const nextWatchV1 = Math.min(curWatch + 1, total);
+                        maxNextWatchV1 = Math.max(maxNextWatchV1, nextWatchV1);
+                        updatedWatchedProgress[u] = { ...ensureP(uProg), v1: nextWatchV1.toString() };
+                    });
 
-        const payload = {
-            watchedProgress: updatedWatchedProgress,
-            updatedEpisodes: { ...ensureP(g.updatedEpisodes), v1: nextUpdateV1.toString() },
-            updatedAt: serverTimestamp()
-        };
-        
-        await setDoc(doc(getPublicCol('games'), g.id), payload, { merge: true });
-        logActivity("修改", g.name, g.order, `追更 +1 集`);
-        showNotify(`進度更新成功！`);
-    } catch (err) {
-        showNotify(`更新失敗：${err.message}`);
-    }
-};
+                    // 同步推動最新集數（取 MAX 避免倒退，且不超過總集數）
+                    const nextUpdateV1 = Math.min(Math.max(g._virtualUpdate, maxNextWatchV1), total);
+
+                    const payload = {
+                        watchedProgress: updatedWatchedProgress,
+                        // 存進資料庫時，以原始數字去覆蓋，避免時間重複疊加
+                        updatedEpisodes: { ...ensureP(g._rawUpdatedEpisodes || g.updatedEpisodes), v1: nextUpdateV1.toString() },
+                        updatedAt: serverTimestamp() 
+                    };
+                    
+                    await setDoc(doc(getPublicCol('games'), g.id), payload, { merge: true });
+                    logActivity("修改", g.name, g.order, `追更 +1 集`);
+                    showNotify(`進度更新成功！`);
+                } catch (err) {
+                    showNotify(`更新失敗：${err.message}`);
+                }
+            };
+            // ==========================================
+            // 核心邏輯置入結束
+            // ==========================================
             // ==========================================
             // 核心邏輯置入結束
             // ==========================================
