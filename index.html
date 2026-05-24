@@ -776,6 +776,51 @@ const formatBracketTitle = (text) => {
             );
         });
 
+        // ==========================================
+        // 🌟 新增：擁有「1秒延遲展開」智慧的操作日誌專屬元件
+        // ==========================================
+        const ActivityLogItem = memo(({ l, nameColorMap }) => {
+            const [isExpanded, setIsExpanded] = useState(false);
+            const timerRef = useRef(null);
+
+            const handleMouseEnter = () => {
+                // 滑鼠放上去時，設定 1 秒 (1000ms) 後才展開
+                timerRef.current = setTimeout(() => {
+                    setIsExpanded(true);
+                }, 1000); 
+            };
+
+            const handleMouseLeave = () => {
+                // 如果 1 秒內滑鼠就移開了，馬上清除計時器，並縮回文字
+                if (timerRef.current) clearTimeout(timerRef.current);
+                setIsExpanded(false);
+            };
+
+            return (
+                <div 
+                    className="border-b border-white/5 py-1 flex items-center w-full transition-all"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                >
+                    <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
+                    <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
+                    {l.action === "系統" ? (
+                        <span className={`font-black text-[11.5px] text-green-400 shrink min-w-0 transition-all pr-2 ${isExpanded ? 'whitespace-normal overflow-visible break-all' : 'truncate'}`} title={l.gameName}>{formatBracketTitle(l.gameName)}</span> 
+                    ) : (
+                        <>
+                            <span className={`mr-0.5 flex-shrink-0 text-[10.5px] ${l.action === '移除' ? 'text-red-400 font-bold' : 'opacity-80'}`}>{l.action}</span>
+                            <span className={`font-black text-[11.5px] shrink min-w-0 transition-all ${isExpanded ? 'whitespace-normal overflow-visible break-all' : 'truncate'}`} title={l.gameName}>
+                                {l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}
+                                {formatBracketTitle(l.gameName)}
+                            </span>
+                            {l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
+                        </>
+                    )}
+                </div>
+            );
+        });
+        // ==========================================
+
         function App() {
             const CURRENT_APP_VERSION = 1181; 
             const [user, setUser] = useState(null), [games, setGames] = useState([]);
@@ -1942,18 +1987,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-1 font-black text-white/50 text-xs uppercase"><Icon name="history" className="w-4 h-4 text-[#ffbae9]" /> 操作日誌</div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[13px] space-y-1 text-white/70">
                         {activityLogs.map(l => (
-                            <div key={l.id} className="border-b border-white/5 py-1 flex items-center w-full group transition-all">
-                                <span className="text-white/30 text-[10px] mr-1 flex-shrink-0">{formatDate(l.timestamp).split(' ')[1]}</span> 
-                                <span className="font-bold mr-0.5 flex-shrink-0 text-[11.5px]" style={{ color: nameColorMap[l.userName] || '#fff' }}>{l.userName}</span> 
-                                {l.action === "系統" ? (
-                                    <span className="font-black text-[11.5px] text-green-400 truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all pr-2" title={l.gameName}>{formatBracketTitle(l.gameName)}</span> 
-                                ) : (
-                                    <>
-                                        {/* 這裡加入了條件判斷：如果是「移除」，就變成淺紅色加粗 */}
-                                        <span className={`mr-0.5 flex-shrink-0 text-[10.5px] ${l.action === '移除' ? 'text-red-400 font-bold' : 'opacity-80'}`}>{l.action}</span><span className="font-black text-[11.5px] truncate group-hover:whitespace-normal group-hover:overflow-visible group-hover:break-all shrink min-w-0 transition-all" title={l.gameName}>{l.gameOrder && <span className="text-[#ffbae9] mr-0.5 relative -top-[1px]">[{l.gameOrder}]</span>}{formatBracketTitle(l.gameName)}</span>{l.extraDetail && <span className="text-cyan-300 font-bold flex-shrink-0 text-[10.5px] pr-2">{l.extraDetail}</span>}
-                                    </>
-                                )}
-                            </div>
+                            <ActivityLogItem key={l.id} l={l} nameColorMap={nameColorMap} />
                         ))}
                     </div>
                 </div>
