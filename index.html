@@ -784,14 +784,14 @@ const formatBracketTitle = (text) => {
             const timerRef = useRef(null);
 
             const handleMouseEnter = () => {
-                // 滑鼠放上去時，設定 1 秒 (1000ms) 後才展開
+                // 調整為 500 毫秒 (0.5 秒)
                 timerRef.current = setTimeout(() => {
                     setIsExpanded(true);
-                }, 1000); 
+                }, 500); 
             };
 
             const handleMouseLeave = () => {
-                // 如果 1 秒內滑鼠就移開了，馬上清除計時器，並縮回文字
+                // 如果滑鼠快速移開，馬上清除計時器
                 if (timerRef.current) clearTimeout(timerRef.current);
                 setIsExpanded(false);
             };
