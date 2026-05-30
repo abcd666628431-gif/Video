@@ -2367,10 +2367,12 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                         ) : (
                                             <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))' }}>
                                                 {reminderGames.map(g => {
-                                                    const maxBehind = Math.max(...g._userStatuses.map(s => s.behind));
-                                                    
                                                     return (
-                                                        <div key={g.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded hover:border-green-500/30 transition-colors transform-gpu overflow-hidden pr-2">
+                                                        <div 
+                                                            key={g.id} 
+                                                            onClick={() => handleOpenEdit(g)}
+                                                            className="flex items-center justify-between bg-white/5 border border-white/5 rounded hover:border-green-500/30 transition-colors transform-gpu overflow-hidden pr-2 cursor-pointer"
+                                                        >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
                                                                 {g.cover ? (
                                                                     <img src={g.cover} className="w-[28px] h-[38px] object-cover flex-shrink-0 bg-black/20" alt="" />
@@ -2384,7 +2386,6 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                                             const colorClass = s.isNew ? 'text-amber-400 animate-pulse' : 'text-red-400';
                                                                             return (
                                                                                 <span key={s.user} className={colorClass}>
-                                                                                    {/* 👇 1. 紅字修改為「未觀看剩-XXX集」 👇 */}
                                                                                     {s.user}{s.isNew ? '🔥新' : ` 未觀看剩-${s.behind}集`}
                                                                                     {idx < g._userStatuses.length - 1 && <span className="text-white/20 ml-1">|</span>}
                                                                                 </span>
@@ -2394,17 +2395,14 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                                 </div>
                                                             </div>
                                                             
-                                                            {/* 👇 2. UI 究極進化：變成玫瑰紅色，且點擊瞬間會縮小並閃現 -1 👇 */}
+                                                            {/* 綠色 +1 按鈕還原，並確保點擊時不會觸發外層卡片的 onClick */}
                                                             <button 
                                                                 type="button" 
-                                                                onClick={(e) => handleQuickProgressPlusOne(e, g)} 
-                                                                className="group bg-rose-600/90 hover:bg-rose-500 active:scale-90 active:bg-rose-700 text-white font-black text-[10.5px] px-2 py-0.5 rounded shadow transition-all flex-shrink-0 ml-1 min-w-[42px] text-center"
-                                                                title={`點擊追 1 集 (當前共落後 ${maxBehind} 集)`}
+                                                                onClick={(e) => { e.stopPropagation(); handleQuickProgressPlusOne(e, g); }} 
+                                                                className="bg-green-600 hover:bg-white hover:text-[#3f5968] text-white font-black text-[10.5px] px-2 py-0.5 rounded shadow transition-colors flex-shrink-0 ml-1 min-w-[34px] text-center"
+                                                                title="點擊快速前進 1 集"
                                                             >
-                                                                {/* 平常顯示 -總欠集數 */}
-                                                                <span className="group-active:hidden">-{maxBehind}</span>
-                                                                {/* 按下去的瞬間切換成 -1 */}
-                                                                <span className="hidden group-active:inline">-1</span>
+                                                                +1
                                                             </button>
                                                         </div>
                                                     );
