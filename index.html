@@ -2386,7 +2386,8 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                                             const colorClass = s.isNew ? 'text-amber-400 animate-pulse' : 'text-red-400';
                                                                             return (
                                                                                 <span key={s.user} className={colorClass}>
-                                                                                    {s.user}{s.isNew ? '🔥新' : ` 未觀看剩-${s.behind}集`}
+                                                                                    {/* 👇 把負號和剩字拿掉，改成括號 👇 */}
+                                                                                    {s.user}{s.isNew ? '🔥新' : ` 未觀看(${s.behind}集)`}
                                                                                     {idx < g._userStatuses.length - 1 && <span className="text-white/20 ml-1">|</span>}
                                                                                 </span>
                                                                             );
