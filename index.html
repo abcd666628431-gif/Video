@@ -2261,7 +2261,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 }).filter(Boolean).sort((a, b) => extractFirstNumber(a.order) - extractFirstNumber(b.order));
             }, [smartGames, reminderUserFilter]);
 
-            // 3. 一鍵追更：防超量保護機制
+            // 3. 一鍵追更：防超量保護機制 + 精準日誌紀錄
             const handleQuickProgressPlusOne = async (e, g) => {
                 e.stopPropagation();
                 if (!user || isSaving) return;
@@ -2274,15 +2274,31 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
 
                     const updatedWatchedProgress = { ...g.watchedProgress };
                     let maxNextWatchV1 = 0;
+                    
+                    // 🌟 新增：用來收集進度變化的陣列
+                    let progressChanges = [];
 
                     usersToUpdate.forEach(u => {
-                        const uProg = updatedWatchedProgress[u] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
+                        const uProg = g.watchedProgress?.[u] || { v1: '0', u1: '集', v2: '', u2: '分鐘' };
                         const curWatch = parseFloat(uProg.v1) || 0;
                         
                         // 【上限保護】進度 +1 但絕對不能超過總集數
                         const nextWatchV1 = Math.min(curWatch + 1, total);
                         maxNextWatchV1 = Math.max(maxNextWatchV1, nextWatchV1);
-                        updatedWatchedProgress[u] = { ...ensureP(uProg), v1: nextWatchV1.toString() };
+                        
+                        // 🌟 新增：格式化新舊進度字串
+                        const oldStr = uProg.v1 ? formatProgressText(uProg) : `0${uProg.u1 || '集'}`;
+                        const newProgObj = { ...ensureP(uProg), v1: nextWatchV1.toString() };
+                        const newStr = formatProgressText(newProgObj);
+                        
+                        // 如果數字真的有改變才紀錄 (防呆)
+                        if (curWatch !== nextWatchV1) {
+                            // 如果是雙人模式，前面加上名字以示區別；單人模式直接顯示數字
+                            const prefix = usersToUpdate.length > 1 ? `${u} ` : "";
+                            progressChanges.push(`${prefix}${oldStr}>${newStr}`);
+                        }
+
+                        updatedWatchedProgress[u] = newProgObj;
                     });
 
                     // 同步推動最新集數（取 MAX 避免倒退，且不超過總集數）
@@ -2296,18 +2312,16 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     };
                     
                     await setDoc(doc(getPublicCol('games'), g.id), payload, { merge: true });
-                    logActivity("修改", g.name, g.order, `追更 +1 集`);
+                    
+                    // 🌟 新增：組合最終的日誌字串，並傳給 logActivity
+                    const extraDetail = progressChanges.length > 0 ? `觀看進度 ${progressChanges.join(', ')}` : "";
+                    
+                    logActivity("修改", g.name, g.order, extraDetail);
                     showNotify(`進度更新成功！`);
                 } catch (err) {
                     showNotify(`更新失敗：${err.message}`);
                 }
             };
-            // ==========================================
-            // 核心邏輯置入結束
-            // ==========================================
-            // ==========================================
-            // 核心邏輯置入結束
-            // ==========================================
             return (
                 <div className="min-h-screen px-0 py-2 relative text-white pb-24 overflow-x-hidden">
                     {notification && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#ffbae9] text-[#3f5968] font-black px-6 py-2 rounded-full border-2 border-white shadow-2xl animate-slide-down-fade">{notification}</div>}
@@ -2353,15 +2367,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                         ) : (
                                             <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))' }}>
                                                 {reminderGames.map(g => {
-                                                    const curWatch = parseFloat(g.watchedProgress?.[userName]?.v1) || 0;
-                                                    const virtualUpdate = g._virtualUpdate;
-                                                    
-                                                    // 1. 計算該檔案在當前篩選模式下的「最大未看集數」
-                                                    // 如果是雙人模式，取兩個人之中落後最多（最大值）的那筆數字來顯示在按鈕上
                                                     const maxBehind = Math.max(...g._userStatuses.map(s => s.behind));
-
-                                                    // 2. 判斷是否為純時間戳觸發的新集數（原本已看 >= 資料庫最新，但推算有新事件）
-                                                    const isPureTimeUpdate = g._userStatuses.some(s => s.isNew);
                                                     
                                                     return (
                                                         <div key={g.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded hover:border-green-500/30 transition-colors transform-gpu overflow-hidden pr-2">
@@ -2378,7 +2384,8 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                                             const colorClass = s.isNew ? 'text-amber-400 animate-pulse' : 'text-red-400';
                                                                             return (
                                                                                 <span key={s.user} className={colorClass}>
-                                                                                    {s.user}{s.isNew ? '🔥新' : `-${s.behind}`}
+                                                                                    {/* 👇 1. 紅字修改為「未觀看剩-XXX集」 👇 */}
+                                                                                    {s.user}{s.isNew ? '🔥新' : ` 未觀看剩-${s.behind}集`}
                                                                                     {idx < g._userStatuses.length - 1 && <span className="text-white/20 ml-1">|</span>}
                                                                                 </span>
                                                                             );
@@ -2387,14 +2394,17 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                                                                 </div>
                                                             </div>
                                                             
-                                                            {/* 🎯 這裡優化：將原本的 "+1" 變更為 "+未看集數數量" */}
+                                                            {/* 👇 2. UI 究極進化：變成玫瑰紅色，且點擊瞬間會縮小並閃現 -1 👇 */}
                                                             <button 
                                                                 type="button" 
                                                                 onClick={(e) => handleQuickProgressPlusOne(e, g)} 
-                                                                className="bg-green-600 hover:bg-white hover:text-[#3f5968] text-white font-black text-[10.5px] px-2 py-0.5 rounded shadow transition-colors flex-shrink-0 ml-1 min-w-[34px] text-center"
-                                                                title={`點擊快速前進 1 集 (當前共落後 ${maxBehind} 集)`}
+                                                                className="group bg-rose-600/90 hover:bg-rose-500 active:scale-90 active:bg-rose-700 text-white font-black text-[10.5px] px-2 py-0.5 rounded shadow transition-all flex-shrink-0 ml-1 min-w-[42px] text-center"
+                                                                title={`點擊追 1 集 (當前共落後 ${maxBehind} 集)`}
                                                             >
-                                                                +{maxBehind}
+                                                                {/* 平常顯示 -總欠集數 */}
+                                                                <span className="group-active:hidden">-{maxBehind}</span>
+                                                                {/* 按下去的瞬間切換成 -1 */}
+                                                                <span className="hidden group-active:inline">-1</span>
                                                             </button>
                                                         </div>
                                                     );
