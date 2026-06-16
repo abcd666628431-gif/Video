@@ -159,7 +159,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel" data-type="module">
+    <script type="text/babel" data-type="module" data-plugins="transform-react-jsx">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
         import { initializeFirestore, persistentLocalCache, getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit, writeBatch } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
