@@ -1338,47 +1338,36 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                 }
             };
 
+            // ==========================================
+            // 🌟 核心大腦提前宣告區 (極速 O(1) 數學算法版)
+            // ==========================================
             const countAiringEvents = useCallback((startDate, endDate, updateDays, updateTimeStr) => {
-
-                if (!startDate || !endDate || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
-
+                // 防禦機制：如果有任何無效時間，直接回傳 0，不浪費效能
+                if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate || !updateDays || !updateTimeStr) return 0;
+                
                 const daysMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
-
                 const targetDays = (Array.isArray(updateDays) ? updateDays : [updateDays]).map(d => daysMap[d]).filter(d => d !== undefined);
-
                 if (targetDays.length === 0) return 0;
-
                 
-
                 const [targetH, targetM] = updateTimeStr.split(':').map(Number);
-
-                let count = 0;
-
                 let current = new Date(startDate.getTime());
-
                 current.setHours(targetH, targetM, 0, 0);
-
                 
-
                 if (current <= startDate) current.setDate(current.getDate() + 1);
+                if (current > endDate) return 0;
 
-
-
-                while (current <= endDate) {
-
-                    if (targetDays.includes(current.getDay())) count++;
-
-                    current.setDate(current.getDate() + 1);
-
+                // 🚀 核心優化：使用 O(1) 數學公式取代原本的 while 逐日迴圈，徹底消除卡頓！
+                const diffDays = Math.floor((endDate.getTime() - current.getTime()) / (24 * 60 * 60 * 1000));
+                const fullWeeks = Math.floor(diffDays / 7);
+                let count = fullWeeks * targetDays.length;
+                
+                const remainderDays = diffDays % 7;
+                const startDayOfWeek = current.getDay();
+                for (let i = 0; i <= remainderDays; i++) {
+                    if (targetDays.includes((startDayOfWeek + i) % 7)) count++;
                 }
-
                 return count;
-
             }, []);
-
-
-
-            // 1.5 🌟 全域智慧資料庫攔截器：讓「更新至」在所有卡片、統計中都會跟著時間自動增加！
 
             const smartGames = useMemo(() => {
                 const now = new Date();
@@ -1387,29 +1376,25 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                         return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
                     }
                     
-                    // 🌟 修復跳動 Bug：攔截 Firebase 的「等待中 (null)」狀態，防止時空倒流回 1970 年
-                    let docUpdatedAt;
-                    if (g.updatedAt && typeof g.updatedAt.toDate === 'function') {
-                        docUpdatedAt = g.updatedAt.toDate();
-                    } else if (g.updatedAt && g.updatedAt.seconds) {
-                        docUpdatedAt = new Date(g.updatedAt.seconds * 1000);
-                    } else if (g.updatedAt === null) {
-                        // 當前正在等待 Firebase 伺服器回傳時間，代表「剛剛才修改」，直接當作現在時間
-                        docUpdatedAt = now;
-                    } else if (g.createdAt && g.createdAt.seconds) {
-                        docUpdatedAt = new Date(g.createdAt.seconds * 1000);
-                    } else if (g.timestamp && g.timestamp.seconds) {
-                        docUpdatedAt = new Date(g.timestamp.seconds * 1000);
-                    } else {
-                        docUpdatedAt = now; // 終極防線：沒有時間就當作現在，不准回 1970 年
-                    }
+                    // 🌟 強化版時間防禦：防止從外部導入的 JSON 奇葩時間格式引發無限迴圈崩潰
+                    let docUpdatedAt = now;
+                    try {
+                        if (g.updatedAt?.toDate) docUpdatedAt = g.updatedAt.toDate();
+                        else if (g.updatedAt?.seconds) docUpdatedAt = new Date(g.updatedAt.seconds * 1000);
+                        else if (g.updatedAt === null) docUpdatedAt = now;
+                        else if (typeof g.updatedAt === 'string') docUpdatedAt = new Date(g.updatedAt);
+                        else if (g.createdAt?.seconds) docUpdatedAt = new Date(g.createdAt.seconds * 1000);
+                        else if (g.timestamp?.seconds) docUpdatedAt = new Date(g.timestamp.seconds * 1000);
+                    } catch(e) {}
+                    
+                    if (isNaN(docUpdatedAt.getTime())) docUpdatedAt = now;
 
                     const missedEpisodes = countAiringEvents(docUpdatedAt, now, g.updateDay, g.updateTime);
                     
                     if (missedEpisodes > 0) {
                         const curUpdateDB = parseFloat(g.updatedEpisodes?.v1) || 0;
                         const total = parseFloat(g.totalEpisodes?.v1) || Infinity;
-                        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total); // 防超量上限保護
+                        const virtualUpdate = Math.min(curUpdateDB + missedEpisodes, total); 
                         
                         return {
                             ...g,
@@ -1422,6 +1407,7 @@ showNotify("資料已儲存"); setIsModalOpen(false); setEditingId(null);
                     return { ...g, _virtualUpdate: parseFloat(g.updatedEpisodes?.v1) || 0, _missedEpisodes: 0 };
                 });
             }, [games, countAiringEvents, systemTick]);
+            // ==========================================
             
             const handleUpdateWatchOrder = async (id, val) => { 
                 if(!user) return; 
