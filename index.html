@@ -1046,8 +1046,30 @@ const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新�
                 return result;
             }, [games]);
             
+          // ==========================================
+            // 🛠️ 補回被誤刪的核心功能 (會員排序 & 操作日誌)
             // ==========================================
-            // 🚀 終極秒開優化：解除登入綁架，讓快取瞬間爆發！
+            const sortedMemberships = useMemo(() => {
+                return customMemberships.map((m, index) => ({ ...m, _originalIndex: index })).sort((a, b) => {
+                    const dA = a.expiryDate ? calculateDaysLeft(a.expiryDate) : null, dB = b.expiryDate ? calculateDaysLeft(b.expiryDate) : null;
+                    const valA = dA === null ? 99999 : dA, valB = dB === null ? 99999 : dB;
+                    return valA - valB;
+                });
+            }, [customMemberships, calculateDaysLeft]);
+
+            const logActivity = useCallback(async (action, gameName, gameOrder, extraDetail = "") => { 
+                if(!user) return; 
+                try { 
+                    await addDoc(getPublicCol('activity_logs'), { 
+                        userName: userNameRef.current, 
+                        action, 
+                        gameName, 
+                        gameOrder: gameOrder || '', 
+                        extraDetail, 
+                        timestamp: serverTimestamp() 
+                    }); 
+                } catch(e) {} 
+            }, [user]);
             // ==========================================
             useEffect(() => { 
                 // 1. 讓登入程序在「背景」默默執行，不再阻擋畫面載入
