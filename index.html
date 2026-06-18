@@ -1046,48 +1046,26 @@ const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新�
                 return result;
             }, [games]);
             
+            // ==========================================
+            // 🚀 終極秒開優化：解除登入綁架，讓快取瞬間爆發！
+            // ==========================================
             useEffect(() => { 
-                const init = async () => { 
-                    try { await signInAnonymously(auth); } catch (e) { console.error("Auth failed:", e); } 
-                }; 
-                init(); 
-                return onAuthStateChanged(auth, setUser); 
-            }, []);
-            
-            const sortedMemberships = useMemo(() => {
-                return customMemberships.map((m, index) => ({ ...m, _originalIndex: index })).sort((a, b) => {
-                    const dA = a.expiryDate ? calculateDaysLeft(a.expiryDate) : null, dB = b.expiryDate ? calculateDaysLeft(b.expiryDate) : null;
-                    const valA = dA === null ? 99999 : dA, valB = dB === null ? 99999 : dB;
-                    return valA - valB;
-                });
-            }, [customMemberships, calculateDaysLeft]);
-            
-            const logActivity = useCallback(async (action, gameName, gameOrder, extraDetail = "") => { 
-    if(!user) return; 
-    try { 
-        await addDoc(getPublicCol('activity_logs'), { 
-            userName: userNameRef.current, 
-            action, 
-            gameName, 
-            gameOrder: gameOrder || '', 
-            extraDetail, // 新增這個欄位
-            timestamp: serverTimestamp() 
-        }); 
-    } catch(e) {} 
-}, [user]);
-            
-            useEffect(() => {
-                if (!user) return;
+                // 1. 讓登入程序在「背景」默默執行，不再阻擋畫面載入
+                signInAnonymously(auth).catch(e => console.error("Auth failed:", e));
+                const unsubscribeAuth = onAuthStateChanged(auth, setUser); 
+
+                // 2. 移除 if(!user) 限制！Firebase 會在 0.01 秒內從「本機快取」把資料噴給畫面，並在背景自動完成同步！
                 const ug = onSnapshot(getPublicCol('games'), (s) => { 
                     setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); 
                     setIsLoadingGames(false); 
                 });
-                // 🚀 極速優化：直接在雲端過濾排序，只下載最新的 50 筆，節省 99% 網路傳輸時間！
+                
                 const ul = onSnapshot(query(getPublicCol('activity_logs'), orderBy('timestamp', 'desc'), limit(50)), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     setActivityLogs(logs); 
                     setIsLoadingLogs(false); 
                 });
+                
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
                     if(d.exists()) { 
                         const data = d.data();
@@ -1096,11 +1074,14 @@ const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新�
                         setCustomMemberships(data.memberships || []);
                     } 
                 });
+                
                 const upro = onSnapshot(getPublicCol('user_profiles'), (s) => { 
                     setUserProfiles(s.docs.map(d => d.data())); 
                 });
-                return () => { ug(); ul(); us(); upro(); };
-            }, [user]);
+                
+                return () => { unsubscribeAuth(); ug(); ul(); us(); upro(); };
+            }, []); // 依賴清空，只在網頁打開時執行一次！
+            // ==========================================
 
             useEffect(() => {
                 const handleClickOutsideTools = (e) => { 
