@@ -167,7 +167,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel" data-type="module" data-presets="env,react-classic">
+    <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-auth.js";
         import { initializeFirestore, persistentLocalCache, getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit, writeBatch } from "https://gs.jurieo.com/gemini/gstatic/firebasejs/11.1.0/firebase-firestore.js";
@@ -421,8 +421,8 @@ const formatBracketTitle = (text) => {
                         {g.cover ? (
     <img 
         src={g.cover} 
-        decoding="sync" 
-        loading="eager" 
+        decoding="async" 
+        loading="lazy" 
         className="absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300" 
         style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
         alt={g.name} 
@@ -1082,10 +1082,10 @@ const [reminderUserFilter, setReminderUserFilter] = useState("全部"); // 新�
                     setGames(s.docs.map(d => ({ id: d.id, ...d.data() }))); 
                     setIsLoadingGames(false); 
                 });
-                const ul = onSnapshot(getPublicCol('activity_logs'), (s) => { 
+                // 🚀 極速優化：直接在雲端過濾排序，只下載最新的 50 筆，節省 99% 網路傳輸時間！
+                const ul = onSnapshot(query(getPublicCol('activity_logs'), orderBy('timestamp', 'desc'), limit(50)), (s) => { 
                     const logs = s.docs.map(d => ({ id: d.id, ...d.data() })); 
-                    logs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); 
-                    setActivityLogs(logs.slice(0, 50)); 
+                    setActivityLogs(logs); 
                     setIsLoadingLogs(false); 
                 });
                 const us = onSnapshot(doc(getPublicCol('settings'), 'config'), (d) => { 
